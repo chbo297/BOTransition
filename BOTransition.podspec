@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
                      :tag => s.version
   }
 
-  s.source_files  = "BOTransition", "BOTransition/*.{h}", "BOTransition/*.{m}", "BOTransition/effectGroup", "BOTransition/effectGroup/*.h", "BOTransition/effectGroup/*.m",
+  s.source_files  = "BOTransition", "BOTransition/*.{h}", "BOTransition/*.{m}", "BOTransition/effectGroup", "BOTransition/effectGroup/*.{h}", "BOTransition/effectGroup/*.{m}",
   s.framework = 'UIKit'
   s.license = 'Apache'
 end
