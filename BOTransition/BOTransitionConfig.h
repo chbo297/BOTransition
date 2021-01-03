@@ -108,6 +108,8 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
 
 /*
  支持的moveOut弹出手势方向
+ 比如想同时支持右滑和下滑可以设置为：
+ UISwipeGestureRecognizerDirectionRight|UISwipeGestureRecognizerDirectionDown
  (考虑到moveIn的一般是比较个性化的手势需求，使用configDelegate去定义，不支持快捷属性)
  default: UISwipeGestureRecognizerDirectionRight
  */

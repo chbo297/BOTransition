@@ -267,7 +267,7 @@ NSDictionary * _Nullable info)> *
                 CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
                                                             v1:self.alphaTo
                                                              t:pow(MIN(self.alphaInteractiveLimit, percentComplete),
-                                                                                  self.alphaCalPow)];
+                                                                   self.alphaCalPow)];
                 thetrView.alpha = curalpha;
             }
         }
@@ -904,7 +904,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
      [transitionContext completeTransition:YES]会同步先执行外部的completion，再执行- (void)animationEnded:(BOOL)transitionCompleted {
      如果外部进行了push或pop等操作，会修改transitionAct为一个有效值，等下下次转场使用，此时再执行animationEnded:时不宜将其重置
      */
-//    _transitionAct = BOTransitionActNone;
+    //    _transitionAct = BOTransitionActNone;
 }
 
 #pragma mark - triggerInteractiveTransitioning
@@ -1048,7 +1048,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [UIView animateWithDuration:duration
                           delay:0
                         options:(
-//                                 UIViewAnimationOptionAllowUserInteraction |
+                                 //                                 UIViewAnimationOptionAllowUserInteraction |
                                  UIViewAnimationOptionBeginFromCurrentState
                                  | UIViewAnimationOptionAllowAnimatedContent
                                  | UIViewAnimationOptionCurveLinear
@@ -1075,10 +1075,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
         curmoveVC = self.navigationController.viewControllers.lastObject;
     }
     BOTransitionConfig *tconfig = curmoveVC.bo_transitionConfig;
-//    if (!tconfig) {
-//        //没有配置，otherGes优先，本手势不响应,---都响应吧，有时moveVC设置的不及时
-//        return 3;
-//    }
+    //    if (!tconfig) {
+    //        //没有配置，otherGes优先，本手势不响应,---都响应吧，有时moveVC设置的不及时
+    //        return 3;
+    //    }
     
     if (tconfig && (ges.triggerDirectionInfo.mainDirection
                     & tconfig.moveOutSeriousGesDirection)) {
@@ -1412,12 +1412,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
 }
 
-- (CGFloat)obtainMaxFrameCenterDistance {
+- (CGFloat)obtainMaxFrameChangeCenterDistance:(BOOL)isToEnd {
     __block CGFloat dis = 0;
     [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (obj.frameAllow) {
-            CGPoint tocenter = CGPointMake(CGRectGetMidX(obj.frameTo),
-                                           CGRectGetMidY(obj.frameTo));
+            CGPoint tocenter = CGPointMake(CGRectGetMidX(isToEnd ?
+                                                         obj.frameTo : obj.frameFrom),
+                                           CGRectGetMidY(isToEnd ?
+                                                         obj.frameTo : obj.frameFrom));
             CALayer *dislayer = (obj.transitionView.layer.presentationLayer ?
                                  : obj.transitionView.layer);
             CGPoint currcenter = CGPointMake(CGRectGetMidX(dislayer.frame),
@@ -1607,8 +1609,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
             }];
             
             if (cancomplete) {
-                CGFloat maxdis = [self obtainMaxFrameCenterDistance];
+                CGFloat maxdis = [self obtainMaxFrameChangeCenterDistance:YES];
                 CGFloat mindur = maxdis / 2400.f;
+                if (maxdis > 8) {
+                    mindur = MAX(mindur, 0.12);
+                }
                 CGFloat dur = MAX(mindur, (1.f - percentComplete) * sf_default_transition_dur);
                 transitioninfo.percentComplete = 1;
                 self.shouldRunAniCompletionBlock = YES;
@@ -1690,8 +1695,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 }
                 
                 if (!durval) {
-                    CGFloat maxdis = [self obtainMaxFrameCenterDistance];
+                    CGFloat maxdis = [self obtainMaxFrameChangeCenterDistance:NO];
                     CGFloat mindur = maxdis / 2400.f;
+                    if (maxdis > 8) {
+                        mindur = MAX(mindur, 0.12);
+                    }
                     durval = @(MAX(mindur, percentComplete * sf_default_transition_dur));
                 }
                 
