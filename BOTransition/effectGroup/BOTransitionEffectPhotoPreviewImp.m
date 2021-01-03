@@ -9,7 +9,7 @@
 #import "BOTransitionEffectFadeImp.h"
 #import "BOTransitioning.h"
 
-@interface BOTransitionEffectPhotoPreviewImp ()
+@interface BOTransitionEffectPhotoPreviewImp () <BOTransitionEffectControl>
 
 @property (nonatomic, strong) BOTransitionEffectFadeImp *fadeImp;
 

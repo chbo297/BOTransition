@@ -8,9 +8,8 @@
 #import "BOTransitionProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
-@protocol BOTransitionEffectControl;
 
-@interface BOTransitionEffectPhotoPreviewImp : NSObject <BOTransitionEffectControl>
+@interface BOTransitionEffectPhotoPreviewImp : NSObject
 
 /*
  {
