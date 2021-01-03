@@ -7,7 +7,7 @@
 //
 
 #import "PhotoVC.h"
-
+#import "BOTransition.h"
 @interface PhotoVC () <BOTransitionEffectControl>
 
 @property (nonatomic, strong) UIButton *closeBtn;

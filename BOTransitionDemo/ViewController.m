@@ -11,6 +11,7 @@
 #import "PhotoVC.h"
 #import "PopCardVC.h"
 #import "AvatarDetailVC.h"
+#import "BOTransition.h"
 
 static CGSize sf_cell_size;
 

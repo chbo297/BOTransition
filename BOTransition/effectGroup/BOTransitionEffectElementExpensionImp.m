@@ -7,6 +7,7 @@
 //
 
 #import "BOTransitionEffectElementExpensionImp.h"
+#import "BOTransitioning.h"
 
 @implementation BOTransitionEffectElementExpensionImp
 

@@ -7,6 +7,7 @@
 //
 
 #import "BOTransitionEffectMovingImp.h"
+#import "BOTransitioning.h"
 
 @implementation BOTransitionEffectMovingImp
 

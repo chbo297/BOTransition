@@ -5,7 +5,7 @@
 //  Created by bo on 2021/1/3.
 //
 
-#import <Foundation/Foundation.h>
+#import "BOTransitionProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

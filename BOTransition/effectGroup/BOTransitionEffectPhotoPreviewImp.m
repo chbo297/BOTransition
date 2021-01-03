@@ -7,6 +7,7 @@
 
 #import "BOTransitionEffectPhotoPreviewImp.h"
 #import "BOTransitionEffectFadeImp.h"
+#import "BOTransitioning.h"
 
 @interface BOTransitionEffectPhotoPreviewImp ()
 

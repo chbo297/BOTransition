@@ -86,6 +86,7 @@
 		95E0D94C25A182760095C763 /* AvatarDetailVC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AvatarDetailVC.m; sourceTree = "<group>"; };
 		95E0D94F25A1987C0095C763 /* BOTransitionEffectPhotoPreviewImp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectPhotoPreviewImp.h; sourceTree = "<group>"; };
 		95E0D95025A1987C0095C763 /* BOTransitionEffectPhotoPreviewImp.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectPhotoPreviewImp.m; sourceTree = "<group>"; };
+		95E0D95625A1F6930095C763 /* BOTransitionProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BOTransitionProtocol.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,6 +167,7 @@
 				95E0D91025A06A860095C763 /* UIViewController+BOTransition.m */,
 				95E0D90825A06A860095C763 /* BOTransitioning.h */,
 				95E0D90F25A06A860095C763 /* BOTransitioning.m */,
+				95E0D95625A1F6930095C763 /* BOTransitionProtocol.h */,
 				95E0D90C25A06A860095C763 /* BOTransitionConfig.h */,
 				95E0D90525A06A860095C763 /* BOTransitionConfig.m */,
 				95E0D90A25A06A860095C763 /* BOTransitionPanGesture.h */,

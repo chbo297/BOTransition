@@ -7,6 +7,7 @@
 //
 
 #import "BOTransitionEffectFadeImp.h"
+#import "BOTransitioning.h"
 
 @implementation BOTransitionEffectFadeImp
 

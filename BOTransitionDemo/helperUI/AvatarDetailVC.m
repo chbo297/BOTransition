@@ -6,7 +6,7 @@
 //
 
 #import "AvatarDetailVC.h"
-
+#import "BOTransition.h"
 @interface AvatarDetailVC ()
 
 @property (nonatomic, strong) UIButton *closeBtn;

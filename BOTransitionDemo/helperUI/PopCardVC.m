@@ -7,7 +7,7 @@
 //
 
 #import "PopCardVC.h"
-
+#import "BOTransition.h"
 @interface PopCardVC ()
 
 @property (strong, nonatomic) UIView *board;

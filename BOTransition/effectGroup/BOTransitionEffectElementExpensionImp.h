@@ -6,8 +6,7 @@
 //  Copyright © 2020 bo. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-#import "BOTransition.h"
+#import "BOTransitionProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 /*
