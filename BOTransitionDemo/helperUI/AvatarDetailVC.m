@@ -19,7 +19,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
-    // Do any additional setup after loading the view.
+    
     self.view.addSubview(self.closeBtn);
     self.closeBtn.mas_makeConstraints(^(MASConstraintMaker *make) {
         if (@available(iOS 11.0, *)) {

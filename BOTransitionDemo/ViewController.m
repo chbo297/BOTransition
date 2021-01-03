@@ -62,6 +62,27 @@ static CGSize sf_cell_size;
                             [BOTransitionConfig configWithEffect:BOTransitionEffectElementExpensionPinGes
                                                        startView:cell.imageV];
                             [ws presentViewController:vc animated:YES completion:nil];
+                            
+                            /*
+                             也可以通过以下方式详细设置需要的效果：
+                             [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+                                 
+                                 NSDictionary *effectinfo = @{
+                                     @"style": @"ElementExpension",
+                                     @"config": @{
+                                             @"pinGes": @(YES),
+                                             @"zoomContentMode": @(UIViewContentModeScaleAspectFill),
+                                     },
+                                     
+                                     @"configBlock": ^(BOTransitionConfig *config) {
+                                         config.moveOutSeriousGesDirection = 0;
+                                     },
+                                     @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
+                                 };
+                                 
+                                 config.startViewFromBaseVC = cell.imageV;
+                             }];
+                             */
                         }
                     },
                     
