@@ -194,10 +194,18 @@
             }];
             
             [photoele addToStep:BOTransitionStepInteractiveEnd
-                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                transitionElement.transitionView.clipsToBounds = YES;
-                transitionElement.transitionView.contentMode = toMode;
-                transitionElement.frameTo = tort;
+                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable bksubInfo) {
+                NSNumber *finishnum = bksubInfo[@"finish"];
+                BOOL bkfinish = YES;
+                if (nil != finishnum) {
+                    bkfinish = finishnum.boolValue;
+                }
+                
+                if (bkfinish) {
+                    transitionElement.transitionView.clipsToBounds = YES;
+                    transitionElement.transitionView.contentMode = toMode;
+                    transitionElement.frameTo = tort;
+                }
             }];
             
             [photoele addToStep:BOTransitionStepCompleted
