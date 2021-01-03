@@ -75,11 +75,13 @@
                     }
                         break;
                     case UIViewContentModeScaleAspectFit: {
-                        startrt  = botransition_rectWithAspectFitForBounding(startviewrt, movedrt.size);
+                        
+                        startrt = [BOTransitionUtility rectWithAspectFitForBounding:startviewrt size:movedrt.size];
                     }
                         break;
                     case UIViewContentModeScaleAspectFill: {
-                        startrt  = botransition_rectWithAspectFillForBounding(startviewrt, movedrt.size);
+                        
+                        startrt = [BOTransitionUtility rectWithAspectFillForBounding:startviewrt size:movedrt.size];
                     }
                         break;
                     default: {
@@ -161,7 +163,8 @@
                     if (BOTransitionActMoveIn == transitioning.transitionAct) {
                         itemelement.frameOrigin = startviewrt;
                         itemelement.frameFrom = startviewrt;
-                        itemelement.frameTo = botransition_rectWithAspectFitForBounding(movedrt, startviewrt.size);
+                        
+                        itemelement.frameTo = [BOTransitionUtility rectWithAspectFitForBounding:movedrt size:startviewrt.size];
                         
                         itemelement.alphaFrom = 1;
                         itemelement.alphaTo = 0;
@@ -169,7 +172,8 @@
                         itemelement.fromView = startView;
                     } else {
                         itemelement.frameOrigin = startviewrt;
-                        itemelement.frameFrom = botransition_rectWithAspectFitForBounding(movedrt, startviewrt.size);
+                        
+                        itemelement.frameFrom = [BOTransitionUtility rectWithAspectFitForBounding:movedrt size:startviewrt.size];
                         itemelement.frameTo = startviewrt;
                         
                         itemelement.alphaFrom = 0;

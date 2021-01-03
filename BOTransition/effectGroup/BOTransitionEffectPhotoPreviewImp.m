@@ -134,8 +134,8 @@
                     case UIViewContentModeScaleAspectFit: {
                         switch (toMode) {
                             case UIViewContentModeScaleAspectFill: {
-                                utort = botransition_rectWithAspectFillForBounding(tort,
-                                                                                   originimage.size);
+                                
+                                utort = [BOTransitionUtility rectWithAspectFillForBounding:tort size:originimage.size];
                             }
                                 break;
                             default:
@@ -146,8 +146,8 @@
                     case UIViewContentModeScaleAspectFill: {
                         switch (toMode) {
                             case UIViewContentModeScaleAspectFit: {
-                                utort = botransition_rectWithAspectFitForBounding(tort,
-                                                                                  originimage.size);
+                                
+                                utort = [BOTransitionUtility rectWithAspectFitForBounding:tort size:originimage.size];
                             }
                                 break;
                             default:

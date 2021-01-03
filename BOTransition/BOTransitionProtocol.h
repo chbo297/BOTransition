@@ -1,9 +1,10 @@
 //
 //  BOTransitionProtocol.h
-//  BOTransitionDemo
+//  BOTransition
 //
 //  Created by bo on 2021/1/3.
 //
+#import "BOTransitionUtility.h"
 
 #ifndef BOTransitionProtocol_h
 #define BOTransitionProtocol_h
@@ -40,6 +41,13 @@ typedef struct BOTransitionInfo {
     CGPoint panBeganLoc;
     CGPoint panCurrLoc;
 } BOTransitionInfo;
+
+typedef NS_ENUM(NSUInteger, BOTransitionElementType) {
+    BOTransitionElementTypeNormal = 0,
+    BOTransitionElementTypeBoard,
+    BOTransitionElementTypeBg,
+    BOTransitionElementTypePhotoMirror,
+};
 
 @class BOTransitioning;
 @class BOTransitionElement;

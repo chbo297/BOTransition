@@ -1,15 +1,17 @@
 //
-//  BOTransitionMath.m
+//  BOTransitionUtility.m
 //  BOTransition
 //
 //  Created by bo on 2020/12/6.
 //  Copyright © 2020 bo. All rights reserved.
 //
 
-#import "BOTransitionMath.h"
+#import "BOTransitionUtility.h"
 #import <objc/runtime.h>
 
-void bo_addCATransactionCompletionTask(NSString *key, void(^task)(void)) {
+@implementation BOTransitionUtility
+
++ (void)addCATransaction:(NSString *)key completionTask:(void(^)(void))task {
     if (![NSThread isMainThread]) {
         return;
     }
@@ -45,7 +47,7 @@ void bo_addCATransactionCompletionTask(NSString *key, void(^task)(void)) {
     }
 }
 
-CGRect botransition_rectWithAspectFitForBounding(CGRect bounding, CGSize size) {
++ (CGRect)rectWithAspectFitForBounding:(CGRect)bounding size:(CGSize)size {
     CGFloat staspect = CGRectGetHeight(bounding) / CGRectGetWidth(bounding);
     CGFloat mvaspect = size.height / size.width;
     CGFloat sw;
@@ -64,7 +66,7 @@ CGRect botransition_rectWithAspectFitForBounding(CGRect bounding, CGSize size) {
     return rt;
 }
 
-CGRect botransition_rectWithAspectFillForBounding(CGRect bounding, CGSize size) {
++ (CGRect)rectWithAspectFillForBounding:(CGRect)bounding size:(CGSize)size {
     CGFloat staspect = CGRectGetHeight(bounding) / CGRectGetWidth(bounding);
     CGFloat mvaspect = size.height / size.width;
     CGFloat sw;
@@ -83,18 +85,20 @@ CGRect botransition_rectWithAspectFillForBounding(CGRect bounding, CGSize size) 
     return rt;
 }
 
-CGFloat botransition_clip(CGFloat min, CGFloat max, CGFloat val) {
++ (CGFloat)clipMin:(CGFloat)min max:(CGFloat)max val:(CGFloat)val {
     return MAX(min, MIN(max, val));
 }
 
-CGFloat botransition_lerp(CGFloat v0, CGFloat v1, CGFloat t) {
++ (CGFloat)lerpV0:(CGFloat)v0 v1:(CGFloat)v1 t:(CGFloat)t {
     return v0 + (v1 - v0) * t;
 }
 
-CGAffineTransform botransition_getTransform(CGRect from, CGRect to) {
++ (CGAffineTransform)getTransform:(CGRect)from to:(CGRect)to {
     CGAffineTransform tf = CGAffineTransformMakeTranslation(CGRectGetMidX(to) - CGRectGetMidX(from),
                                                             CGRectGetMidY(to) - CGRectGetMidY(from));
     tf = CGAffineTransformScale(tf, to.size.width / MAX(1.f, from.size.width),
                                 to.size.height / MAX(1.f, from.size.height));
     return tf;
 }
+
+@end

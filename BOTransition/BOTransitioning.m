@@ -9,7 +9,7 @@
 #import "BOTransitioning.h"
 #import "UIViewController+BOTransition.h"
 #import "BOTransitionNCProxy.h"
-#import "BOTransitionMath.h"
+#import "BOTransitionUtility.h"
 
 @interface BOTransitionElement ()
 
@@ -159,7 +159,8 @@ NSDictionary * _Nullable info)> *
                     if (CGRectEqualToRect(self.frameFrom, self.frameOrigin)) {
                         thetrView.transform = CGAffineTransformIdentity;
                     } else {
-                        thetrView.transform = botransition_getTransform(self.frameOrigin, self.frameFrom);
+                        
+                        thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:self.frameFrom];
                     }
                 } else {
                     thetrView.frame = self.frameFrom;
@@ -183,9 +184,12 @@ NSDictionary * _Nullable info)> *
                                         MIN(self.frameInteractiveLimit, percentComplete)
                                         :
                                         percentComplete);
+                
                 CGSize tsz =\
-                CGSizeMake(botransition_lerp(CGRectGetWidth(rtfrom), CGRectGetWidth(rtto), scalepercent),
-                           botransition_lerp(CGRectGetHeight(rtfrom), CGRectGetHeight(rtto), scalepercent));
+                CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
+                                                    v1:CGRectGetWidth(rtto) t:scalepercent],
+                           [BOTransitionUtility lerpV0:CGRectGetHeight(rtfrom)
+                                                    v1:CGRectGetHeight(rtto) t:scalepercent]);
                 
                 CGPoint tocenter;
                 CGRect currt;
@@ -240,14 +244,18 @@ NSDictionary * _Nullable info)> *
                     }
                     
                 } else {
+                    
+                    
                     tocenter =\
-                    CGPointMake(botransition_lerp(CGRectGetMidX(rtfrom), CGRectGetMidX(rtto), percentComplete),
-                                botransition_lerp(CGRectGetMidY(rtfrom), CGRectGetMidY(rtto), percentComplete));
+                    CGPointMake([BOTransitionUtility lerpV0:CGRectGetMidX(rtfrom)
+                                                         v1:CGRectGetMidX(rtto) t:percentComplete],
+                                [BOTransitionUtility lerpV0:CGRectGetMidY(rtfrom)
+                                                         v1:CGRectGetMidY(rtto) t:percentComplete]);
                     currt = (CGRect){tocenter.x - tsz.width / 2.f, tocenter.y - tsz.height / 2.f, tsz};
                 }
                 
                 if (self.frameAnimationWithTransform) {
-                    thetrView.transform = botransition_getTransform(rtorigin, currt);
+                    thetrView.transform = [BOTransitionUtility getTransform:rtorigin to:currt];
                 } else {
                     thetrView.frame = currt;
                 }
@@ -256,9 +264,10 @@ NSDictionary * _Nullable info)> *
             
             if (self.alphaAllow) {
                 
-                CGFloat curalpha = botransition_lerp(self.alphaFrom, self.alphaTo,
-                                                     pow(MIN(self.alphaInteractiveLimit, percentComplete),
-                                                         self.alphaCalPow));
+                CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
+                                                            v1:self.alphaTo
+                                                             t:pow(MIN(self.alphaInteractiveLimit, percentComplete),
+                                                                                  self.alphaCalPow)];
                 thetrView.alpha = curalpha;
             }
         }
@@ -270,7 +279,7 @@ NSDictionary * _Nullable info)> *
                     if (CGRectEqualToRect(self.frameOrigin, self.frameTo)) {
                         thetrView.transform = CGAffineTransformIdentity;
                     } else {
-                        thetrView.transform = botransition_getTransform(self.frameOrigin, self.frameTo);
+                        thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:self.frameTo];
                     }
                 } else {
                     thetrView.frame = self.frameTo;
@@ -308,7 +317,8 @@ NSDictionary * _Nullable info)> *
     
     if (self.frameAllow) {
         if (self.frameAnimationWithTransform) {
-            self.transitionView.transform = botransition_getTransform(self.frameOrigin, displaylayer.frame);
+            self.transitionView.transform = [BOTransitionUtility getTransform:self.frameOrigin
+                                                                           to:displaylayer.frame];
         } else {
             self.transitionView.frame = displaylayer.frame;
         }
@@ -344,11 +354,12 @@ NSDictionary * _Nullable info)> *
             CGRect anito = thetrView.frame;
             
             CGPoint currcenter =\
-            CGPointMake(botransition_lerp(CGRectGetMidX(anifrom), CGRectGetMidX(anito), anipercent),
-                        botransition_lerp(CGRectGetMidY(anifrom), CGRectGetMidY(anito), anipercent));
+            CGPointMake([BOTransitionUtility lerpV0:CGRectGetMidX(anifrom) v1:CGRectGetMidX(anito) t:anipercent],
+                        [BOTransitionUtility lerpV0:CGRectGetMidY(anifrom) v1:CGRectGetMidY(anito) t:anipercent]);
+            
             CGSize currsz =\
-            CGSizeMake(botransition_lerp(CGRectGetWidth(anifrom), CGRectGetWidth(anito), anipercent),
-                       botransition_lerp(CGRectGetHeight(anifrom), CGRectGetHeight(anito), anipercent));
+            CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(anifrom) v1:CGRectGetWidth(anito) t:anipercent],
+                       [BOTransitionUtility lerpV0:CGRectGetHeight(anifrom) v1:CGRectGetHeight(anito) t:anipercent]);
             
             CGRect currrt = (CGRect){currcenter.x - currsz.width / 2.f,
                 currcenter.y - currsz.height / 2.f,
@@ -358,7 +369,7 @@ NSDictionary * _Nullable info)> *
             CGPointMake((transitionInfo.panCurrLoc.x - CGRectGetMidX(currrt)) / CGRectGetWidth(currrt),
                         (transitionInfo.panCurrLoc.y - CGRectGetMidY(currrt)) / CGRectGetHeight(currrt));
             if (self.frameAnimationWithTransform) {
-                thetrView.transform = botransition_getTransform(self.frameOrigin, currrt);
+                thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:currrt];
             } else {
                 thetrView.frame = currrt;
             }
@@ -370,13 +381,12 @@ NSDictionary * _Nullable info)> *
     
     if (self.alphaAllow) {
         if (nil != self.alphaLastBeforeAni) {
-            
-            thetrView.alpha = botransition_lerp(self.alphaLastBeforeAni.floatValue, thetrView.alpha,
-                                                pow(anipercent, self.alphaCalPow));
+            thetrView.alpha = [BOTransitionUtility lerpV0:self.alphaLastBeforeAni.floatValue
+                                                       v1:thetrView.alpha t:pow(anipercent, self.alphaCalPow)];
         } else {
             NSLog(@"~~~~~!!!error x3");
-            CGFloat curalpha = botransition_lerp(self.alphaFrom, self.alphaTo,
-                                                 pow(percentComplete, self.alphaCalPow));
+            CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
+                                                        v1:self.alphaTo t:pow(percentComplete, self.alphaCalPow)];
             thetrView.alpha = curalpha;
         }
         
@@ -692,9 +702,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
 - (void)animateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     if (![self setupTransitionContext:transitionContext]) {
         __weak typeof(self) ws = self;
-        bo_addCATransactionCompletionTask(@"boanimateTransition", ^{
+        [BOTransitionUtility addCATransaction:@"boanimateTransition"
+                               completionTask:^{
             [ws makeTransitionComplete:NO isInteractive:NO];
-        });
+        }];
         return;
     }
     
@@ -904,9 +915,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
         || (UIGestureRecognizerStateBegan != self.transitionGes.transitionGesState
             && UIGestureRecognizerStateChanged != self.transitionGes.transitionGesState)) {
         __weak typeof(self) ws = self;
-        bo_addCATransactionCompletionTask(@"bostartInteractiveTransition", ^{
+        [BOTransitionUtility addCATransaction:@"bostartInteractiveTransition"
+                               completionTask:^{
             [ws makeTransitionComplete:NO isInteractive:YES];
-        });
+        }];
         return;
     }
     
@@ -1018,9 +1030,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
         }
         
         if (completion) {
-            bo_addCATransactionCompletionTask(@"noanit", ^{
+            [BOTransitionUtility addCATransaction:@"noanit"
+                                   completionTask:^{
                 completion(YES);
-            });
+            }];
         }
         return;
     }
@@ -1231,8 +1244,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
             CGPoint ptmaybegan = pt1;
             if (ges.touchInfoAr.count >= 2) {
                 CGPoint pt2 = ges.touchInfoAr[1].CGRectValue.origin;
-                ptmaybegan.x = botransition_lerp(pt1.x, pt2.x, -1);
-                ptmaybegan.y = botransition_lerp(pt1.y, pt2.y, -1);
+                ptmaybegan.x = [BOTransitionUtility lerpV0:pt1.x v1:pt2.x t:-1];
+                ptmaybegan.y = [BOTransitionUtility lerpV0:pt1.y v1:pt2.y t:-1];
             }
             
             CGFloat marginres = 27;
@@ -1446,7 +1459,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 self.shouldRunAniCompletionBlock = NO;
                 CGFloat curanipercent = self.timeRuler.layer.presentationLayer.opacity;
                 CGPoint inneranise = _innerAnimatingVal.CGPointValue;
-                CGFloat totalpercent = botransition_lerp(inneranise.x, inneranise.y, curanipercent);
+                
+                CGFloat totalpercent = [BOTransitionUtility lerpV0:inneranise.x v1:inneranise.y t:curanipercent];
                 BOTransitionInfo mofifytinfo = transitioninfo;
                 mofifytinfo.percentComplete = totalpercent;
                 CGPoint virturlbeganpt = curloc;

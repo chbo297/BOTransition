@@ -1,6 +1,6 @@
 //
 //  BOTransition.h
-//  pagenavigator
+//  BOTransition
 //
 //  Created by bo on 2021/1/2.
 //  Copyright © 2021 biosli. All rights reserved.
@@ -13,6 +13,7 @@
 #import "BOTransitioning.h"
 #import "BOTransitionNCProxy.h"
 #import "BOTransitionPresentationDelegate.h"
-#import "BOTransitionMath.h"
+#import "BOTransitionProtocol.h"
+#import "BOTransitionUtility.h"
 
 #endif /* BOTransition_h */

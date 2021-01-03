@@ -49,13 +49,6 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
 @end
 
-typedef NS_ENUM(NSUInteger, BOTransitionElementType) {
-    BOTransitionElementTypeNormal = 0,
-    BOTransitionElementTypeBoard,
-    BOTransitionElementTypeBg,
-    BOTransitionElementTypePhotoMirror,
-};
-
 @interface BOTransitionElement : NSObject
 
 + (instancetype)elementWithType:(BOTransitionElementType)type;
