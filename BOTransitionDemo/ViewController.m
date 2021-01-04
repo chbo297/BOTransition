@@ -12,6 +12,7 @@
 #import "PopCardVC.h"
 #import "AvatarDetailVC.h"
 #import "BOTransition.h"
+#import "ContentVC.h"
 
 static CGSize sf_cell_size;
 
@@ -114,6 +115,24 @@ static CGSize sf_cell_size;
                             [ws.navigationController pushViewController:vc animated:YES];
                         }
                     },
+                    
+                    @{
+                        @"title": @"plain",
+                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+                            cell.imageV.image = [UIImage imageNamed:@"img_62"];
+                        },
+                        @"block": ^(DemoCollectionViewCell *cell){
+                            ContentVC *vc = [ContentVC new];
+                            vc.bo_transitionConfig =\
+                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+                                config.transitionEffect = BOTransitionEffectElementExpension;
+                                config.startViewFromBaseVC = cell.imageV;
+                                config.moveOutGesDirection = (UISwipeGestureRecognizerDirectionDown
+                                                              | UISwipeGestureRecognizerDirectionRight);
+                            }];
+                            [ws.navigationController pushViewController:vc animated:YES];
+                        }
+                    },
             ]
         },
         
@@ -180,6 +199,24 @@ static CGSize sf_cell_size;
                                 config.presentOverTheContext = YES;
                             }];
                             vc.bo_transitionConfig.presentOverTheContext = YES;
+                            [ws presentViewController:vc animated:YES completion:nil];
+                        }
+                    },
+                    
+                    @{
+                        @"title": @"plain",
+                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+                            cell.imageV.image = [UIImage imageNamed:@"img_62"];
+                        },
+                        @"block": ^(DemoCollectionViewCell *cell){
+                            ContentVC *vc = [ContentVC new];
+                            vc.bo_transitionConfig =\
+                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+                                config.transitionEffect = BOTransitionEffectElementExpension;
+                                config.startViewFromBaseVC = cell.imageV;
+                                config.moveOutGesDirection = (UISwipeGestureRecognizerDirectionDown
+                                                              | UISwipeGestureRecognizerDirectionRight);
+                            }];
                             [ws presentViewController:vc animated:YES completion:nil];
                         }
                     },

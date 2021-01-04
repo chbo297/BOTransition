@@ -128,13 +128,14 @@
                                              toView:container];
             }
             CGRect utort = tort;
+            BOOL contentmodeconvert = NO;
             if (isoriginimage
                 && fromMode != toMode) {
                 switch (fromMode) {
                     case UIViewContentModeScaleAspectFit: {
                         switch (toMode) {
                             case UIViewContentModeScaleAspectFill: {
-                                
+                                contentmodeconvert = YES;
                                 utort = [BOTransitionUtility rectWithAspectFillForBounding:tort size:originimage.size];
                             }
                                 break;
@@ -146,7 +147,7 @@
                     case UIViewContentModeScaleAspectFill: {
                         switch (toMode) {
                             case UIViewContentModeScaleAspectFit: {
-                                
+                                contentmodeconvert = YES;
                                 utort = [BOTransitionUtility rectWithAspectFitForBounding:tort size:originimage.size];
                             }
                                 break;
@@ -202,10 +203,23 @@
                     bkfinish = finishnum.boolValue;
                 }
                 
-                if (bkfinish) {
-                    transitionElement.transitionView.clipsToBounds = YES;
-                    transitionElement.transitionView.contentMode = toMode;
-                    transitionElement.frameTo = tort;
+                if (bkfinish
+                    && contentmodeconvert) {
+                    
+                    UIImageView *tiv = (id)transitionElement.transitionView;
+                    if ([tiv isKindOfClass:[UIImageView class]]) {
+                        tiv.clipsToBounds = YES;
+                        tiv.contentMode = toMode;
+                        
+                        if (UIViewContentModeScaleAspectFit == fromMode) {
+                            tiv.frame = [BOTransitionUtility rectWithAspectFitForBounding:tiv.frame size:tiv.image.size];
+                        } else if (UIViewContentModeScaleAspectFill == toMode) {
+                            tiv.frame = [BOTransitionUtility rectWithAspectFillForBounding:tiv.frame size:tiv.image.size];
+                        }
+                        
+                        transitionElement.frameTo = tort;
+                    }
+                    
                 }
             }];
             

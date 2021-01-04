@@ -22,13 +22,13 @@
 - (CGFloat)bo_transitioningDistanceCoefficient:(UISwipeGestureRecognizerDirection)direction {
     switch (direction) {
         case UISwipeGestureRecognizerDirectionUp:
-            return 0.5;
+            return 0.84;
         case UISwipeGestureRecognizerDirectionLeft:
-            return 0.84;
+            return 1;
         case UISwipeGestureRecognizerDirectionDown:
-            return 0.5;
-        case UISwipeGestureRecognizerDirectionRight:
             return 0.84;
+        case UISwipeGestureRecognizerDirectionRight:
+            return 1;
         default:
             break;
     }

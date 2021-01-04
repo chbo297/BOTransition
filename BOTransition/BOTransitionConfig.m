@@ -90,7 +90,7 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 @"configBlock": ^(BOTransitionConfig *config) {
                     config.moveOutSeriousGesDirection = 0;
                 },
-                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
+                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown | UISwipeGestureRecognizerDirectionRight),
         },
         
         BOTransitionEffectElementExpensionPinGes: @{

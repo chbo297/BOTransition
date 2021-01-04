@@ -32,6 +32,7 @@
 		95E0D9D025A2013B0095C763 /* BOTransitionPresentationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C525A2013B0095C763 /* BOTransitionPresentationDelegate.m */; };
 		95E0D9D125A2013B0095C763 /* BOTransitioning.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C625A2013B0095C763 /* BOTransitioning.m */; };
 		95E0D9D225A2013B0095C763 /* UIViewController+BOTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C725A2013B0095C763 /* UIViewController+BOTransition.m */; };
+		95E0DC5B25A355A20095C763 /* ContentVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0DC5A25A355A20095C763 /* ContentVC.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -87,6 +88,8 @@
 		95E0D9C525A2013B0095C763 /* BOTransitionPresentationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPresentationDelegate.m; sourceTree = "<group>"; };
 		95E0D9C625A2013B0095C763 /* BOTransitioning.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitioning.m; sourceTree = "<group>"; };
 		95E0D9C725A2013B0095C763 /* UIViewController+BOTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+BOTransition.m"; sourceTree = "<group>"; };
+		95E0DC5925A355A20095C763 /* ContentVC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ContentVC.h; sourceTree = "<group>"; };
+		95E0DC5A25A355A20095C763 /* ContentVC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ContentVC.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -170,6 +173,8 @@
 				95E0D93E25A1713E0095C763 /* PhotoVC.m */,
 				95E0D94B25A182760095C763 /* AvatarDetailVC.h */,
 				95E0D94C25A182760095C763 /* AvatarDetailVC.m */,
+				95E0DC5925A355A20095C763 /* ContentVC.h */,
+				95E0DC5A25A355A20095C763 /* ContentVC.m */,
 				95E0D94325A171A00095C763 /* CCUtil.h */,
 				95E0D94425A171A00095C763 /* CCUtil.m */,
 			);
@@ -328,6 +333,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95E0DC5B25A355A20095C763 /* ContentVC.m in Sources */,
 				95E0D9C825A2013B0095C763 /* BOTransitionPanGesture.m in Sources */,
 				95E0D92B25A0C5FB0095C763 /* DemoCollectionViewCell.m in Sources */,
 				95E0D8C725A06A5D0095C763 /* ViewController.m in Sources */,
