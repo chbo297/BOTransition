@@ -53,6 +53,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     self = [super initWithTarget:nil action:nil];
     if (self) {
         super.delegate = self;
+        super.delaysTouchesBegan = NO;
+        super.delaysTouchesEnded = NO;
         self.transitionGesDelegate = transitionGesDelegate;
     }
     return self;

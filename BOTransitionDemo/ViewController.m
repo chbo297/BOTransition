@@ -105,7 +105,7 @@ static CGSize sf_cell_size;
                     @{
                         @"title": @"plain",
                         @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
-                            cell.imageV.image = [UIImage imageNamed:@"img_62"];
+                            
                         },
                         @"block": ^(DemoCollectionViewCell *cell){
                             ContentVC *vc = [ContentVC new];
@@ -175,7 +175,7 @@ static CGSize sf_cell_size;
                     @{
                         @"title": @"plain",
                         @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
-                            cell.imageV.image = [UIImage imageNamed:@"img_62"];
+                            
                         },
                         @"block": ^(DemoCollectionViewCell *cell){
                             ContentVC *vc = [ContentVC new];
