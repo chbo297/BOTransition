@@ -133,7 +133,7 @@
             boardelement.frameOrigin = movedrt;
             boardelement.frameBarrierInContainer = NO;
             boardelement.alphaAllow = YES;
-            //disableBoardMove时突出alpha变化，系数2，有boardmove时突出board移动，系数4初期alpha变化较缓
+            //disableBoardMove时突出alpha变化，系数小，有boardmove时突出board移动，系数4初期alpha变化较缓
             boardelement.alphaCalPow = (disableBoardMove ? 2 : 4);
             if (BOTransitionActMoveIn == transitioning.transitionAct) {
                 boardelement.frameFrom = startrt;

@@ -35,6 +35,7 @@ NSDictionary * _Nullable info)> *
         _frameInteractiveLimit = 1;
         _alphaInteractiveLimit = 1;
         _frameAnimationWithTransform = YES;
+        _frameCalPow = 1;
         _alphaCalPow = 1;
         _alphaOrigin = 1;
         _fromViewAutoHidden = YES;
@@ -180,10 +181,11 @@ NSDictionary * _Nullable info)> *
                 CGRect rtorigin = self.frameOrigin;
                 CGRect rtto = self.frameTo;
                 CGRect rtfrom = self.frameFrom;
+                CGFloat upc = pow(percentComplete, self.frameCalPow);
                 CGFloat scalepercent = (transitionInfo.interactive ?
-                                        MIN(self.frameInteractiveLimit, percentComplete)
+                                        MIN(self.frameInteractiveLimit, upc)
                                         :
-                                        percentComplete);
+                                        upc);
                 
                 CGSize tsz =\
                 CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
@@ -263,11 +265,14 @@ NSDictionary * _Nullable info)> *
             }
             
             if (self.alphaAllow) {
+                CGFloat upc = pow(percentComplete, self.alphaCalPow);
                 
                 CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
                                                             v1:self.alphaTo
-                                                             t:pow(MIN(self.alphaInteractiveLimit, percentComplete),
-                                                                   self.alphaCalPow)];
+                                                             t:(transitionInfo.interactive ?
+                                                                MIN(self.alphaInteractiveLimit, upc)
+                                                                :
+                                                                upc)];
                 thetrView.alpha = curalpha;
             }
         }

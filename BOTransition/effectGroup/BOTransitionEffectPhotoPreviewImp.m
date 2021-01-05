@@ -193,20 +193,20 @@
             photoele.frameAnimationWithTransform = NO;
             
             [photoele addToStep:BOTransitionStepAfterInstallElements
-                             block:^(BOTransitioning * _Nonnull blockTrans,
-                                     BOTransitionStep step,
-                                     BOTransitionElement * _Nonnull transitionElement,
-                                     BOTransitionInfo transitionInfo,
-                                     NSDictionary * _Nullable subInfo) {
+                          block:^(BOTransitioning * _Nonnull blockTrans,
+                                  BOTransitionStep step,
+                                  BOTransitionElement * _Nonnull transitionElement,
+                                  BOTransitionInfo transitionInfo,
+                                  NSDictionary * _Nullable subInfo) {
                 UIView *blockcontainer = blockTrans.transitionContext.containerView;
                 [blockcontainer addSubview:transitionElement.transitionView];
             }];
             [photoele addToStep:BOTransitionStepCancelled
-                             block:^(BOTransitioning * _Nonnull blockTrans,
-                                     BOTransitionStep step,
-                                     BOTransitionElement * _Nonnull transitionElement,
-                                     BOTransitionInfo transitionInfo,
-                                     NSDictionary * _Nullable subInfo) {
+                          block:^(BOTransitioning * _Nonnull blockTrans,
+                                  BOTransitionStep step,
+                                  BOTransitionElement * _Nonnull transitionElement,
+                                  BOTransitionInfo transitionInfo,
+                                  NSDictionary * _Nullable subInfo) {
                 [transitionElement.transitionView removeFromSuperview];
             }];
             
@@ -239,11 +239,11 @@
             }];
             
             [photoele addToStep:BOTransitionStepCompleted
-                             block:^(BOTransitioning * _Nonnull blockTrans,
-                                     BOTransitionStep step,
-                                     BOTransitionElement * _Nonnull transitionElement,
-                                     BOTransitionInfo transitionInfo,
-                                     NSDictionary * _Nullable subInfo) {
+                          block:^(BOTransitioning * _Nonnull blockTrans,
+                                  BOTransitionStep step,
+                                  BOTransitionElement * _Nonnull transitionElement,
+                                  BOTransitionInfo transitionInfo,
+                                  NSDictionary * _Nullable subInfo) {
                 [transitionElement.transitionView removeFromSuperview];
             }];
             
