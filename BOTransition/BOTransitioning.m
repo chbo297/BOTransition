@@ -1052,9 +1052,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     //暂不开启手势中断动画功能
     [UIView animateWithDuration:duration
                           delay:0
-                        options:(
-                                 //                                 UIViewAnimationOptionAllowUserInteraction |
-                                 UIViewAnimationOptionBeginFromCurrentState
+                        options:(UIViewAnimationOptionBeginFromCurrentState
                                  | UIViewAnimationOptionAllowAnimatedContent
                                  | UIViewAnimationOptionCurveLinear
                                  )
@@ -1079,12 +1077,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
     if (!self.moveVC && BOTransitionTypeNavigation == _transitionType) {
         curmoveVC = self.navigationController.viewControllers.lastObject;
     }
-    BOTransitionConfig *tconfig = curmoveVC.bo_transitionConfig;
-    //    if (!tconfig) {
-    //        //没有配置，otherGes优先，本手势不响应,---都响应吧，有时moveVC设置的不及时
-    //        return 3;
-    //    }
     
+    BOTransitionConfig *tconfig = curmoveVC.bo_transitionConfig;
     if (tconfig && (ges.triggerDirectionInfo.mainDirection
                     & tconfig.moveOutSeriousGesDirection)) {
         return 1;
