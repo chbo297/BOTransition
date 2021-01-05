@@ -61,7 +61,7 @@ static CGSize sf_cell_size;
                         @"block": ^(DemoCollectionViewCell *cell){
                             AvatarDetailVC *vc = [AvatarDetailVC new];
                             vc.bo_transitionConfig =\
-                            [BOTransitionConfig configWithEffect:BOTransitionEffectElementExpensionPinGes
+                            [BOTransitionConfig configWithEffect:BOTransitionEffectElementExpensionOnlyEle
                                                        startView:cell.imageV];
                             [ws presentViewController:vc animated:YES completion:nil];
                             
@@ -97,20 +97,6 @@ static CGSize sf_cell_size;
                             PhotoVC *vc = [PhotoVC new];
                             ws.currTargetView = cell.imageV;
                             vc.bo_transitionConfig =\
-                            [BOTransitionConfig configWithEffect:BOTransitionEffectPhotoPreview];
-                            [ws.navigationController pushViewController:vc animated:YES];
-                        }
-                    },
-                    
-                    @{
-                        @"title": @"photo-pinGes",
-                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
-                            cell.imageV.image = [UIImage imageNamed:@"demophoto"];
-                        },
-                        @"block": ^(DemoCollectionViewCell *cell){
-                            PhotoVC *vc = [PhotoVC new];
-                            ws.currTargetView = cell.imageV;
-                            vc.bo_transitionConfig =\
                             [BOTransitionConfig configWithEffect:BOTransitionEffectPhotoPreviewPinGes];
                             [ws.navigationController pushViewController:vc animated:YES];
                         }
@@ -127,8 +113,6 @@ static CGSize sf_cell_size;
                             [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
                                 config.transitionEffect = BOTransitionEffectElementExpension;
                                 config.startViewFromBaseVC = cell.imageV;
-                                config.moveOutGesDirection = (UISwipeGestureRecognizerDirectionDown
-                                                              | UISwipeGestureRecognizerDirectionRight);
                             }];
                             [ws.navigationController pushViewController:vc animated:YES];
                         }
@@ -141,6 +125,10 @@ static CGSize sf_cell_size;
             @"dataAr": @[
                     @{
                         @"title": @"pop card",
+                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+                            cell.imageV.image = nil;
+                            cell.imageV.backgroundColor = [UIColor colorWithRed:0.8 green:0.68 blue:0.68 alpha:1];
+                        },
                         @"block": ^(DemoCollectionViewCell *cell){
                             PopCardVC *vc = [PopCardVC new];
                             vc.bo_transitionConfig =\
@@ -159,7 +147,7 @@ static CGSize sf_cell_size;
                         @"block": ^(DemoCollectionViewCell *cell){
                             AvatarDetailVC *vc = [AvatarDetailVC new];
                             vc.bo_transitionConfig =\
-                            [BOTransitionConfig configWithEffect:BOTransitionEffectElementExpensionPinGes
+                            [BOTransitionConfig configWithEffect:BOTransitionEffectElementExpensionOnlyEle
                                                        startView:cell.imageV];
                             [ws presentViewController:vc animated:YES completion:nil];
                         }
@@ -167,25 +155,6 @@ static CGSize sf_cell_size;
                     
                     @{
                         @"title": @"photo",
-                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
-                            cell.imageV.image = [UIImage imageNamed:@"demophoto"];
-                        },
-                        @"block": ^(DemoCollectionViewCell *cell){
-                            PhotoVC *vc = [PhotoVC new];
-                            ws.currTargetView = cell.imageV;
-                            ws.definesPresentationContext = YES;
-                            vc.bo_transitionConfig =\
-                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
-                                config.transitionEffect = BOTransitionEffectPhotoPreview;
-                                config.presentOverTheContext = YES;
-                            }];
-                            vc.bo_transitionConfig.presentOverTheContext = YES;
-                            [ws presentViewController:vc animated:YES completion:nil];
-                        }
-                    },
-                    
-                    @{
-                        @"title": @"photo-pinGes",
                         @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
                             cell.imageV.image = [UIImage imageNamed:@"demophoto"];
                         },
@@ -214,8 +183,6 @@ static CGSize sf_cell_size;
                             [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
                                 config.transitionEffect = BOTransitionEffectElementExpension;
                                 config.startViewFromBaseVC = cell.imageV;
-                                config.moveOutGesDirection = (UISwipeGestureRecognizerDirectionDown
-                                                              | UISwipeGestureRecognizerDirectionRight);
                             }];
                             [ws presentViewController:vc animated:YES completion:nil];
                         }

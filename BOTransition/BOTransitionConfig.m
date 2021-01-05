@@ -10,7 +10,9 @@
 
 BOTransitionEffect const BOTransitionEffectElementExpension = @"ElementExpension";
 BOTransitionEffect const BOTransitionEffectElementExpensionPinGes = @"ElementExpensionPinGes";
-BOTransitionEffect const BOTransitionEffectElementExpensionNoGes = @"ElementExpensionLite";
+BOTransitionEffect const BOTransitionEffectElementExpensionNoGes = @"ElementExpensionNoGes";
+BOTransitionEffect const BOTransitionEffectElementExpensionOnlyEle = @"ElementExpensionOnlyEle";
+
 BOTransitionEffect const BOTransitionEffectPopCard = @"PopCard";
 
 BOTransitionEffect const BOTransitionEffectPhotoPreview = @"PhotoPreview";
@@ -83,14 +85,15 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
         BOTransitionEffectElementExpension: @{
                 @"style": @"ElementExpension",
                 @"config": @{
+                        @"bg": @(NO),
                         @"pinGes": @(NO),
                         @"zoomContentMode": @(UIViewContentModeScaleAspectFill),
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = 0;
+                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
                 },
-                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown | UISwipeGestureRecognizerDirectionRight),
+                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
         
         BOTransitionEffectElementExpensionPinGes: @{
@@ -112,6 +115,18 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                         @"pinGes": @(NO),
                         @"zoomContentMode": @(UIViewContentModeScaleAspectFill),
                 },
+        },
+        
+        BOTransitionEffectElementExpensionOnlyEle: @{
+                @"style": @"ElementExpension",
+                @"config": @{
+                        @"bg": @(NO),
+                        @"pinGes": @(NO),
+                        @"disableBoardMove": @(YES),
+                        @"zoomContentMode": @(UIViewContentModeScaleAspectFill),
+                },
+                
+                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown | UISwipeGestureRecognizerDirectionRight),
         },
         
         BOTransitionEffectPopCard: @{
@@ -147,7 +162,7 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = 0;
+                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -156,10 +171,11 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 @"style": @"PhotoPreview",
                 @"config": @{
                         @"pinGes": @(YES),
+                        @"disablePinGesForDirection": @(UISwipeGestureRecognizerDirectionRight),
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = 0;
+                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },

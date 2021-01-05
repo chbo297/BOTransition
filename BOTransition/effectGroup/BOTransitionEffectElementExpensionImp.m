@@ -56,6 +56,18 @@
                 pinGes = NO;
             }
             
+            NSNumber *pinGesElenum = configinfo[@"pinGesEle"];
+            BOOL pinGesEle = pinGes;
+            if (nil != pinGesElenum) {
+                pinGesEle = pinGesElenum.boolValue;
+            }
+            
+            NSNumber *disableBoardMovenum = configinfo[@"disableBoardMove"];
+            BOOL disableBoardMove = NO;
+            if (nil != disableBoardMovenum && disableBoardMovenum.boolValue) {
+                disableBoardMove = YES;
+            }
+            
             CGRect movedrt;
             if (BOTransitionActMoveIn == transitioning.transitionAct) {
                 movedrt = [transitioning.transitionContext finalFrameForViewController:transitioning.moveVC];
@@ -116,12 +128,13 @@
             }
             
             boardelement.transitionView = transitioning.moveVC.view;
-            boardelement.frameAllow = YES;
+            boardelement.frameAllow = !disableBoardMove;
             boardelement.frameShouldPin = pinGes;
             boardelement.frameOrigin = movedrt;
             boardelement.frameBarrierInContainer = NO;
             boardelement.alphaAllow = YES;
-            boardelement.alphaCalPow = 4;
+            //disableBoardMove时突出alpha变化，所以系数1，有boardmove时突出board移动，所以系数4初期alpha变化较缓
+            boardelement.alphaCalPow = (disableBoardMove ? 1 : 4);
             if (BOTransitionActMoveIn == transitioning.transitionAct) {
                 boardelement.frameFrom = startrt;
                 boardelement.frameTo = movedrt;
@@ -155,7 +168,7 @@
                     BOTransitionElement *itemelement = [BOTransitionElement new];
                     itemelement.transitionView = tv;
                     itemelement.frameAllow = YES;
-                    itemelement.frameShouldPin = pinGes;
+                    itemelement.frameShouldPin = pinGesEle;
                     itemelement.frameAnimationWithTransform = NO;
                     itemelement.frameBarrierInContainer = NO;
                     itemelement.alphaAllow = YES;

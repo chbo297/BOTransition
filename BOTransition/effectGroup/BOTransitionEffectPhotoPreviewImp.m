@@ -168,6 +168,21 @@
             if (nil != pinGesnum && !pinGesnum.boolValue) {
                 pinGes = NO;
             }
+            
+            if (pinGes) {
+                NSNumber *disablePinGesForDirectionnum = self.configInfo[@"disablePinGesForDirection"];
+                NSUInteger disablePinGesForDirection = 0;
+                if (nil != disablePinGesForDirectionnum) {
+                    disablePinGesForDirection = disablePinGesForDirectionnum.unsignedIntegerValue;
+                }
+                
+                if (transitionInfo.interactive
+                    && (disablePinGesForDirection
+                        & transitioning.transitionGes.triggerDirectionInfo.mainDirection)) {
+                    pinGes = NO;
+                }
+            }
+            
             photoele.frameShouldPin = pinGes;
             tranview.frame = fromrt;
             photoele.transitionView = tranview;
