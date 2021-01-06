@@ -283,7 +283,7 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
     NSArray<UIViewController *> *originvcar = self.viewControllers.copy;
     if (viewControllers.count == 1
         && viewControllers.firstObject == self.viewControllers.firstObject) {
-        [self popToRootViewControllerAnimated:animated];
+        [self bo_transitioning_popToRootViewControllerAnimated:animated];
     } else {
         [self bo_transitioning_setViewControllers:viewControllers animated:animated];
     }
