@@ -241,7 +241,8 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 
 - (void)bo_transitioning_setViewControllers:(NSArray<UIViewController *> *)viewControllers
                                    animated:(BOOL)animated;
-- (NSArray<__kindof UIViewController *> *)bo_transitioning_popToRootViewControllerAnimated:(BOOL)animated;
+- (NSArray<__kindof UIViewController *> *)bo_transitioning_popToViewController:(UIViewController *)viewController
+                                                                      animated:(BOOL)animated;
 
 @end
 
@@ -258,8 +259,8 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
         [BOTransitionUtility copyOriginMeth:@selector(setViewControllers:animated:)
                                      newSel:@selector(bo_transitioning_setViewControllers:animated:)
                                       class:self];
-        [BOTransitionUtility copyOriginMeth:@selector(popToRootViewControllerAnimated:)
-                                     newSel:@selector(bo_transitioning_popToRootViewControllerAnimated:)
+        [BOTransitionUtility copyOriginMeth:@selector(popToViewController:animated:)
+                                     newSel:@selector(bo_transitioning_popToViewController:animated:)
                                       class:self];
     });
 }
@@ -279,11 +280,31 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
                 completion:(void (^)(BOOL finish, NSDictionary *info))completion {
+    if (viewControllers.count <= 0 && animated) {
+        //容错修正
+        if (completion) {
+            completion(NO, nil);
+        }
+        return;
+    }
     
     NSArray<UIViewController *> *originvcar = self.viewControllers.copy;
-    if (viewControllers.count == 1
-        && viewControllers.firstObject == self.viewControllers.firstObject) {
-        [self bo_transitioning_popToRootViewControllerAnimated:animated];
+    BOOL ispop = NO;
+    if (viewControllers.count > 0
+        && viewControllers.count < originvcar.count) {
+        __block BOOL isequal = YES;
+        [viewControllers enumerateObjectsUsingBlock:^(UIViewController * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (originvcar[idx] != obj) {
+                isequal = NO;
+                *stop = YES;
+            }
+        }];
+        
+        ispop = isequal;
+    }
+    if (ispop) {
+        //pop是用setViewControllers后，self.viewControllers状态有问题，使用popToViewController没问题
+        [self bo_transitioning_popToViewController:viewControllers.lastObject animated:animated];
     } else {
         [self bo_transitioning_setViewControllers:viewControllers animated:animated];
     }
