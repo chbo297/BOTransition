@@ -280,8 +280,11 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
                 completion:(void (^)(BOOL finish, NSDictionary *info))completion {
-    if (viewControllers.count <= 0 && animated) {
-        //容错修正
+    if ((viewControllers.count <= 0
+        && animated)
+        || (self.viewControllers.lastObject.transitionCoordinator
+            || viewControllers.lastObject.transitionCoordinator)) {
+        //容错修正，设为nil的animated方式，以及正在转场过程中，不再接收进出栈命令。
         if (completion) {
             completion(NO, nil);
         }
