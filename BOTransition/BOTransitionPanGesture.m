@@ -487,8 +487,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGRStrategyForGes:otherGes:)]) {
         [_otherGesWillExecSimultaneouslyStrategy enumerateObjectsUsingBlock:^(UIGestureRecognizer * _Nonnull obj,
-                                                                     NSUInteger idx,
-                                                                     BOOL * _Nonnull stop) {
+                                                                              NSUInteger idx,
+                                                                              BOOL * _Nonnull stop) {
             if (![self execeSimultaneouslyStrategy:obj]) {
                 hasFailed = YES;
             }
@@ -889,8 +889,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
             if (((contentsz.height + insets.top + insets.bottom) > boundsz.height)
                 &&
                 ((offset.y + boundsz.height)
-                >
-                (contentsz.height + insets.bottom + onepixel))) {
+                 >
+                 (contentsz.height + insets.bottom + onepixel))) {
                 hasbounces = YES;
             } else if (offset.y
                        <
@@ -899,7 +899,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
             } else if (((contentsz.width + insets.left + insets.right) > boundsz.width)
                        &&
                        ((offset.x + boundsz.width) >
-                       (contentsz.width + insets.right + onepixel))) {
+                        (contentsz.width + insets.right + onepixel))) {
                 hasbounces = YES;
             } else if (offset.x
                        <
