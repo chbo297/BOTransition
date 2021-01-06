@@ -11,6 +11,14 @@
 
 @implementation BOTransitionUtility
 
++ (void)copyOriginMeth:(SEL)originSel newSel:(SEL)newSel class:(Class)cls {
+    Method originalMethod = class_getInstanceMethod(cls, originSel);
+    class_addMethod(cls,
+                    newSel,
+                    method_getImplementation(originalMethod),
+                    method_getTypeEncoding(originalMethod));
+}
+
 + (void)addCATransaction:(NSString *)key completionTask:(void(^)(void))task {
     if (![NSThread isMainThread]) {
         return;

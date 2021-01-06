@@ -63,7 +63,7 @@ static CGSize sf_cell_size;
                             vc.bo_transitionConfig =\
                             [BOTransitionConfig configWithEffect:BOTransitionEffectElementExpensionOnlyEle
                                                        startView:cell.imageV];
-                            [ws presentViewController:vc animated:YES completion:nil];
+                            [ws.navigationController pushViewController:vc animated:YES];
                             
                             /*
                              也可以通过以下方式详细设置需要的效果：

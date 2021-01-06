@@ -40,7 +40,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 @property (nonatomic, assign) BOTransitionPanGestureBrief lastGesBrief;
 @property (nonatomic, assign) BOOL needsRecoverWhenTouchDown;
 
-@property (nonatomic, strong) NSMutableArray<UIGestureRecognizer *> *otherGesNoNeedsSimultaneously;
+@property (nonatomic, strong) NSMutableArray<UIGestureRecognizer *> *otherGesWillExecSimultaneouslyStrategy;
 
 //同时只接收和响应第一个touch的began、move、end、cancel
 @property (nonatomic, strong) UITouch *currTouch;
@@ -136,9 +136,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     _originState = UIGestureRecognizerStatePossible;
     _transitionGesState = UIGestureRecognizerStatePossible;
     
-    [_otherGesNoNeedsSimultaneously removeAllObjects];
+    [_otherGesWillExecSimultaneouslyStrategy removeAllObjects];
     //这个不用频繁释放了吧
-    //    _otherGesNoNeedsSimultaneously = nil;
+    //    _otherGesWillExecSimultaneouslyStrategy = nil;
     
     _beganWithOtherSVBounces = NO;
     [self clearCurrSVRecord];
@@ -172,6 +172,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     [_otherSVRespondedDirectionRecord removeAllObjects];
     _delayTrigger = NO;
     _beganWithOtherSVBounces = NO;
+}
+
+- (BOOL)canPreventGestureRecognizer:(UIGestureRecognizer *)preventedGestureRecognizer {
+    return NO;
 }
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer {
@@ -482,7 +486,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     __block BOOL hasFailed = NO;
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGRStrategyForGes:otherGes:)]) {
-        [_otherGesNoNeedsSimultaneously enumerateObjectsUsingBlock:^(UIGestureRecognizer * _Nonnull obj,
+        [_otherGesWillExecSimultaneouslyStrategy enumerateObjectsUsingBlock:^(UIGestureRecognizer * _Nonnull obj,
                                                                      NSUInteger idx,
                                                                      BOOL * _Nonnull stop) {
             if (![self execeSimultaneouslyStrategy:obj]) {
@@ -491,7 +495,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }];
     }
     
-    [_otherGesNoNeedsSimultaneously removeAllObjects];
+    [_otherGesWillExecSimultaneouslyStrategy removeAllObjects];
     
     if (!hasFailed) {
         __block BOOL hasDrag = NO;
@@ -529,14 +533,20 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 
 #pragma mark - UIGestureRecognizerDelegate
 
+- (void)addGesWillExecSimultaneouslyStrategy:(UIGestureRecognizer *)ges {
+    if (!_otherGesWillExecSimultaneouslyStrategy) {
+        _otherGesWillExecSimultaneouslyStrategy = [NSMutableArray new];
+    }
+    if (![_otherGesWillExecSimultaneouslyStrategy containsObject:ges]) {
+        [_otherGesWillExecSimultaneouslyStrategy addObject:ges];
+    }
+}
+
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRequireFailureOfGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     if (UIGestureRecognizerStateBegan == _transitionGesState || UIGestureRecognizerStateChanged == _transitionGesState) {
         [self execeSimultaneouslyStrategy:otherGestureRecognizer];
     } else {
-        if (!_otherGesNoNeedsSimultaneously) {
-            _otherGesNoNeedsSimultaneously = [NSMutableArray new];
-        }
-        [_otherGesNoNeedsSimultaneously addObject:otherGestureRecognizer];
+        [self addGesWillExecSimultaneouslyStrategy:gestureRecognizer];
     }
     return NO;
 }
@@ -545,10 +555,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (UIGestureRecognizerStateBegan == _transitionGesState || UIGestureRecognizerStateChanged == _transitionGesState) {
         [self execeSimultaneouslyStrategy:otherGestureRecognizer];
     } else {
-        if (!_otherGesNoNeedsSimultaneously) {
-            _otherGesNoNeedsSimultaneously = [NSMutableArray new];
-        }
-        [_otherGesNoNeedsSimultaneously addObject:otherGestureRecognizer];
+        [self addGesWillExecSimultaneouslyStrategy:gestureRecognizer];
     }
     return NO;
 }
@@ -558,38 +565,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         return NO;
     }
     
-    if ([otherGestureRecognizer.view isKindOfClass:[UIScrollView class]]) {
-        NSLog(@"~~~~~other:%@", otherGestureRecognizer);
-    }
-    
-    
     if (UIGestureRecognizerStateBegan == _transitionGesState || UIGestureRecognizerStateChanged == _transitionGesState) {
         [self execeSimultaneouslyStrategy:otherGestureRecognizer];
     } else {
-        if (!_otherGesNoNeedsSimultaneously) {
-            _otherGesNoNeedsSimultaneously = [NSMutableArray new];
-        }
-        [_otherGesNoNeedsSimultaneously addObject:otherGestureRecognizer];
+        [self addGesWillExecSimultaneouslyStrategy:gestureRecognizer];
     }
-    //    if (self.transitionGesDelegate &&
-    //        [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGRStrategyForGes:otherGes:)]) {
-    //        NSInteger strategy = [self.transitionGesDelegate boTransitionGRStrategyForGes:gestureRecognizer
-    //                                                                             otherGes:otherGestureRecognizer];
-    //        switch (strategy) {
-    //            case 0:
-    //                return YES;
-    //            case 1:
-    //            case 2: {
-    //                if (!_otherGesNoNeedsSimultaneously) {
-    //                    _otherGesNoNeedsSimultaneously = [NSMutableArray new];
-    //                }
-    //                [_otherGesNoNeedsSimultaneously addObject:otherGestureRecognizer];
-    //                return NO;
-    //            }
-    //            default:
-    //                break;
-    //        }
-    //    }
     
     return YES;
 }

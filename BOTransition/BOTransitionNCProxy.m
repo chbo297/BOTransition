@@ -241,6 +241,7 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 
 - (void)bo_transitioning_setViewControllers:(NSArray<UIViewController *> *)viewControllers
                                    animated:(BOOL)animated;
+- (NSArray<__kindof UIViewController *> *)bo_transitioning_popToRootViewControllerAnimated:(BOOL)animated;
 
 @end
 
@@ -254,15 +255,12 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
          setViewControllers
          的实现
          */
-        SEL originalsetvcsel = @selector(setViewControllers:animated:);
-        SEL bosetvcsel = @selector(bo_transitioning_setViewControllers:animated:);
-        
-        Method originalsetvcMethod = class_getInstanceMethod(self, originalsetvcsel);
-        class_addMethod(self,
-                        bosetvcsel,
-                        method_getImplementation(originalsetvcMethod),
-                        method_getTypeEncoding(originalsetvcMethod));
-        
+        [BOTransitionUtility copyOriginMeth:@selector(setViewControllers:animated:)
+                                     newSel:@selector(bo_transitioning_setViewControllers:animated:)
+                                      class:self];
+        [BOTransitionUtility copyOriginMeth:@selector(popToRootViewControllerAnimated:)
+                                     newSel:@selector(bo_transitioning_popToRootViewControllerAnimated:)
+                                      class:self];
     });
 }
 
@@ -283,8 +281,12 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
                 completion:(void (^)(BOOL finish, NSDictionary *info))completion {
     
     NSArray<UIViewController *> *originvcar = self.viewControllers.copy;
-    
-    [self bo_transitioning_setViewControllers:viewControllers animated:animated];
+    if (viewControllers.count == 1
+        && viewControllers.firstObject == self.viewControllers.firstObject) {
+        [self popToRootViewControllerAnimated:animated];
+    } else {
+        [self bo_transitioning_setViewControllers:viewControllers animated:animated];
+    }
     
     if (completion) {
         //如果有转场动画，设置结束回调

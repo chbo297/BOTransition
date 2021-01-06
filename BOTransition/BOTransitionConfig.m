@@ -126,7 +126,10 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                         @"zoomContentMode": @(UIViewContentModeScaleAspectFill),
                 },
                 
-                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown | UISwipeGestureRecognizerDirectionRight),
+                @"configBlock": ^(BOTransitionConfig *config) {
+                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                },
+                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
         
         BOTransitionEffectPopCard: @{
