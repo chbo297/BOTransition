@@ -18,7 +18,8 @@ BOTransitionEffect const BOTransitionEffectPopCard = @"PopCard";
 BOTransitionEffect const BOTransitionEffectPhotoPreview = @"PhotoPreview";
 BOTransitionEffect const BOTransitionEffectPhotoPreviewPinGes = @"PhotoPreviewPinGes";
 
-BOTransitionEffect const BOTransitionEffectMoving = @"Moving";
+BOTransitionEffect const BOTransitionEffectMovingRight = @"MovingRight";
+BOTransitionEffect const BOTransitionEffectMovingBottom = @"MovingBottom";
 
 BOTransitionEffect const BOTransitionEffectFade = @"Fade";
 
@@ -141,7 +142,7 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
         },
         
-        BOTransitionEffectMoving: @{
+        BOTransitionEffectMovingRight: @{
                 @"style": @"Moving",
                 @"config": @{
                         @"direction": @(UIRectEdgeRight),
@@ -150,6 +151,15 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 @"configBlock": ^(BOTransitionConfig *config) {
                     config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
                 },
+        },
+        
+        BOTransitionEffectMovingBottom: @{
+                @"style": @"Moving",
+                @"config": @{
+                        @"direction": @(UIRectEdgeBottom),
+                },
+                
+                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
         
         BOTransitionEffectFade: @{

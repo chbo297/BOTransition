@@ -13,6 +13,8 @@
 #import "AvatarDetailVC.h"
 #import "BOTransition.h"
 #import "ContentVC.h"
+#import "ListVC.h"
+#import "InnerNC.h"
 
 static CGSize sf_cell_size;
 
@@ -117,6 +119,36 @@ static CGSize sf_cell_size;
                             [ws.navigationController pushViewController:vc animated:YES];
                         }
                     },
+                    
+                    @{
+                        @"title": @"Scroll Vertical",
+                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+                            
+                        },
+                        @"block": ^(DemoCollectionViewCell *cell){
+                            ListVC *vc = [ListVC new];
+                            vc.bo_transitionConfig =\
+                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+                                config.transitionEffect = BOTransitionEffectMovingBottom;
+                            }];
+                            [ws.navigationController pushViewController:vc animated:YES];
+                        }
+                    },
+                    
+//                    @{
+//                        @"title": @"Inner NC",
+//                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+//                            
+//                        },
+//                        @"block": ^(DemoCollectionViewCell *cell){
+//                            InnerNC *vc = [InnerNC new];
+////                            vc.bo_transitionConfig =\
+////                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+////                                config.transitionEffect = BOTransitionEffectMovingRight;
+////                            }];
+//                            [ws.navigationController pushViewController:vc animated:YES];
+//                        }
+//                    },
             ]
         },
         
@@ -183,6 +215,21 @@ static CGSize sf_cell_size;
                             [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
                                 config.transitionEffect = BOTransitionEffectElementExpension;
                                 config.startViewFromBaseVC = cell.imageV;
+                            }];
+                            [ws presentViewController:vc animated:YES completion:nil];
+                        }
+                    },
+                    
+                    @{
+                        @"title": @"Scroll Vertical",
+                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+                            
+                        },
+                        @"block": ^(DemoCollectionViewCell *cell){
+                            ListVC *vc = [ListVC new];
+                            vc.bo_transitionConfig =\
+                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+                                config.transitionEffect = BOTransitionEffectMovingBottom;
                             }];
                             [ws presentViewController:vc animated:YES completion:nil];
                         }

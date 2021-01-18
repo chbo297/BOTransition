@@ -47,6 +47,18 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, weak) UINavigationController *navigationController;
 @property (nonatomic, weak) UITabBarController *tabBarController;
 
+/*
+ return:
+ 1 保留ges
+ 2 保留otherges
+ 0 没有判断出结果
+ */
++ (NSInteger)checkWithVC:(UIViewController *)vc
+          transitionType:(BOTransitionType)transitionType
+                makeFail:(BOOL)makeFail
+                 baseGes:(UIGestureRecognizer *)ges
+      otherTransitionGes:(UIGestureRecognizer *)otherGes;
+
 @end
 
 @interface BOTransitionElement : NSObject

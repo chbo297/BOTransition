@@ -58,13 +58,50 @@
     return YES;
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer) {
-        //interactivePopGestureRecognizer优先级最高，企图把其它手势都fail掉
-        return YES;
-    } else {
-        return NO;
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRequireFailureOfGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
+        && otherGestureRecognizer != gestureRecognizer) {
+        
+        if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+            NSInteger strategy =\
+            [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
+                          transitionType:BOTransitionTypeNavigation
+                                makeFail:YES
+                                 baseGes:gestureRecognizer
+                      otherTransitionGes:otherGestureRecognizer];
+            
+            if (2 == strategy) {
+                return YES;
+            }
+        }
     }
+    
+    return NO;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
+        && otherGestureRecognizer != gestureRecognizer) {
+        
+        if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+            NSInteger strategy =\
+            [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
+                          transitionType:BOTransitionTypeNavigation
+                                makeFail:YES
+                                 baseGes:gestureRecognizer
+                      otherTransitionGes:otherGestureRecognizer];
+            
+            if (1 == strategy) {
+                return YES;
+            }
+        }
+    }
+    
+    return NO;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return NO;
 }
 
 @end
@@ -284,7 +321,7 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
         && animated)
         || (self.viewControllers.lastObject.transitionCoordinator
             || viewControllers.lastObject.transitionCoordinator)) {
-        //容错修正，设为nil的animated方式，以及正在转场过程中，不再接收进出栈命令。
+        //容错修正
         if (completion) {
             completion(NO, nil);
         }

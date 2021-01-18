@@ -8,6 +8,7 @@
 
 #import "BOTransitionUtility.h"
 #import <objc/runtime.h>
+#import "BOTransitionPanGesture.h"
 
 @implementation BOTransitionUtility
 
@@ -107,6 +108,54 @@
     tf = CGAffineTransformScale(tf, to.size.width / MAX(1.f, from.size.width),
                                 to.size.height / MAX(1.f, from.size.height));
     return tf;
+}
+
++ (NSInteger)viewHierarchy:(UIView *)viewA viewB:(UIView *)viewB {
+    
+    if (viewA.window != viewB.window) {
+        return NSNotFound;
+    }
+    
+    NSInteger hier = NSNotFound;
+    NSInteger idx = 0;
+    for (UIView *theview = viewB;
+         nil != theview;
+         theview = theview.superview) {
+        if (theview == viewA) {
+            hier = idx;
+            break;
+        }
+        idx++;
+    }
+    
+    if (NSNotFound == hier) {
+        idx = -1;
+        for (UIView *theview = viewA.superview;
+             nil != theview;
+             theview = theview.superview) {
+            if (theview == viewB) {
+                hier = idx;
+                break;
+            }
+            idx--;
+        }
+    }
+    
+    return idx;
+}
+
++ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges {
+    UIResponder *vnres = ges.view.nextResponder;
+    if ([vnres isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *nc = (UINavigationController *)vnres;
+        if (nc.interactivePopGestureRecognizer == ges) {
+            return 1;
+        } else if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
+            return 2;
+        }
+    }
+    
+    return 0;
 }
 
 @end

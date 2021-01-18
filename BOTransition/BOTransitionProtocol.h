@@ -106,6 +106,20 @@ NS_ASSUME_NONNULL_BEGIN
                transitionType:(BOTransitionType)transitionType
                       subInfo:(nullable NSDictionary *)subInfo;
 
+/*
+ 在手势之初，是否接收该手势
+ subInfo:
+ "nc" UINavigationController //如果是BOTransitionTypeNavigation的话
+ 
+ return:
+ nil不控制，使用默认行为
+ @(NO)，终止该手势
+ @(YES)，允许该手势
+ */
+- (NSNumber *)bo_trans_shouldRecTransitionGes:(UIGestureRecognizer *)gesture
+                               transitionType:(BOTransitionType)transitionType
+                                      subInfo:(nullable NSDictionary *)subInfo;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -22,7 +22,8 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectElementExpensionOnl
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectPopCard;
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectPhotoPreview;
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectPhotoPreviewPinGes;
-FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectMoving;
+FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectMovingRight;
+FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectMovingBottom;
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
 
 @interface BOTransitionConfig : NSObject

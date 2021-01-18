@@ -1052,10 +1052,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
     //暂不开启手势中断动画功能
     [UIView animateWithDuration:duration
                           delay:0
-                        options:(UIViewAnimationOptionBeginFromCurrentState
-                                 | UIViewAnimationOptionAllowAnimatedContent
-                                 | UIViewAnimationOptionCurveLinear
-                                 )
+                        options:(UIViewAnimationOptionAllowAnimatedContent
+                                 | UIViewAnimationOptionCurveLinear)
                      animations:^{
         self.timeRuler.alpha = 1;
         if (modifyUIBlock) {
@@ -1075,7 +1073,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
 - (NSInteger)boTransitionGRStrategyForGes:(BOTransitionPanGesture *)ges otherGes:(UIGestureRecognizer *)otherGes {
     UIViewController *curmoveVC = self.moveVC;
     if (!self.moveVC && BOTransitionTypeNavigation == _transitionType) {
-        curmoveVC = self.navigationController.viewControllers.lastObject;
+        switch (_transitionType) {
+            case BOTransitionTypeNavigation:
+                curmoveVC = self.navigationController.viewControllers.lastObject;
+                break;
+            case BOTransitionTypeTabBar:
+                curmoveVC = self.tabBarController.selectedViewController;
+                break;
+            default:
+                break;
+        }
+        
     }
     
     BOTransitionConfig *tconfig = curmoveVC.bo_transitionConfig;
@@ -1762,7 +1770,152 @@ static CGFloat sf_default_transition_dur = 0.22f;
         default:
             break;
     }
+}
+
+- (NSInteger)checkTransitionGes:(UIGestureRecognizer *)tGes
+             otherTransitionGes:(UIGestureRecognizer *)otherTGes
+                       makeFail:(BOOL)makeFail {
+    UIViewController *curmoveVC = self.moveVC;
+    if (!self.moveVC && BOTransitionTypeNavigation == _transitionType) {
+        switch (_transitionType) {
+            case BOTransitionTypeNavigation:
+                curmoveVC = self.navigationController.viewControllers.lastObject;
+                break;
+            case BOTransitionTypeTabBar:
+                curmoveVC = self.tabBarController.selectedViewController;
+                break;
+            default:
+                break;
+        }
+    }
     
+    return [BOTransitioning checkWithVC:curmoveVC
+                         transitionType:self.transitionType
+                               makeFail:makeFail
+                                baseGes:tGes
+                     otherTransitionGes:otherTGes];
+    
+}
+
+/*
+ 1 保留ges
+ 2 保留otherges
+ 0 没有判断出结果
+ */
++ (NSInteger)checkWithVC:(UIViewController *)vc
+          transitionType:(BOTransitionType)transitionType
+                makeFail:(BOOL)makeFail
+                 baseGes:(UIGestureRecognizer *)ges
+      otherTransitionGes:(UIGestureRecognizer *)otherGes  {
+    if (ges == otherGes
+        || ges.class == otherGes.class) {
+        return 0;
+    }
+    
+    UIView *viewa = ges.view;
+    UIView *viewb = otherGes.view;
+    
+    NSInteger prior = 0;
+    BOTransitionConfig *tconfig = vc.bo_transitionConfig;
+    id<BOTransitionConfigDelegate> configdelegate = tconfig.configDelegate;
+    if (!configdelegate) {
+        configdelegate = (id)vc;
+    }
+    
+    if (BOTransitionTypeNavigation == transitionType
+        && ges.view == otherGes.view) {
+        BOOL usebotr = (tconfig && !tconfig.moveOutUseOrigin);
+        if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
+            prior = usebotr ? 1 : 2;
+        } else {
+            prior = usebotr ? 2 : 1;
+        }
+        
+    } else {
+        NSNumber *reccontrol;
+        if ([configdelegate respondsToSelector:@selector(bo_trans_shouldRecTransitionGes:transitionType:subInfo:)]) {
+            NSDictionary *subinfo;
+            if (BOTransitionTypeNavigation == transitionType
+                && [ges.view.nextResponder isKindOfClass:[UINavigationController class]]) {
+                subinfo = @{
+                    @"nc": ges.view.nextResponder
+                };
+            }
+            reccontrol = [configdelegate bo_trans_shouldRecTransitionGes:ges
+                                                          transitionType:transitionType
+                                                                 subInfo:subinfo];
+            
+        }
+        
+        if (nil != reccontrol) {
+            if (reccontrol.boolValue) {
+                prior = 1;
+            } else {
+                prior = 2;
+            }
+        } else {
+            NSInteger hier = [BOTransitionUtility viewHierarchy:viewa viewB:viewb];
+            if (NSNotFound == hier
+                || 0 == hier) {
+                prior = 1;
+            } else {
+                BOOL gesBenable = YES;
+                UINavigationController *bnc = (id)viewb.nextResponder;
+                if ([bnc isKindOfClass:[UINavigationController class]]) {
+                    if (bnc.viewControllers.count <= 1) {
+                        gesBenable = NO;
+                    }
+                }
+                
+                if (!gesBenable) {
+                    prior = 1;
+                } else {
+                    if (hier > 0) {
+                        //otherGes是当前环境的子view中的转场
+                        prior = 2;
+                    } else {
+                        
+                        BOOL gesAEnable = YES;
+                        UINavigationController *anc = (id)viewa.nextResponder;
+                        if ([anc isKindOfClass:[UINavigationController class]]) {
+                            if (anc.viewControllers.count <= 1) {
+                                gesAEnable = NO;
+                            }
+                            
+                            if (nil == anc.bo_transitioning) {
+                                if (gesAEnable) {
+                                    prior = 1;
+                                } else {
+                                    prior = 2;
+                                }
+                            } else {
+                                prior = 0;
+                            }
+                        } else {
+                            prior = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (makeFail) {
+        switch (prior) {
+            case 1: {
+                [BOTransitionPanGesture tryMakeGesFail:otherGes byGes:ges force:YES];
+            }
+                break;
+            case 2: {
+                [BOTransitionPanGesture tryMakeGesFail:ges byGes:otherGes force:YES];
+            }
+                break;
+            default:
+                break;
+        }
+    }
+    
+    return prior;
 }
 
 @end

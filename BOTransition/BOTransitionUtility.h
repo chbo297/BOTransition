@@ -22,4 +22,8 @@
 
 + (CGAffineTransform)getTransform:(CGRect)from to:(CGRect)to;
 
++ (NSInteger)viewHierarchy:(UIView *)viewA viewB:(UIView *)viewB;
+
++ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges;
+
 @end

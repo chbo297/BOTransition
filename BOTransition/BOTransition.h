@@ -16,4 +16,9 @@
 #import "BOTransitionProtocol.h"
 #import "BOTransitionUtility.h"
 
+#import "BOTransitionEffectElementExpensionImp.h"
+#import "BOTransitionEffectMovingImp.h"
+#import "BOTransitionEffectFadeImp.h"
+#import "BOTransitionEffectPhotoPreviewImp.h"
+
 #endif /* BOTransition_h */

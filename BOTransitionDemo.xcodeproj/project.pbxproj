@@ -8,6 +8,20 @@
 
 /* Begin PBXBuildFile section */
 		22D2928DEE6CA28A3143984C /* Pods_BOTransitionDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2E931393390B12145FA0993B /* Pods_BOTransitionDemo.framework */; };
+		950C911B25B1487700561B29 /* BOTransitionPanGesture.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910325B1487600561B29 /* BOTransitionPanGesture.m */; };
+		950C911C25B1487700561B29 /* BOTransitionConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910525B1487600561B29 /* BOTransitionConfig.m */; };
+		950C911D25B1487700561B29 /* BOTransitionNCProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910625B1487600561B29 /* BOTransitionNCProxy.m */; };
+		950C911E25B1487700561B29 /* BOTransitionEffectElementExpensionImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910A25B1487600561B29 /* BOTransitionEffectElementExpensionImp.m */; };
+		950C911F25B1487700561B29 /* BOTransitionEffectPhotoPreviewImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910C25B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.m */; };
+		950C912025B1487700561B29 /* BOTransitionEffectMovingImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910D25B1487600561B29 /* BOTransitionEffectMovingImp.m */; };
+		950C912125B1487700561B29 /* BOTransitionEffectFadeImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910F25B1487600561B29 /* BOTransitionEffectFadeImp.m */; };
+		950C912225B1487700561B29 /* BOTransitionUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C911425B1487700561B29 /* BOTransitionUtility.m */; };
+		950C912325B1487700561B29 /* BOTransitionPresentationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */; };
+		950C912425B1487700561B29 /* BOTransitioning.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C911925B1487700561B29 /* BOTransitioning.m */; };
+		950C912525B1487700561B29 /* UIViewController+BOTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C911A25B1487700561B29 /* UIViewController+BOTransition.m */; };
+		950C912925B1491200561B29 /* ListVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C912825B1491200561B29 /* ListVC.m */; };
+		950C912D25B155F100561B29 /* InnerNC.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C912C25B155F100561B29 /* InnerNC.m */; };
+		95A4037E25A44E4F00308216 /* BODisplayTouchPoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A4037D25A44E4F00308216 /* BODisplayTouchPoint.m */; };
 		95E0D8C125A06A5D0095C763 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D8C025A06A5D0095C763 /* AppDelegate.m */; };
 		95E0D8C425A06A5D0095C763 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D8C325A06A5D0095C763 /* SceneDelegate.m */; };
 		95E0D8C725A06A5D0095C763 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D8C625A06A5D0095C763 /* ViewController.m */; };
@@ -21,17 +35,6 @@
 		95E0D94525A171A00095C763 /* CCUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D94425A171A00095C763 /* CCUtil.m */; };
 		95E0D94925A172DB0095C763 /* DemoNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D94825A172DB0095C763 /* DemoNavigationController.m */; };
 		95E0D94D25A182760095C763 /* AvatarDetailVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D94C25A182760095C763 /* AvatarDetailVC.m */; };
-		95E0D9C825A2013B0095C763 /* BOTransitionPanGesture.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9B025A2013B0095C763 /* BOTransitionPanGesture.m */; };
-		95E0D9C925A2013B0095C763 /* BOTransitionConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9B225A2013B0095C763 /* BOTransitionConfig.m */; };
-		95E0D9CA25A2013B0095C763 /* BOTransitionNCProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9B325A2013B0095C763 /* BOTransitionNCProxy.m */; };
-		95E0D9CB25A2013B0095C763 /* BOTransitionEffectElementExpensionImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9B725A2013B0095C763 /* BOTransitionEffectElementExpensionImp.m */; };
-		95E0D9CC25A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9B925A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.m */; };
-		95E0D9CD25A2013B0095C763 /* BOTransitionEffectMovingImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9BA25A2013B0095C763 /* BOTransitionEffectMovingImp.m */; };
-		95E0D9CE25A2013B0095C763 /* BOTransitionEffectFadeImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9BC25A2013B0095C763 /* BOTransitionEffectFadeImp.m */; };
-		95E0D9CF25A2013B0095C763 /* BOTransitionUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C125A2013B0095C763 /* BOTransitionUtility.m */; };
-		95E0D9D025A2013B0095C763 /* BOTransitionPresentationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C525A2013B0095C763 /* BOTransitionPresentationDelegate.m */; };
-		95E0D9D125A2013B0095C763 /* BOTransitioning.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C625A2013B0095C763 /* BOTransitioning.m */; };
-		95E0D9D225A2013B0095C763 /* UIViewController+BOTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0D9C725A2013B0095C763 /* UIViewController+BOTransition.m */; };
 		95E0DC5B25A355A20095C763 /* ContentVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 95E0DC5A25A355A20095C763 /* ContentVC.m */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +42,36 @@
 		2A55D62AAB28BBDD5CE1D3A2 /* Pods-BOTransitionDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BOTransitionDemo.debug.xcconfig"; path = "Target Support Files/Pods-BOTransitionDemo/Pods-BOTransitionDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		2E931393390B12145FA0993B /* Pods_BOTransitionDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_BOTransitionDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C7D7768807021FCA4935E77 /* Pods-BOTransitionDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BOTransitionDemo.release.xcconfig"; path = "Target Support Files/Pods-BOTransitionDemo/Pods-BOTransitionDemo.release.xcconfig"; sourceTree = "<group>"; };
+		950C910225B1487600561B29 /* BOTransitionUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionUtility.h; sourceTree = "<group>"; };
+		950C910325B1487600561B29 /* BOTransitionPanGesture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPanGesture.m; sourceTree = "<group>"; };
+		950C910425B1487600561B29 /* BOTransitionPresentationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionPresentationDelegate.h; sourceTree = "<group>"; };
+		950C910525B1487600561B29 /* BOTransitionConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionConfig.m; sourceTree = "<group>"; };
+		950C910625B1487600561B29 /* BOTransitionNCProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionNCProxy.m; sourceTree = "<group>"; };
+		950C910725B1487600561B29 /* UIViewController+BOTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+BOTransition.h"; sourceTree = "<group>"; };
+		950C910825B1487600561B29 /* BOTransitioning.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitioning.h; sourceTree = "<group>"; };
+		950C910A25B1487600561B29 /* BOTransitionEffectElementExpensionImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectElementExpensionImp.m; sourceTree = "<group>"; };
+		950C910B25B1487600561B29 /* BOTransitionEffectFadeImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectFadeImp.h; sourceTree = "<group>"; };
+		950C910C25B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectPhotoPreviewImp.m; sourceTree = "<group>"; };
+		950C910D25B1487600561B29 /* BOTransitionEffectMovingImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectMovingImp.m; sourceTree = "<group>"; };
+		950C910E25B1487600561B29 /* BOTransitionEffectElementExpensionImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectElementExpensionImp.h; sourceTree = "<group>"; };
+		950C910F25B1487600561B29 /* BOTransitionEffectFadeImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectFadeImp.m; sourceTree = "<group>"; };
+		950C911025B1487600561B29 /* BOTransitionEffectMovingImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectMovingImp.h; sourceTree = "<group>"; };
+		950C911125B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectPhotoPreviewImp.h; sourceTree = "<group>"; };
+		950C911225B1487600561B29 /* BOTransitionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionProtocol.h; sourceTree = "<group>"; };
+		950C911325B1487600561B29 /* BOTransitionPanGesture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionPanGesture.h; sourceTree = "<group>"; };
+		950C911425B1487700561B29 /* BOTransitionUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionUtility.m; sourceTree = "<group>"; };
+		950C911525B1487700561B29 /* BOTransitionNCProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionNCProxy.h; sourceTree = "<group>"; };
+		950C911625B1487700561B29 /* BOTransitionConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionConfig.h; sourceTree = "<group>"; };
+		950C911725B1487700561B29 /* BOTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransition.h; sourceTree = "<group>"; };
+		950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPresentationDelegate.m; sourceTree = "<group>"; };
+		950C911925B1487700561B29 /* BOTransitioning.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitioning.m; sourceTree = "<group>"; };
+		950C911A25B1487700561B29 /* UIViewController+BOTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+BOTransition.m"; sourceTree = "<group>"; };
+		950C912725B1491200561B29 /* ListVC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ListVC.h; sourceTree = "<group>"; };
+		950C912825B1491200561B29 /* ListVC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ListVC.m; sourceTree = "<group>"; };
+		950C912B25B155F100561B29 /* InnerNC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InnerNC.h; sourceTree = "<group>"; };
+		950C912C25B155F100561B29 /* InnerNC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InnerNC.m; sourceTree = "<group>"; };
+		95A4037C25A44E4F00308216 /* BODisplayTouchPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BODisplayTouchPoint.h; sourceTree = "<group>"; };
+		95A4037D25A44E4F00308216 /* BODisplayTouchPoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BODisplayTouchPoint.m; sourceTree = "<group>"; };
 		95E0D8BC25A06A5D0095C763 /* BOTransitionDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BOTransitionDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95E0D8BF25A06A5D0095C763 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		95E0D8C025A06A5D0095C763 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -64,30 +97,6 @@
 		95E0D94825A172DB0095C763 /* DemoNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DemoNavigationController.m; sourceTree = "<group>"; };
 		95E0D94B25A182760095C763 /* AvatarDetailVC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AvatarDetailVC.h; sourceTree = "<group>"; };
 		95E0D94C25A182760095C763 /* AvatarDetailVC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AvatarDetailVC.m; sourceTree = "<group>"; };
-		95E0D9AF25A2013B0095C763 /* BOTransitionUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionUtility.h; sourceTree = "<group>"; };
-		95E0D9B025A2013B0095C763 /* BOTransitionPanGesture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPanGesture.m; sourceTree = "<group>"; };
-		95E0D9B125A2013B0095C763 /* BOTransitionPresentationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionPresentationDelegate.h; sourceTree = "<group>"; };
-		95E0D9B225A2013B0095C763 /* BOTransitionConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionConfig.m; sourceTree = "<group>"; };
-		95E0D9B325A2013B0095C763 /* BOTransitionNCProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionNCProxy.m; sourceTree = "<group>"; };
-		95E0D9B425A2013B0095C763 /* UIViewController+BOTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+BOTransition.h"; sourceTree = "<group>"; };
-		95E0D9B525A2013B0095C763 /* BOTransitioning.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitioning.h; sourceTree = "<group>"; };
-		95E0D9B725A2013B0095C763 /* BOTransitionEffectElementExpensionImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectElementExpensionImp.m; sourceTree = "<group>"; };
-		95E0D9B825A2013B0095C763 /* BOTransitionEffectFadeImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectFadeImp.h; sourceTree = "<group>"; };
-		95E0D9B925A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectPhotoPreviewImp.m; sourceTree = "<group>"; };
-		95E0D9BA25A2013B0095C763 /* BOTransitionEffectMovingImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectMovingImp.m; sourceTree = "<group>"; };
-		95E0D9BB25A2013B0095C763 /* BOTransitionEffectElementExpensionImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectElementExpensionImp.h; sourceTree = "<group>"; };
-		95E0D9BC25A2013B0095C763 /* BOTransitionEffectFadeImp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectFadeImp.m; sourceTree = "<group>"; };
-		95E0D9BD25A2013B0095C763 /* BOTransitionEffectMovingImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectMovingImp.h; sourceTree = "<group>"; };
-		95E0D9BE25A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectPhotoPreviewImp.h; sourceTree = "<group>"; };
-		95E0D9BF25A2013B0095C763 /* BOTransitionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionProtocol.h; sourceTree = "<group>"; };
-		95E0D9C025A2013B0095C763 /* BOTransitionPanGesture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionPanGesture.h; sourceTree = "<group>"; };
-		95E0D9C125A2013B0095C763 /* BOTransitionUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionUtility.m; sourceTree = "<group>"; };
-		95E0D9C225A2013B0095C763 /* BOTransitionNCProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionNCProxy.h; sourceTree = "<group>"; };
-		95E0D9C325A2013B0095C763 /* BOTransitionConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionConfig.h; sourceTree = "<group>"; };
-		95E0D9C425A2013B0095C763 /* BOTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransition.h; sourceTree = "<group>"; };
-		95E0D9C525A2013B0095C763 /* BOTransitionPresentationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPresentationDelegate.m; sourceTree = "<group>"; };
-		95E0D9C625A2013B0095C763 /* BOTransitioning.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitioning.m; sourceTree = "<group>"; };
-		95E0D9C725A2013B0095C763 /* UIViewController+BOTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+BOTransition.m"; sourceTree = "<group>"; };
 		95E0DC5925A355A20095C763 /* ContentVC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ContentVC.h; sourceTree = "<group>"; };
 		95E0DC5A25A355A20095C763 /* ContentVC.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ContentVC.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -121,10 +130,60 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		950C910125B1487600561B29 /* BOTransition */ = {
+			isa = PBXGroup;
+			children = (
+				950C911725B1487700561B29 /* BOTransition.h */,
+				950C910225B1487600561B29 /* BOTransitionUtility.h */,
+				950C911425B1487700561B29 /* BOTransitionUtility.m */,
+				950C911325B1487600561B29 /* BOTransitionPanGesture.h */,
+				950C910325B1487600561B29 /* BOTransitionPanGesture.m */,
+				950C910425B1487600561B29 /* BOTransitionPresentationDelegate.h */,
+				950C910825B1487600561B29 /* BOTransitioning.h */,
+				950C911925B1487700561B29 /* BOTransitioning.m */,
+				950C911225B1487600561B29 /* BOTransitionProtocol.h */,
+				950C910525B1487600561B29 /* BOTransitionConfig.m */,
+				950C911525B1487700561B29 /* BOTransitionNCProxy.h */,
+				950C910625B1487600561B29 /* BOTransitionNCProxy.m */,
+				950C910725B1487600561B29 /* UIViewController+BOTransition.h */,
+				950C910925B1487600561B29 /* effectGroup */,
+				950C911625B1487700561B29 /* BOTransitionConfig.h */,
+				950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */,
+				950C911A25B1487700561B29 /* UIViewController+BOTransition.m */,
+			);
+			path = BOTransition;
+			sourceTree = "<group>";
+		};
+		950C910925B1487600561B29 /* effectGroup */ = {
+			isa = PBXGroup;
+			children = (
+				950C910A25B1487600561B29 /* BOTransitionEffectElementExpensionImp.m */,
+				950C910B25B1487600561B29 /* BOTransitionEffectFadeImp.h */,
+				950C910C25B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.m */,
+				950C910D25B1487600561B29 /* BOTransitionEffectMovingImp.m */,
+				950C910E25B1487600561B29 /* BOTransitionEffectElementExpensionImp.h */,
+				950C910F25B1487600561B29 /* BOTransitionEffectFadeImp.m */,
+				950C911025B1487600561B29 /* BOTransitionEffectMovingImp.h */,
+				950C911125B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.h */,
+			);
+			path = effectGroup;
+			sourceTree = "<group>";
+		};
+		95B39F5725B5C99500DD2299 /* testUse */ = {
+			isa = PBXGroup;
+			children = (
+				950C912B25B155F100561B29 /* InnerNC.h */,
+				950C912C25B155F100561B29 /* InnerNC.m */,
+				95A4037C25A44E4F00308216 /* BODisplayTouchPoint.h */,
+				95A4037D25A44E4F00308216 /* BODisplayTouchPoint.m */,
+			);
+			path = testUse;
+			sourceTree = "<group>";
+		};
 		95E0D8B325A06A5D0095C763 = {
 			isa = PBXGroup;
 			children = (
-				95E0D9AE25A2013B0095C763 /* BOTransition */,
+				950C910125B1487600561B29 /* BOTransition */,
 				95E0D8BE25A06A5D0095C763 /* BOTransitionDemo */,
 				95E0D8BD25A06A5D0095C763 /* Products */,
 				84BAFF3203C9518E3D46D313 /* Pods */,
@@ -175,49 +234,13 @@
 				95E0D94C25A182760095C763 /* AvatarDetailVC.m */,
 				95E0DC5925A355A20095C763 /* ContentVC.h */,
 				95E0DC5A25A355A20095C763 /* ContentVC.m */,
+				950C912725B1491200561B29 /* ListVC.h */,
+				950C912825B1491200561B29 /* ListVC.m */,
+				95B39F5725B5C99500DD2299 /* testUse */,
 				95E0D94325A171A00095C763 /* CCUtil.h */,
 				95E0D94425A171A00095C763 /* CCUtil.m */,
 			);
 			path = helperUI;
-			sourceTree = "<group>";
-		};
-		95E0D9AE25A2013B0095C763 /* BOTransition */ = {
-			isa = PBXGroup;
-			children = (
-				95E0D9C425A2013B0095C763 /* BOTransition.h */,
-				95E0D9B425A2013B0095C763 /* UIViewController+BOTransition.h */,
-				95E0D9C725A2013B0095C763 /* UIViewController+BOTransition.m */,
-				95E0D9B525A2013B0095C763 /* BOTransitioning.h */,
-				95E0D9C625A2013B0095C763 /* BOTransitioning.m */,
-				95E0D9BF25A2013B0095C763 /* BOTransitionProtocol.h */,
-				95E0D9C325A2013B0095C763 /* BOTransitionConfig.h */,
-				95E0D9B225A2013B0095C763 /* BOTransitionConfig.m */,
-				95E0D9C025A2013B0095C763 /* BOTransitionPanGesture.h */,
-				95E0D9B025A2013B0095C763 /* BOTransitionPanGesture.m */,
-				95E0D9AF25A2013B0095C763 /* BOTransitionUtility.h */,
-				95E0D9C125A2013B0095C763 /* BOTransitionUtility.m */,
-				95E0D9C225A2013B0095C763 /* BOTransitionNCProxy.h */,
-				95E0D9B325A2013B0095C763 /* BOTransitionNCProxy.m */,
-				95E0D9B125A2013B0095C763 /* BOTransitionPresentationDelegate.h */,
-				95E0D9C525A2013B0095C763 /* BOTransitionPresentationDelegate.m */,
-				95E0D9B625A2013B0095C763 /* effectGroup */,
-			);
-			path = BOTransition;
-			sourceTree = "<group>";
-		};
-		95E0D9B625A2013B0095C763 /* effectGroup */ = {
-			isa = PBXGroup;
-			children = (
-				95E0D9BB25A2013B0095C763 /* BOTransitionEffectElementExpensionImp.h */,
-				95E0D9B725A2013B0095C763 /* BOTransitionEffectElementExpensionImp.m */,
-				95E0D9BD25A2013B0095C763 /* BOTransitionEffectMovingImp.h */,
-				95E0D9BA25A2013B0095C763 /* BOTransitionEffectMovingImp.m */,
-				95E0D9B825A2013B0095C763 /* BOTransitionEffectFadeImp.h */,
-				95E0D9BC25A2013B0095C763 /* BOTransitionEffectFadeImp.m */,
-				95E0D9BE25A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.h */,
-				95E0D9B925A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.m */,
-			);
-			path = effectGroup;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -333,27 +356,30 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				950C912925B1491200561B29 /* ListVC.m in Sources */,
+				950C912525B1487700561B29 /* UIViewController+BOTransition.m in Sources */,
 				95E0DC5B25A355A20095C763 /* ContentVC.m in Sources */,
-				95E0D9C825A2013B0095C763 /* BOTransitionPanGesture.m in Sources */,
+				950C911F25B1487700561B29 /* BOTransitionEffectPhotoPreviewImp.m in Sources */,
+				950C912125B1487700561B29 /* BOTransitionEffectFadeImp.m in Sources */,
+				950C911B25B1487700561B29 /* BOTransitionPanGesture.m in Sources */,
+				950C912425B1487700561B29 /* BOTransitioning.m in Sources */,
 				95E0D92B25A0C5FB0095C763 /* DemoCollectionViewCell.m in Sources */,
 				95E0D8C725A06A5D0095C763 /* ViewController.m in Sources */,
-				95E0D9D225A2013B0095C763 /* UIViewController+BOTransition.m in Sources */,
+				950C911E25B1487700561B29 /* BOTransitionEffectElementExpensionImp.m in Sources */,
 				95E0D8C125A06A5D0095C763 /* AppDelegate.m in Sources */,
-				95E0D9CC25A2013B0095C763 /* BOTransitionEffectPhotoPreviewImp.m in Sources */,
 				95E0D94D25A182760095C763 /* AvatarDetailVC.m in Sources */,
-				95E0D9CF25A2013B0095C763 /* BOTransitionUtility.m in Sources */,
+				950C912D25B155F100561B29 /* InnerNC.m in Sources */,
 				95E0D94125A1713E0095C763 /* PhotoVC.m in Sources */,
-				95E0D9CD25A2013B0095C763 /* BOTransitionEffectMovingImp.m in Sources */,
 				95E0D8D225A06A5F0095C763 /* main.m in Sources */,
 				95E0D94025A1713E0095C763 /* PopCardVC.m in Sources */,
+				950C912025B1487700561B29 /* BOTransitionEffectMovingImp.m in Sources */,
+				950C911C25B1487700561B29 /* BOTransitionConfig.m in Sources */,
 				95E0D94925A172DB0095C763 /* DemoNavigationController.m in Sources */,
-				95E0D9C925A2013B0095C763 /* BOTransitionConfig.m in Sources */,
-				95E0D9CE25A2013B0095C763 /* BOTransitionEffectFadeImp.m in Sources */,
-				95E0D9D125A2013B0095C763 /* BOTransitioning.m in Sources */,
-				95E0D9CA25A2013B0095C763 /* BOTransitionNCProxy.m in Sources */,
+				950C911D25B1487700561B29 /* BOTransitionNCProxy.m in Sources */,
+				950C912325B1487700561B29 /* BOTransitionPresentationDelegate.m in Sources */,
+				950C912225B1487700561B29 /* BOTransitionUtility.m in Sources */,
 				95E0D94525A171A00095C763 /* CCUtil.m in Sources */,
-				95E0D9CB25A2013B0095C763 /* BOTransitionEffectElementExpensionImp.m in Sources */,
-				95E0D9D025A2013B0095C763 /* BOTransitionPresentationDelegate.m in Sources */,
+				95A4037E25A44E4F00308216 /* BODisplayTouchPoint.m in Sources */,
 				95E0D8C425A06A5D0095C763 /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

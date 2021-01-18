@@ -53,13 +53,15 @@ typedef struct BOTransitionPanGestureBrief {
 - (NSInteger)boTransitionGRStrategyForGes:(BOTransitionPanGesture *)ges
                                  otherGes:(UIGestureRecognizer *)otherGes;
 
-///*
-// state: 0 began、1 moved、2 ended
-// */
-//- (void)boTransitionGes:(UIGestureRecognizer *)ges
-//                  state:(NSInteger)state
-//                touches:(NSSet<UITouch *> *)touches
-//                  event:(UIEvent *)event;
+/*
+ 用来处理nc嵌套nc之类的情况，两个转场手势的冲突处理
+ 1 保留ges
+ 2 保留otherges
+ 0 没有判断出结果
+ */
+- (NSInteger)checkTransitionGes:(UIGestureRecognizer *)tGes
+             otherTransitionGes:(UIGestureRecognizer *)otherTGes
+                       makeFail:(BOOL)makeFail;
 
 @end
 
@@ -101,6 +103,11 @@ typedef struct BOTransitionPanGestureBrief {
 
 //给外部挂信息用，目前内部会在手势结束时清空该信息。
 @property (nonatomic, copy, nullable) NSDictionary *userInfo;
+
+
++ (BOOL)tryMakeGesFail:(UIGestureRecognizer *)gesShouldFail
+                 byGes:(UIGestureRecognizer *)ges
+                 force:(BOOL)force;
 
 @end
 
