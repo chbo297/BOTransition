@@ -169,7 +169,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer {
     if (preventingGestureRecognizer != self
-        && [BOTransitionUtility isTransitonGes:preventingGestureRecognizer]) {
+        && [BOTransitionPanGesture isTransitonGes:preventingGestureRecognizer]) {
         return YES;
     }
     return NO;
@@ -453,7 +453,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
  */
 - (BOOL)execeSimultaneouslyStrategy:(UIGestureRecognizer *)ges makeGesFailedOrCancelled:(BOOL *)makeGesFailedOrCancelled {
     NSInteger strategy = 0;
-    BOOL istran = [BOTransitionUtility isTransitonGes:ges];
+    BOOL istran = [BOTransitionPanGesture isTransitonGes:ges];
     if (istran) {
         strategy = [self.transitionGesDelegate checkTransitionGes:self
                                                otherTransitionGes:ges
@@ -587,7 +587,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         && otherGestureRecognizer != gestureRecognizer) {
         BOOL shouldfailsf = NO;
         
-        if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
             if (self.transitionGesDelegate
                 && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
                 NSInteger checkst = [self.transitionGesDelegate checkTransitionGes:self
@@ -616,7 +616,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (gestureRecognizer == self
         && otherGestureRecognizer != gestureRecognizer) {
         BOOL shouldfailog = NO;
-        if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
             if (self.transitionGesDelegate
                 && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
                 NSInteger checkst = [self.transitionGesDelegate checkTransitionGes:self
@@ -648,7 +648,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     }
     
     BOOL shouldsim = YES;
-    if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+    if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
         shouldsim = NO;
     }
     
@@ -1053,6 +1053,20 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     }
     
     return NO;
+}
+
++ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges {
+    UIResponder *vnres = ges.view.nextResponder;
+    if ([vnres isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *nc = (UINavigationController *)vnres;
+        if (nc.interactivePopGestureRecognizer == ges) {
+            return 1;
+        } else if ([ges isKindOfClass:self]) {
+            return 2;
+        }
+    }
+    
+    return 0;
 }
 
 @end

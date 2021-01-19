@@ -8,7 +8,6 @@
 
 #import "BOTransitionUtility.h"
 #import <objc/runtime.h>
-#import "BOTransitionPanGesture.h"
 
 @implementation BOTransitionUtility
 
@@ -142,20 +141,6 @@
     }
     
     return idx;
-}
-
-+ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges {
-    UIResponder *vnres = ges.view.nextResponder;
-    if ([vnres isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *nc = (UINavigationController *)vnres;
-        if (nc.interactivePopGestureRecognizer == ges) {
-            return 1;
-        } else if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
-            return 2;
-        }
-    }
-    
-    return 0;
 }
 
 @end

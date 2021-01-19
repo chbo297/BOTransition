@@ -109,6 +109,8 @@ typedef struct BOTransitionPanGestureBrief {
                  byGes:(UIGestureRecognizer *)ges
                  force:(BOOL)force;
 
++ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges;
+
 @end
 
 NS_ASSUME_NONNULL_END

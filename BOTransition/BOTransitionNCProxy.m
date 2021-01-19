@@ -62,7 +62,7 @@
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
         && otherGestureRecognizer != gestureRecognizer) {
         
-        if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
                           transitionType:BOTransitionTypeNavigation
@@ -83,7 +83,7 @@
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
         && otherGestureRecognizer != gestureRecognizer) {
         
-        if ([BOTransitionUtility isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
                           transitionType:BOTransitionTypeNavigation

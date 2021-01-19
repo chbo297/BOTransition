@@ -40,7 +40,7 @@ static CGSize sf_cell_size;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    sf_cell_size = CGSizeMake(self.view.bounds.size.width, 67);
+    sf_cell_size = CGSizeMake(self.view.bounds.size.width, 167);
     
     NSMutableArray<NSDictionary *> *muar = [NSMutableArray new];
     for (NSInteger idx = 0; idx < 40; idx++) {
@@ -134,43 +134,5 @@ static CGSize sf_cell_size;
     }
     return cell;
 }
-
-//- (BOOL)collectionView:(UICollectionView *)collectionView shouldSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-//    DemoCollectionViewCell *cell = (id)[collectionView cellForItemAtIndexPath:indexPath];
-//    if (![cell isKindOfClass:[DemoCollectionViewCell class]]) {
-//        cell = nil;
-//    }
-//    NSDictionary *datadic = [self dataDicFor:indexPath];
-//    void (^bk)(DemoCollectionViewCell *cell) = [datadic objectForKey:@"block"];
-//    if (bk) {
-//        bk(cell);
-//    }
-//
-//    return NO;
-//}
-
-#pragma mark - BOTransition
-
-//- (void)bo_transitioning:(BOTransitioning *)transitioning prepareForStep:(BOTransitionStep)step transitionInfo:(BOTransitionInfo)transitionInfo elements:(NSMutableArray<BOTransitionElement *> *)elements {
-//    if (BOTransitionStepInstallElements != step) {
-//        return;
-//    }
-//    __block BOTransitionElement *photoele;
-//    [elements enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//        if (BOTransitionElementTypePhotoMirror == obj.elementType) {
-//            photoele = obj;
-//        }
-//    }];
-//
-//    if (!photoele) {
-//        return;
-//    }
-//
-//    if (BOTransitionActMoveIn == transitioning.transitionAct) {
-//        photoele.fromView = self.currTargetView;
-//    } else {
-//        photoele.toView = self.currTargetView;
-//    }
-//}
 
 @end

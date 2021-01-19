@@ -349,7 +349,7 @@ NSDictionary * _Nullable info)> *
     if (nil != anipercentval) {
         anipercent = anipercentval.floatValue;
     } else {
-        NSLog(@"~~~!!!error x1");
+        //容错，不应发生
         anipercent = 0.5;
     }
     
@@ -380,7 +380,7 @@ NSDictionary * _Nullable info)> *
             }
             
         } else {
-            NSLog(@"~~~!!!error x2");
+            //容错，不应发生
         }
     }
     
@@ -389,7 +389,7 @@ NSDictionary * _Nullable info)> *
             thetrView.alpha = [BOTransitionUtility lerpV0:self.alphaLastBeforeAni.floatValue
                                                        v1:thetrView.alpha t:pow(anipercent, self.alphaCalPow)];
         } else {
-            NSLog(@"~~~~~!!!error x3");
+            //容错，不应发生
             CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
                                                         v1:self.alphaTo t:pow(percentComplete, self.alphaCalPow)];
             thetrView.alpha = curalpha;
