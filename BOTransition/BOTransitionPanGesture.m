@@ -491,21 +491,6 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 
 - (void)beganTransitionGesState {
     
-    NSArray<UIView *> *ncar = [self careOtherArForKey:@"nc"];
-    if (ncar.count > 0) {
-        for (UIView *ncview in ncar) {
-            UINavigationController *thenc = (id)ncview.nextResponder;
-            if ([thenc isKindOfClass:[UINavigationController class]]) {
-                if (thenc.viewControllers.count > 1
-                    || [thenc.viewControllers[0] transitionCoordinator]) {
-                    //有子NC，子NC还没有到root，不响应当前的手势
-                    [self makeGestureStateCanceledOrFailed];
-                    return;
-                }
-            }
-        }
-    }
-    
     __block BOOL hasFailed = NO;
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGRStrategyForGes:otherGes:)]) {

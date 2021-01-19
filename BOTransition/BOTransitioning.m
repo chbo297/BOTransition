@@ -1342,7 +1342,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                                              gesture:ges
                                                       transitionType:self.transitionType
                                                              subInfo:subInfo];
-        if (control) {
+        if (nil != control) {
             shouldMoveOut = control;
         }
     }
