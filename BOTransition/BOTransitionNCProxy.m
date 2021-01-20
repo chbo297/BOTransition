@@ -130,12 +130,11 @@
  */
 @interface BOTransitionNCHandler : NSObject <UINavigationControllerDelegate>
 
-@property (nonatomic, weak) UINavigationController *navigationController;
 @property (nonatomic, weak) BOTransitionNCProxy *ncProxy;
-
+@property (nonatomic, weak) UINavigationController *navigationController;
 @property (nonatomic, strong) BOTransitioning *transitioning;
 
-@property (nonatomic, assign) void(^ncDidShowVCCallback)(UINavigationController *nc, UIViewController *vc, BOOL animated);
+@property (nonatomic, copy) void(^ncDidShowVCCallback)(UINavigationController *nc, UIViewController *vc, BOOL animated);
 
 @end
 
