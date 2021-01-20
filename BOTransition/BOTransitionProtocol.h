@@ -89,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
  NO: 不可以开始并且取消本次手势响应
  */
 - (NSNumber *)bo_trans_shouldMoveOutVC:(UIViewController *)viewController
-                               gesture:(BOTransitionPanGesture *)gesture
+                               gesture:(UIGestureRecognizer *)gesture
                         transitionType:(BOTransitionType)transitionType
                                subInfo:(nullable NSDictionary *)subInfo;
 
@@ -102,7 +102,7 @@ NS_ASSUME_NONNULL_BEGIN
  返回NO或没实现，控件会自己调用navigationController popViewControllerAnimated:YES
  */
 - (BOOL)bo_trans_actMoveOutVC:(UIViewController *)viewController
-                      gesture:(BOTransitionPanGesture *)gesture
+                      gesture:(UIGestureRecognizer *)gesture
                transitionType:(BOTransitionType)transitionType
                       subInfo:(nullable NSDictionary *)subInfo;
 

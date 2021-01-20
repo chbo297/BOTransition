@@ -1356,13 +1356,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 case BOTransitionTypeNavigation: {
                     ges.userInfo = @{
                         @"beganBlock": ^{
+                            UINavigationController *sfnc = self.navigationController;
                             ws.triggerInteractiveTransitioning = YES;
                             BOOL takeover = NO;
                             if ([configdelegate respondsToSelector:@selector(bo_trans_actMoveOutVC:gesture:transitionType:subInfo:)]) {
                                 takeover = [configdelegate bo_trans_actMoveOutVC:firstResponseVC
                                                                          gesture:ges
                                                                   transitionType:ws.transitionType
-                                                                         subInfo:nil];
+                                                                         subInfo:@{@"nc": sfnc}];
                             }
                             
                             if (!takeover) {
