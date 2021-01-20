@@ -1330,11 +1330,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
         && shouldMoveOut.boolValue
         && configdelegate
         && [configdelegate respondsToSelector:@selector(bo_trans_shouldMoveOutVC:gesture:transitionType:subInfo:)]) {
-        
+        NSMutableDictionary *usubif = (subInfo ? : @{}).mutableCopy;
+        if (BOTransitionTypeNavigation == self.transitionType
+            && self.navigationController) {
+            [usubif setObject:self.navigationController forKey:@"nc"];
+        }
         NSNumber *control = [configdelegate bo_trans_shouldMoveOutVC:firstResponseVC
                                                              gesture:ges
                                                       transitionType:self.transitionType
-                                                             subInfo:subInfo];
+                                                             subInfo:usubif];
         if (nil != control) {
             shouldMoveOut = control;
         }
