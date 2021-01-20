@@ -61,14 +61,12 @@
     [self.imageV mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.equalTo(self.contentView).offset(0);
         make.leading.equalTo(self.contentView).offset(0);
-        
         make.trailing.equalTo(self.contentView).offset(0);
-        make.height.equalTo(self.imageV.mas_width);
+        make.height.equalTo(self.contentView.mas_height).offset(-27);
     }];
     [self.label mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.equalTo(self.imageV.mas_bottom).offset(2);
         make.leading.equalTo(self.contentView).offset(0);
-        make.bottom.equalTo(self.contentView).offset(0);
         make.trailing.equalTo(self.contentView).offset(0);
     }];
 }

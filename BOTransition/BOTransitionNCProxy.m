@@ -52,6 +52,24 @@
         if (transitconfig && !transitconfig.moveOutUseOrigin) {
             //顶部VC配置了不支持interactivePopGestureRecognizer
             return NO;
+        } else {
+            NSNumber *shouldMoveOut = @(YES);
+            id<BOTransitionConfigDelegate> configdelegate = transitconfig.configDelegate;
+            if (!configdelegate) {
+                configdelegate = (id)topvc;
+            }
+            if (configdelegate
+                && [configdelegate respondsToSelector:@selector(bo_trans_shouldMoveOutVC:gesture:transitionType:subInfo:)]) {
+                NSNumber *control = [configdelegate bo_trans_shouldMoveOutVC:topvc
+                                                                     gesture:gestureRecognizer
+                                                              transitionType:BOTransitionTypeNavigation
+                                                                     subInfo:nil];
+                if (nil != control) {
+                    shouldMoveOut = control;
+                }
+            }
+            
+            return shouldMoveOut.boolValue;
         }
     }
     

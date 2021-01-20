@@ -79,21 +79,19 @@ static CGSize sf_cell_size;
 #pragma mark - collection view delegate
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
-    CGFloat w = (CGRectGetWidth(collectionView.bounds) - 2.f * sf_cell_size.width) / 3.f;
-    return w;
+    return 0;
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section {
-    return 25;
+    return 0;
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
-    CGFloat w = (CGRectGetWidth(collectionView.bounds) - 2.f * sf_cell_size.width) / 3.f;
-    return UIEdgeInsetsMake(0, w, 40, w);
+    return UIEdgeInsetsZero;
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    return sf_cell_size;
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), 167);
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
