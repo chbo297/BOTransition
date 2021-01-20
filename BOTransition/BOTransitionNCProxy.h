@@ -44,6 +44,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface UINavigationController (BOTransition)
 
+/*
+ bo_setTransProxy:YES后bo_transProxy有值
+ bo_setTransProxy:NO 后bo_transProxy无值
+ 使用bo_transProxy的时候，bo_transProxy会成为UINavigationController的delegate，如果需要使用delegate，请不要直接更改，
+ BOTransitionNCProxy会把系统回调转发到navigationControllerDelegate上。
+ 可以使用BOTransitionNCProxy的navigationControllerDelegate来获取原系统方法回调。
+ */
 @property (nonatomic, readonly) BOTransitionNCProxy *bo_transProxy;
 - (void)bo_setTransProxy:(BOOL)use;
 
