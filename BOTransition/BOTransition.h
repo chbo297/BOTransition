@@ -11,14 +11,16 @@
 
 #import "UIViewController+BOTransition.h"
 #import "BOTransitioning.h"
-#import "BOTransitionNCProxy.h"
-#import "BOTransitionPresentationDelegate.h"
+#import "BOTransitionConfig.h"
+#import "BOTransitionPanGesture.h"
 #import "BOTransitionProtocol.h"
 #import "BOTransitionUtility.h"
+#import "BOTransitionNCProxy.h"
+#import "BOTransitionPresentationDelegate.h"
 
-#import "BOTransitionEffectElementExpensionImp.h"
-#import "BOTransitionEffectMovingImp.h"
 #import "BOTransitionEffectFadeImp.h"
+#import "BOTransitionEffectMovingImp.h"
 #import "BOTransitionEffectPhotoPreviewImp.h"
+#import "BOTransitionEffectElementExpensionImp.h"
 
 #endif /* BOTransition_h */
