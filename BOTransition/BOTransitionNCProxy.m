@@ -336,7 +336,7 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
                   animated:(BOOL)animated
                 completion:(void (^)(BOOL finish, NSDictionary *info))completion {
     if ((viewControllers.count <= 0
-        && animated)
+         && animated)
         || (self.viewControllers.lastObject.transitionCoordinator
             || viewControllers.lastObject.transitionCoordinator)) {
         //容错修正
