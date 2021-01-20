@@ -41,13 +41,17 @@
 #pragma mark - UIGestureRecognizerDelegate
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
-    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer) {
-        if (self.navigationController.viewControllers.count <= 1) {
+    UINavigationController *nc = self.navigationController;
+    if (!nc) {
+        return NO;
+    }
+    if (gestureRecognizer == nc.interactivePopGestureRecognizer) {
+        if (nc.viewControllers.count <= 1) {
             //没有可pop的VC，不响应手势
             return NO;
         }
         
-        UIViewController *topvc = self.navigationController.viewControllers.lastObject;
+        UIViewController *topvc = nc.viewControllers.lastObject;
         BOTransitionConfig *transitconfig = topvc.bo_transitionConfig;
         if (transitconfig && !transitconfig.moveOutUseOrigin) {
             //顶部VC配置了不支持interactivePopGestureRecognizer
@@ -63,7 +67,7 @@
                 NSNumber *control = [configdelegate bo_trans_shouldMoveOutVC:topvc
                                                                      gesture:gestureRecognizer
                                                               transitionType:BOTransitionTypeNavigation
-                                                                     subInfo:nil];
+                                                                     subInfo:@{@"nc": nc}];
                 if (nil != control) {
                     shouldMoveOut = control;
                 }
