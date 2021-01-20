@@ -135,6 +135,21 @@ static CGSize sf_cell_size;
                         }
                     },
                     
+                    @{
+                        @"title": @"Push Right",
+                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
+                            
+                        },
+                        @"block": ^(DemoCollectionViewCell *cell){
+                            ListVC *vc = [ListVC new];
+                            vc.bo_transitionConfig =\
+                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+                                config.transitionEffect = BOTransitionEffectMovingRight;
+                            }];
+                            [ws.navigationController pushViewController:vc animated:YES];
+                        }
+                    },
+                    
 //                    @{
 //                        @"title": @"Inner NC",
 //                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){

@@ -452,6 +452,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
  NO： 执行完后，自己被杀死了
  */
 - (BOOL)execeSimultaneouslyStrategy:(UIGestureRecognizer *)ges makeGesFailedOrCancelled:(BOOL *)makeGesFailedOrCancelled {
+    if (UIGestureRecognizerStateFailed == ges.state
+        || UIGestureRecognizerStateCancelled == ges.state) {
+        return NO;
+    }
+    
     NSInteger strategy = 0;
     BOOL istran = [BOTransitionPanGesture isTransitonGes:ges];
     if (istran) {

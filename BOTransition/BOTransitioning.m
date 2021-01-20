@@ -903,13 +903,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
         _moveVC = nil;
         _moveVCConfig = nil;
     }
-    
-    /*
-     transitionAct 由外部控制，内部就不要修改了吧（出现animationEnded前）
-     [transitionContext completeTransition:YES]会同步先执行外部的completion，再执行- (void)animationEnded:(BOOL)transitionCompleted {
-     如果外部进行了push或pop等操作，会修改transitionAct为一个有效值，等下下次转场使用，此时再执行animationEnded:时不宜将其重置
-     */
-    //    _transitionAct = BOTransitionActNone;
 }
 
 #pragma mark - triggerInteractiveTransitioning
@@ -1778,8 +1771,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
     UIViewController *curmoveVC = self.moveVC;
     if (!self.moveVC && BOTransitionTypeNavigation == _transitionType) {
         switch (_transitionType) {
-            case BOTransitionTypeNavigation:
-                curmoveVC = self.navigationController.viewControllers.lastObject;
+            case BOTransitionTypeNavigation: {
+                if (BOTransitionActNone == self.transitionAct) {
+                    curmoveVC = self.navigationController.viewControllers.lastObject;
+                }
+            }
                 break;
             case BOTransitionTypeTabBar:
                 curmoveVC = self.tabBarController.selectedViewController;
