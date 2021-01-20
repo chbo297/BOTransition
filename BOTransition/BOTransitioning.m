@@ -1883,7 +1883,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                 gesAEnable = NO;
                             }
                             
-                            if (nil == anc.bo_transitioning) {
+                            if (nil == anc.bo_transProxy) {
                                 if (gesAEnable) {
                                     prior = 1;
                                 } else {

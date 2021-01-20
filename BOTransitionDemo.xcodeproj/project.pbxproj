@@ -146,10 +146,10 @@
 				950C911525B1487700561B29 /* BOTransitionNCProxy.h */,
 				950C910625B1487600561B29 /* BOTransitionNCProxy.m */,
 				950C910725B1487600561B29 /* UIViewController+BOTransition.h */,
+				950C911A25B1487700561B29 /* UIViewController+BOTransition.m */,
 				950C910925B1487600561B29 /* effectGroup */,
 				950C911625B1487700561B29 /* BOTransitionConfig.h */,
 				950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */,
-				950C911A25B1487700561B29 /* UIViewController+BOTransition.m */,
 			);
 			path = BOTransition;
 			sourceTree = "<group>";

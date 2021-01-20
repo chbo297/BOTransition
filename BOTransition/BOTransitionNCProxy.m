@@ -320,16 +320,32 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
     });
 }
 
-- (BOTransitioning *)bo_transitioning {
-    if (self.delegate
-        && [self.delegate respondsToSelector:@selector(transitionNCHandler)]) {
-        BOTransitionNCHandler *transitionNCHandler = [(id)self.delegate transitionNCHandler];
-        if (transitionNCHandler
-            && [transitionNCHandler isKindOfClass:[BOTransitionNCHandler class]]) {
-            return transitionNCHandler.transitioning;
+- (BOTransitionNCProxy *)bo_transProxy {
+    return objc_getAssociatedObject(self, @selector(bo_transProxy));
+}
+
+- (void)bo_setTransProxy:(BOOL)use {
+    BOTransitionNCProxy *ncproxy = objc_getAssociatedObject(self, @selector(bo_transProxy));
+    if (use) {
+        if (ncproxy) {
+            //已经有了，什么也不做
+            return;
+        } else {
+            //还没有，新建并保存
+            ncproxy = [BOTransitionNCProxy transitionProxyWithNC:self];
+            objc_setAssociatedObject(self, @selector(bo_transProxy),
+                                     ncproxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+    } else {
+        if (ncproxy) {
+            //清空
+            if (ncproxy == self.delegate) {
+                self.delegate = nil;
+            }
+            objc_setAssociatedObject(self, @selector(bo_transProxy),
+                                     nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
     }
-    return nil;
 }
 
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers

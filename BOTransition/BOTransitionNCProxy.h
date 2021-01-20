@@ -44,7 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface UINavigationController (BOTransition)
 
-@property (nonatomic, readonly) BOTransitioning *bo_transitioning;
+@property (nonatomic, readonly) BOTransitionNCProxy *bo_transProxy;
+- (void)bo_setTransProxy:(BOOL)use;
 
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated

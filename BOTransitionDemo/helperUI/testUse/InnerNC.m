@@ -11,7 +11,6 @@
 @interface InnerNC () <BOTransitionConfigDelegate>
 
 @property (nonatomic, strong) UINavigationController *nc;
-@property (nonatomic, strong) BOTransitionNCProxy *ncProxy;
 
 @end
 
@@ -21,7 +20,6 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor blueColor];
     // Do any additional setup after loading the view.
-    _ncProxy = [BOTransitionNCProxy transitionProxyWithNC:self.nc];
     
     [self.view addSubview:self.nc.view];
     [self addChildViewController:self.nc];
@@ -48,6 +46,7 @@
         UIViewController *rvc = [UIViewController new];
         rvc.view.backgroundColor = [UIColor lightGrayColor];
         _nc = [[UINavigationController alloc] initWithRootViewController:rvc];
+        [_nc bo_setTransProxy:YES];
     }
     return _nc;
 }

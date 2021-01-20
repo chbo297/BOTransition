@@ -153,14 +153,14 @@ static CGSize sf_cell_size;
 //                    @{
 //                        @"title": @"Inner NC",
 //                        @"cellSetupBlock": ^(DemoCollectionViewCell *cell){
-//                            
+//
 //                        },
 //                        @"block": ^(DemoCollectionViewCell *cell){
 //                            InnerNC *vc = [InnerNC new];
-////                            vc.bo_transitionConfig =\
-////                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
-////                                config.transitionEffect = BOTransitionEffectMovingRight;
-////                            }];
+//                            vc.bo_transitionConfig =\
+//                            [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
+//                                config.transitionEffect = BOTransitionEffectMovingRight;
+//                            }];
 //                            [ws.navigationController pushViewController:vc animated:YES];
 //                        }
 //                    },

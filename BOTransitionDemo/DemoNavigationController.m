@@ -10,8 +10,6 @@
 
 @interface DemoNavigationController ()
 
-@property (nonatomic, strong) BOTransitionNCProxy *ncProxy;
-
 @end
 
 @implementation DemoNavigationController
@@ -19,8 +17,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.navigationBarHidden = YES;
-    self.ncProxy = [[BOTransitionNCProxy alloc] initWithNC:self];
-    
+    [self bo_setTransProxy:YES];
     
     /*
      如果需要设置当前NavigationController的Delegate，请不要直接设置self.delegate，
