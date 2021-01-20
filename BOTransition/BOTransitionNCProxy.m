@@ -135,9 +135,9 @@
 
 @property (nonatomic, strong) BOTransitioning *transitioning;
 
-@end
+@property (nonatomic, assign) void(^ncDidShowVCCallback)(UINavigationController *nc, UIViewController *vc, BOOL animated);
 
-static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewController *vc, BOOL animated);
+@end
 
 @implementation BOTransitionNCHandler
 
@@ -218,8 +218,8 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 - (void)navigationController:(UINavigationController *)navigationController
        didShowViewController:(UIViewController *)viewController
                     animated:(BOOL)animated {
-    if (sf_nc_didShowVC_callback) {
-        sf_nc_didShowVC_callback(navigationController, viewController, animated);
+    if (self.ncDidShowVCCallback) {
+        self.ncDidShowVCCallback(navigationController, viewController, animated);
     }
     
     if (self.ncProxy.navigationControllerDelegate
@@ -351,6 +351,11 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
                 completion:(void (^)(BOOL finish, NSDictionary *info))completion {
+    BOTransitionNCProxy *ncproxy = self.bo_transProxy;
+    if (!ncproxy) {
+        return;
+    }
+    
     if ((viewControllers.count <= 0
          && animated)
         || (self.viewControllers.lastObject.transitionCoordinator
@@ -394,13 +399,12 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
             }];
         } else {
             if (viewControllers.lastObject != originvcar.lastObject) {
+                __weak typeof(ncproxy) wkncp = ncproxy;
                 __weak typeof(self) ws = self;
-                sf_nc_didShowVC_callback = ^(UINavigationController *nc,
-                                             UIViewController *vc,
-                                             BOOL animated) {
+                ncproxy.transitionNCHandler.ncDidShowVCCallback = ^(UINavigationController *nc, UIViewController *vc, BOOL animated) {
                     if (ws == nc) {
                         void (^savcompletion)(BOOL finish, NSDictionary *info) = completion;
-                        sf_nc_didShowVC_callback = nil;
+                        wkncp.transitionNCHandler.ncDidShowVCCallback = nil;
                         savcompletion(YES, nil);
                     }
                 };

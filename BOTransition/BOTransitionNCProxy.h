@@ -41,6 +41,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)bo_setTransProxy:(BOOL)use;
 @property (nonatomic, readonly) BOTransitionNCProxy *bo_transProxy;
 
+/*
+ 一个有completion的便利方法
+ bo_transProxy开启时，该方法才能用，否则执行无效
+ */
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
                 completion:(void (^ _Nullable)(BOOL finish, NSDictionary * _Nullable info))completion;
