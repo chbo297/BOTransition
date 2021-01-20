@@ -12,24 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class BOTransitioning;
 @interface BOTransitionNCProxy : NSProxy <UINavigationControllerDelegate, UIGestureRecognizerDelegate>
 
-/*
- 在navigationController viewDidLoad 中调用，
- 需要作为navigationController的delegate和navigationController.interactivePopGestureRecognizer的delegate使用
- 外部请不要再修改navigationController.interactivePopGestureRecognizer的delegate
- 如果需要使用navigationController的delegate，使用该类的navigationControllerDelegate即可
- 
- eg.
- UINavigationController:
- 
- - (void)viewDidLoad {
- [super viewDidLoad];
- 
- self.ncProxy = [[BOTransitionNCProxy alloc] initWithNC:self];
- }
- */
-+ (instancetype)transitionProxyWithNC:(UINavigationController *)navigationController;
-
-- (instancetype)initWithNC:(UINavigationController *)navigationController;
+@property (nonatomic, readonly) BOTransitioning *transitioning;
 
 /*
  navigationController的delegate，当外部需要使用UINavigationController的delegate时可在此设置
@@ -45,14 +28,18 @@ NS_ASSUME_NONNULL_BEGIN
 @interface UINavigationController (BOTransition)
 
 /*
+ 在navigationController viewDidLoad 中调用，
+ 需要作为navigationController的delegate和navigationController.interactivePopGestureRecognizer的delegate使用
+ 外部请不要再修改navigationController.interactivePopGestureRecognizer的delegate
+ 
  bo_setTransProxy:YES后bo_transProxy有值
  bo_setTransProxy:NO 后bo_transProxy无值
  使用bo_transProxy的时候，bo_transProxy会成为UINavigationController的delegate，如果需要使用delegate，请不要直接更改，
  BOTransitionNCProxy会把系统回调转发到navigationControllerDelegate上。
  可以使用BOTransitionNCProxy的navigationControllerDelegate来获取原系统方法回调。
  */
-@property (nonatomic, readonly) BOTransitionNCProxy *bo_transProxy;
 - (void)bo_setTransProxy:(BOOL)use;
+@property (nonatomic, readonly) BOTransitionNCProxy *bo_transProxy;
 
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated

@@ -245,10 +245,6 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
 
 @implementation BOTransitionNCProxy
 
-+ (instancetype)transitionProxyWithNC:(UINavigationController *)navigationController {
-    return [[BOTransitionNCProxy alloc] initWithNC:navigationController];
-}
-
 - (instancetype)initWithNC:(UINavigationController *)navigationController {
     
     _transitionNCHandler = [BOTransitionNCHandler new];
@@ -261,6 +257,10 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
     _popGestureHandler.navigationController = navigationController;
     
     return self;
+}
+
+- (BOTransitioning *)transitioning {
+    return self.transitionNCHandler.transitioning;
 }
 
 /*
@@ -332,7 +332,7 @@ static void (^sf_nc_didShowVC_callback)(UINavigationController *nc, UIViewContro
             return;
         } else {
             //还没有，新建并保存
-            ncproxy = [BOTransitionNCProxy transitionProxyWithNC:self];
+            ncproxy = [[BOTransitionNCProxy alloc] initWithNC:self];
             objc_setAssociatedObject(self, @selector(bo_transProxy),
                                      ncproxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
