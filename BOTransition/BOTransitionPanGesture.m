@@ -1007,7 +1007,6 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     return hasbounces;
 }
 
-
 - (void)insertBeganPt:(CGPoint)beganPt {
     [_touchInfoAr insertObject:@((CGRect){beganPt, CGSizeZero}) atIndex:0];
 }
