@@ -1439,10 +1439,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
 }
 
 - (void)boTransitionGesStateDidChange:(BOTransitionPanGesture *)ges {
-    CGPoint beganloc = (ges.delayTrigger ?
-                        ges.triggerDirectionInfo.location
-                        :
-                        ges.touchInfoAr.firstObject.CGRectValue.origin);
+    CGPoint beganloc = ges.triggerDirectionInfo.location;
     CGPoint curloc = ges.touchInfoAr.lastObject.CGRectValue.origin;
     
     __block CGFloat distanceCoe = 1;
