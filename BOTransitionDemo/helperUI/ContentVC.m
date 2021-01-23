@@ -46,7 +46,14 @@
             [ws.navigationController popViewControllerAnimated:YES];
         }
     });
-    
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    if (@available(iOS 13.0, *)) {
+        return UIStatusBarStyleDarkContent;
+    } else {
+        return UIStatusBarStyleDefault;
+    }
 }
 
 - (UIButton *)closeBtn {
