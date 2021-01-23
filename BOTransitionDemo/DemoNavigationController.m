@@ -24,7 +24,7 @@
      delegate被BOTransitionNCProxy占用了，可以通过navigationControllerDelegate设置,
      BOTransitionNCProxy会进行消息转发
      */
-//    self.ncProxy.navigationControllerDelegate = self;
+//    self.bo_transProxy.navigationControllerDelegate = self;
 }
 
 - (void)viewDidAppear:(BOOL)animated {
