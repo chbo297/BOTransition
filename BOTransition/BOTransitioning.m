@@ -1236,7 +1236,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
          2.没有被其它scrollView提前响应过
          3.方向相符
          */
-        
         BOOL ismargin = NO;
         if (!ges.delayTrigger &&
             UIGestureRecognizerStatePossible == ges.transitionGesState) {
@@ -1282,7 +1281,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
         UISwipeGestureRecognizerDirection verd =\
         (UISwipeGestureRecognizerDirectionUp
          | UISwipeGestureRecognizerDirectionDown);
-        
         if (
             (ges.triggerDirectionInfo.mainDirection
              & tconfig.moveOutGesDirection)
