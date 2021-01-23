@@ -1279,7 +1279,19 @@ static CGFloat sf_default_transition_dur = 0.22f;
             return nil;
         }
         
-        if (ges.triggerDirectionInfo.mainDirection & tconfig.moveOutGesDirection) {
+        UISwipeGestureRecognizerDirection verd =\
+        (UISwipeGestureRecognizerDirectionUp
+         | UISwipeGestureRecognizerDirectionDown);
+        
+        if (
+            (ges.triggerDirectionInfo.mainDirection
+             & tconfig.moveOutGesDirection)
+            &&
+            (
+             ((verd & ges.initialDirectionInfo.mainDirection) > 0)
+             == ((verd & ges.triggerDirectionInfo.mainDirection) > 0)
+             )
+            ) {
             BOOL isvalid = NO;
             switch (ges.otherSVRespondedDirectionRecord.count) {
                 case 0: {

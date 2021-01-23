@@ -62,9 +62,6 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    if (self.presentingViewController) {
-        return self.presentingViewController.prefersStatusBarHidden;
-    }
     return YES;
 }
 

@@ -130,6 +130,7 @@ static CGSize sf_cell_size;
                             vc.bo_transitionConfig =\
                             [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
                                 config.transitionEffect = BOTransitionEffectMovingBottom;
+                                config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
                             }];
                             [ws.navigationController pushViewController:vc animated:YES];
                         }
@@ -273,6 +274,13 @@ static CGSize sf_cell_size;
     self.collectionView.contentInset = UIEdgeInsetsMake(0, 0, 0, 0);
 }
 
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    if (@available(iOS 13.0, *)) {
+        return UIStatusBarStyleDarkContent;
+    } else {
+        return UIStatusBarStyleDefault;
+    }
+}
 
 #pragma mark - collection view delegate
 

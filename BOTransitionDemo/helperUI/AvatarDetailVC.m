@@ -50,6 +50,14 @@
     self.imageV.layer.cornerRadius = w / 2.f;
 }
 
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    if (@available(iOS 13.0, *)) {
+        return UIStatusBarStyleDarkContent;
+    } else {
+        return UIStatusBarStyleDefault;
+    }
+}
+
 - (UIButton *)closeBtn {
     if (!_closeBtn) {
         _closeBtn = UIButton.cc_button(UIButtonTypeSystem);
