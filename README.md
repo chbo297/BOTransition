@@ -16,4 +16,4 @@ Only requires one line of code  
   ViewController present的转场特效，只需要一行代码，就可以的到一个类似于系统打开APP的present特效啦。  
   
   
-![picpan](https://github.com/chbo297/BOTransition/blob/main/demov.gif)  
+![picpan](https://cb-storage.oss-cn-beijing.aliyuncs.com/githubuse/demov1.gif)  
