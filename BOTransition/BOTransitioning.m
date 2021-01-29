@@ -200,12 +200,13 @@ NSDictionary * _Nullable info)> *
                     CGPointMake(transitionInfo.panCurrLoc.x - tsz.width * self.framePinAnchor.x,
                                 transitionInfo.panCurrLoc.y - tsz.height * self.framePinAnchor.y);
                     currt = (CGRect){tocenter.x - tsz.width / 2.f, tocenter.y - tsz.height / 2.f, tsz};
-                    if (self.frameBarrierInContainer) {
+                    if (self.frameBarrierInContainer > 0) {
                         CGRect containerbounds = thetrView.superview.bounds;
                         CGFloat topext = CGRectGetMinY(containerbounds) - CGRectGetMinY(currt);
                         CGFloat downext = CGRectGetMaxY(currt) - CGRectGetMaxY(containerbounds);
                         CGPoint offset = CGPointZero;
-                        if (topext > 0) {
+                        if (topext > 0
+                            && (UIRectEdgeTop & self.frameBarrierInContainer)) {
                             if (downext > 0) {
                                 //!!!!!errror
                                 NSLog(@"~~~~~~~~！！！过大");
@@ -213,7 +214,8 @@ NSDictionary * _Nullable info)> *
                                 offset.y = topext;
                             }
                         } else {
-                            if (downext > 0) {
+                            if (downext > 0
+                                && (UIRectEdgeBottom & self.frameBarrierInContainer)) {
                                 offset.y = -downext;
                             } else {
                                 //mei wenti
@@ -222,7 +224,8 @@ NSDictionary * _Nullable info)> *
                         
                         CGFloat leftext = CGRectGetMinX(containerbounds) - CGRectGetMinX(currt);
                         CGFloat rightext = CGRectGetMaxX(currt) - CGRectGetMaxX(containerbounds);
-                        if (leftext > 0) {
+                        if (leftext > 0
+                            && (UIRectEdgeLeft & self.frameBarrierInContainer)) {
                             if (rightext > 0) {
                                 //!!!!!errror
                                 NSLog(@"~~~~~~~~！！！过大");
@@ -230,7 +233,8 @@ NSDictionary * _Nullable info)> *
                                 offset.x = leftext;
                             }
                         } else {
-                            if (rightext > 0) {
+                            if (rightext > 0
+                                && (UIRectEdgeRight & self.frameBarrierInContainer)) {
                                 offset.x = -rightext;
                             } else {
                                 //mei wenti

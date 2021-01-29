@@ -67,18 +67,23 @@
             }
             switch (direction) {
                 case UIRectEdgeTop: {
+                    //往上滑的添加下部的栅栏，防止滑动下边的屏幕外，下同
+                    boardelement.frameBarrierInContainer = UIRectEdgeBottom;
                     outrt.origin.y = CGRectGetMinY(container.bounds) - CGRectGetHeight(movedrt);
                 }
                     break;
                 case UIRectEdgeLeft: {
+                    boardelement.frameBarrierInContainer = UIRectEdgeRight;
                     outrt.origin.x = CGRectGetMinX(container.bounds) - CGRectGetWidth(movedrt);
                 }
                     break;
                 case UIRectEdgeBottom: {
+                    boardelement.frameBarrierInContainer = UIRectEdgeTop;
                     outrt.origin.y = CGRectGetMaxY(container.bounds);
                 }
                     break;
                 case UIRectEdgeRight: {
+                    boardelement.frameBarrierInContainer = UIRectEdgeLeft;
                     outrt.origin.x = CGRectGetMaxX(container.bounds);
                 }
                     break;

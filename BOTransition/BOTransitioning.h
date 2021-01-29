@@ -122,7 +122,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, assign) CGRect frameTo;
 @property (nonatomic, assign) CGFloat frameCalPow;
 @property (nonatomic, assign) BOOL frameAnimationWithTransform;
-@property (nonatomic, assign) BOOL frameBarrierInContainer;
+@property (nonatomic, assign) UIRectEdge frameBarrierInContainer;
 @property (nonatomic, strong) NSValue *frameLastBeforeAni;
 
 

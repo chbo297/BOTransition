@@ -131,7 +131,7 @@
             boardelement.frameAllow = !disableBoardMove;
             boardelement.frameShouldPin = pinGes;
             boardelement.frameOrigin = movedrt;
-            boardelement.frameBarrierInContainer = NO;
+            boardelement.frameBarrierInContainer = UIRectEdgeNone;
             boardelement.alphaAllow = YES;
             //disableBoardMove时突出alpha变化，系数小，有boardmove时突出board移动，系数4初期alpha变化较缓
             boardelement.alphaCalPow = (disableBoardMove ? 2 : 4);
@@ -170,7 +170,7 @@
                     itemelement.frameAllow = YES;
                     itemelement.frameShouldPin = pinGesEle;
                     itemelement.frameAnimationWithTransform = NO;
-                    itemelement.frameBarrierInContainer = NO;
+                    itemelement.frameBarrierInContainer = UIRectEdgeNone;
                     itemelement.alphaAllow = YES;
                     itemelement.alphaCalPow = 4;
                     if (BOTransitionActMoveIn == transitioning.transitionAct) {

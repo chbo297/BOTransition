@@ -401,19 +401,20 @@
                 completion(!context.cancelled, nil);
             }];
         } else {
-            if (viewControllers.lastObject != originvcar.lastObject) {
-                __weak typeof(ncproxy) wkncp = ncproxy;
-                __weak typeof(self) ws = self;
-                ncproxy.transitionNCHandler.ncDidShowVCCallback = ^(UINavigationController *nc, UIViewController *vc, BOOL animated) {
-                    if (ws == nc) {
-                        void (^savcompletion)(BOOL finish, NSDictionary *info) = completion;
-                        wkncp.transitionNCHandler.ncDidShowVCCallback = nil;
-                        savcompletion(YES, nil);
-                    }
-                };
-            } else {
-                completion(YES, nil);
-            }
+            //不需要等待ncDidShowVCCallback再结束了，直接当结束就好了,系统是兼容没转场的时候连续调用的
+            //            if (viewControllers.lastObject != originvcar.lastObject) {
+            //                __weak typeof(ncproxy) wkncp = ncproxy;
+            //                __weak typeof(self) ws = self;
+            //                ncproxy.transitionNCHandler.ncDidShowVCCallback = ^(UINavigationController *nc, UIViewController *vc, BOOL animated) {
+            //                    if (ws == nc) {
+            //                        void (^savcompletion)(BOOL finish, NSDictionary *info) = completion;
+            //                        wkncp.transitionNCHandler.ncDidShowVCCallback = nil;
+            //                        savcompletion(YES, nil);
+            //                    }
+            //                };
+            //            } else {
+            completion(YES, nil);
+            //            }
             
         }
     }

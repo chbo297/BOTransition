@@ -134,22 +134,22 @@
 			isa = PBXGroup;
 			children = (
 				950C911725B1487700561B29 /* BOTransition.h */,
+				950C910825B1487600561B29 /* BOTransitioning.h */,
+				950C911925B1487700561B29 /* BOTransitioning.m */,
+				950C911625B1487700561B29 /* BOTransitionConfig.h */,
+				950C910525B1487600561B29 /* BOTransitionConfig.m */,
+				950C910725B1487600561B29 /* UIViewController+BOTransition.h */,
+				950C911A25B1487700561B29 /* UIViewController+BOTransition.m */,
+				950C911225B1487600561B29 /* BOTransitionProtocol.h */,
 				950C910225B1487600561B29 /* BOTransitionUtility.h */,
 				950C911425B1487700561B29 /* BOTransitionUtility.m */,
 				950C911325B1487600561B29 /* BOTransitionPanGesture.h */,
 				950C910325B1487600561B29 /* BOTransitionPanGesture.m */,
 				950C910425B1487600561B29 /* BOTransitionPresentationDelegate.h */,
-				950C910825B1487600561B29 /* BOTransitioning.h */,
-				950C911925B1487700561B29 /* BOTransitioning.m */,
-				950C911225B1487600561B29 /* BOTransitionProtocol.h */,
-				950C910525B1487600561B29 /* BOTransitionConfig.m */,
+				950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */,
 				950C911525B1487700561B29 /* BOTransitionNCProxy.h */,
 				950C910625B1487600561B29 /* BOTransitionNCProxy.m */,
-				950C910725B1487600561B29 /* UIViewController+BOTransition.h */,
-				950C911A25B1487700561B29 /* UIViewController+BOTransition.m */,
 				950C910925B1487600561B29 /* effectGroup */,
-				950C911625B1487700561B29 /* BOTransitionConfig.h */,
-				950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */,
 			);
 			path = BOTransition;
 			sourceTree = "<group>";
@@ -157,14 +157,14 @@
 		950C910925B1487600561B29 /* effectGroup */ = {
 			isa = PBXGroup;
 			children = (
-				950C910A25B1487600561B29 /* BOTransitionEffectElementExpensionImp.m */,
-				950C910B25B1487600561B29 /* BOTransitionEffectFadeImp.h */,
-				950C910C25B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.m */,
+				950C911025B1487600561B29 /* BOTransitionEffectMovingImp.h */,
 				950C910D25B1487600561B29 /* BOTransitionEffectMovingImp.m */,
 				950C910E25B1487600561B29 /* BOTransitionEffectElementExpensionImp.h */,
+				950C910A25B1487600561B29 /* BOTransitionEffectElementExpensionImp.m */,
+				950C910B25B1487600561B29 /* BOTransitionEffectFadeImp.h */,
 				950C910F25B1487600561B29 /* BOTransitionEffectFadeImp.m */,
-				950C911025B1487600561B29 /* BOTransitionEffectMovingImp.h */,
 				950C911125B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.h */,
+				950C910C25B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.m */,
 			);
 			path = effectGroup;
 			sourceTree = "<group>";
