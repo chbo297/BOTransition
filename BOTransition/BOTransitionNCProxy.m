@@ -359,17 +359,6 @@
         return;
     }
     
-    if ((viewControllers.count <= 0
-         && animated)
-        || (self.viewControllers.lastObject.transitionCoordinator
-            || viewControllers.lastObject.transitionCoordinator)) {
-        //容错修正
-        if (completion) {
-            completion(NO, nil);
-        }
-        return;
-    }
-    
     NSArray<UIViewController *> *originvcar = self.viewControllers.copy;
     BOOL ispop = NO;
     if (viewControllers.count > 0
