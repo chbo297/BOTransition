@@ -1590,17 +1590,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 cancomplete = intentcomplete.boolValue;
             }
             
-            if (self.moveVCConfig.allowInteractionInAnimating) {
-                [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
-            } else if (BOTransitionTypeNavigation == self.transitionType) {
-                [[NSNotificationCenter defaultCenter]\
-                 postNotificationName:BOTransitionWillAndMustCompletion
-                 object:self
-                 userInfo:@{
-                     @"finish": @(cancomplete),
-                 }];
-            }
-            
             [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
                                                                NSUInteger idx,
                                                                BOOL * _Nonnull stop) {
@@ -1769,6 +1758,16 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 }];
             }
             
+            if (self.moveVCConfig.allowInteractionInAnimating) {
+                [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
+            } else if (BOTransitionTypeNavigation == self.transitionType) {
+                [[NSNotificationCenter defaultCenter]\
+                 postNotificationName:BOTransitionWillAndMustCompletion
+                 object:self
+                 userInfo:@{
+                     @"finish": @(cancomplete),
+                 }];
+            }
         }
             break;
         default:
