@@ -11,6 +11,35 @@
 #import "BOTransitionNCProxy.h"
 #import "BOTransitionUtility.h"
 
+@interface UIResponder (BOTransition)
+
+/*
+ 获取APP的FirstResponder
+ */
++ (UIResponder *)bo_trans_obtainFirstResponder;
+
+@end
+
+@implementation UIResponder (BOTransition)
+
+static UIResponder *sf_firstResponder = nil;
+
++ (UIResponder *)bo_trans_obtainFirstResponder {
+    
+    //发送一个没有目标的空消息，借用系统的查找方法找到first响应者
+    [[UIApplication sharedApplication] sendAction:@selector(bo_trans_actFirstResponder:)
+                                               to:nil
+                                             from:nil
+                                         forEvent:nil];
+    return sf_firstResponder;
+}
+
+- (void)bo_trans_actFirstResponder:(id)sender {
+    sf_firstResponder = self;
+}
+
+@end
+
 @interface BOTransitionElement ()
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *,
@@ -1502,6 +1531,13 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 [self.timeRuler.layer removeAllAnimations];
                 break;
             } else if (ges.userInfo.count > 0) {
+                /*
+                 为了将一些正向响应时间的UI控件终止，比如文本输入、键盘弹出状态等，
+                 调用resignFirstResponder将键盘收起，防止页面滑走后键盘异常
+                 */
+                UIResponder *currFirstResponder = [UIResponder bo_trans_obtainFirstResponder];
+                [currFirstResponder resignFirstResponder];
+                
                 void (^beganblock)(void) = ges.userInfo[@"beganBlock"];
                 if (beganblock) {
                     beganblock();
