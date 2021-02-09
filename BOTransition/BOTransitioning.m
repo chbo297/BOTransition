@@ -1532,7 +1532,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 break;
             } else if (ges.userInfo.count > 0) {
                 /*
-                 为了将一些正向响应时间的UI控件终止，比如文本输入、键盘弹出状态等，
+                 将正在活跃UI控件终止，比如文本输入、键盘弹出状态等，
                  调用resignFirstResponder将键盘收起，防止页面滑走后键盘异常
                  */
                 UIResponder *currFirstResponder = [UIResponder bo_trans_obtainFirstResponder];
