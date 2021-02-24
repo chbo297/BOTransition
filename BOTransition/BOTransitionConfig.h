@@ -118,8 +118,13 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
 @property (nonatomic, assign) UISwipeGestureRecognizerDirection moveOutGesDirection;
 
 /*
- 严格的手势触发条件，手势的开始位置必须在屏幕边缘，手势的开始方向必须与trigger方向相同，
+ YES: 严格的手势触发条件，手势的开始位置必须在屏幕边缘，手势的开始方向必须与trigger方向相同，
  手势开始后，不触发或取消页面内其他手势，YES只支出UISwipeGestureRecognizerDirectionLeft和Right，因为上下有系统的浮窗
+ NO : 宽松的手势触发条件，只要在手势过程中有moveOutGesDirection的方向即可触发转场，
+ 与页面内其他手势不互斥，可以先完成页面内的scrollView的滑动，再触发moveOut手势
+ default: YES
+ 
+ note: YES时moveOutGesDirection必须是横向的，因为会判断屏幕边缘滑入，从上或从下滑入就和系统的面板冲突了。
  */
 @property (nonatomic, assign) UISwipeGestureRecognizerDirection moveOutSeriousGesDirection;
 

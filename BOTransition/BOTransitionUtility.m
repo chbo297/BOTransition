@@ -8,8 +8,42 @@
 
 #import "BOTransitionUtility.h"
 #import <objc/runtime.h>
+#import "BOTransitionPanGesture.h"
+
+@interface UIResponder (BOTransition)
+
+/*
+ 获取APP的FirstResponder
+ */
++ (UIResponder *)bo_trans_obtainFirstResponder;
+
+@end
+
+@implementation UIResponder (BOTransition)
+
+static UIResponder *sf_firstResponder = nil;
+
++ (UIResponder *)bo_trans_obtainFirstResponder {
+    
+    //发送一个没有目标的空消息，借用系统的查找方法找到first响应者
+    [[UIApplication sharedApplication] sendAction:@selector(bo_trans_actFirstResponder:)
+                                               to:nil
+                                             from:nil
+                                         forEvent:nil];
+    return sf_firstResponder;
+}
+
+- (void)bo_trans_actFirstResponder:(id)sender {
+    sf_firstResponder = self;
+}
+
+@end
 
 @implementation BOTransitionUtility
+
++ (UIResponder *)obtainFirstResponder {
+    return [UIResponder bo_trans_obtainFirstResponder];
+}
 
 + (void)copyOriginMeth:(SEL)originSel newSel:(SEL)newSel class:(Class)cls {
     Method originalMethod = class_getInstanceMethod(cls, originSel);

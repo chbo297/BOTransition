@@ -10,6 +10,8 @@
 
 @interface BOTransitionUtility : NSObject
 
++ (UIResponder *)obtainFirstResponder;
+
 + (void)copyOriginMeth:(SEL)originSel newSel:(SEL)newSel class:(Class)cls;
 
 + (void)addCATransaction:(NSString *)key completionTask:(void(^)(void))task;

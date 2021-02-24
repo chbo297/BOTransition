@@ -107,7 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
                       subInfo:(nullable NSDictionary *)subInfo;
 
 /*
- 在手势之初，是否接收该手势
+ 在手势之初，是否接收该手势(只有在两个页面栈容器冲突时才会调用，比如一个nc的子VC中嵌套了另一个nc)
  subInfo:
  "nc" UINavigationController //如果是BOTransitionTypeNavigation的话
  

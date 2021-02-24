@@ -495,7 +495,6 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (void)beganTransitionGesState {
-    
     __block BOOL hasFailed = NO;
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGRStrategyForGes:otherGes:)]) {
@@ -1050,7 +1049,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         UINavigationController *nc = (UINavigationController *)vnres;
         if (nc.interactivePopGestureRecognizer == ges) {
             return 1;
-        } else if ([ges isKindOfClass:self]) {
+        } else if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
             return 2;
         }
     }

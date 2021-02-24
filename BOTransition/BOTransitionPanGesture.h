@@ -109,6 +109,11 @@ typedef struct BOTransitionPanGestureBrief {
                  byGes:(UIGestureRecognizer *)ges
                  force:(BOOL)force;
 
+/*
+ 0 不是
+ 1 navigationController 系统pop
+ 2 BOTransitionPanGesture
+ */
 + (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges;
 
 @end

@@ -219,6 +219,23 @@
 }
 
 - (void)navigationController:(UINavigationController *)navigationController
+      willShowViewController:(UIViewController *)viewController
+                    animated:(BOOL)animated {
+    /*
+     将正在活跃UI控件终止，比如文本输入、键盘弹出状态等，
+     调用resignFirstResponder将键盘收起，防止页面滑走后键盘异常
+     */
+    [[BOTransitionUtility obtainFirstResponder] resignFirstResponder];
+    
+    if (self.ncProxy.navigationControllerDelegate
+        && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:willShowViewController:animated:)]) {
+        [self.ncProxy.navigationControllerDelegate navigationController:navigationController
+                                                 willShowViewController:viewController
+                                                               animated:animated];
+    }
+}
+
+- (void)navigationController:(UINavigationController *)navigationController
        didShowViewController:(UIViewController *)viewController
                     animated:(BOOL)animated {
     if (self.ncDidShowVCCallback) {
