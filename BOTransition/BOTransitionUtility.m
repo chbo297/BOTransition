@@ -21,16 +21,21 @@
 
 @implementation UIResponder (BOTransition)
 
-static UIResponder *sf_firstResponder = nil;
+//需要是week，不应影响原先的释放
+static __weak UIResponder *sf_firstResponder = nil;
 
 + (UIResponder *)bo_trans_obtainFirstResponder {
-    
+    //先清空，只获取当前的，确保不能拿上次的
+    sf_firstResponder = nil;
     //发送一个没有目标的空消息，借用系统的查找方法找到first响应者
     [[UIApplication sharedApplication] sendAction:@selector(bo_trans_actFirstResponder:)
                                                to:nil
                                              from:nil
                                          forEvent:nil];
-    return sf_firstResponder;
+    UIResponder *currres = sf_firstResponder;
+    //恢复nil
+    sf_firstResponder = nil;
+    return currres;
 }
 
 - (void)bo_trans_actFirstResponder:(id)sender {
