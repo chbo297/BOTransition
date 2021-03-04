@@ -14,8 +14,6 @@
 
 + (void)copyOriginMeth:(SEL)originSel newSel:(SEL)newSel class:(Class)cls;
 
-+ (void)addCATransaction:(NSString *)key completionTask:(void(^)(void))task;
-
 + (CGRect)rectWithAspectFitForBounding:(CGRect)bounding size:(CGSize)size;
 + (CGRect)rectWithAspectFillForBounding:(CGRect)bounding size:(CGSize)size;
 

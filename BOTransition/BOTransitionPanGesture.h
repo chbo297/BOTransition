@@ -102,7 +102,7 @@ typedef struct BOTransitionPanGestureBrief {
 - (CGPoint)velocityInCurrView;
 
 //给外部挂信息用，目前内部会在手势结束时清空该信息。
-@property (nonatomic, copy, nullable) NSDictionary *userInfo;
+@property (nonatomic, strong, nullable) NSMutableDictionary *userInfo;
 
 
 + (BOOL)tryMakeGesFail:(UIGestureRecognizer *)gesShouldFail

@@ -441,6 +441,8 @@
                 completion(!context.cancelled, nil);
             }];
         } else {
+            //保障渲染后，再调用completion
+            [CATransaction flush];
             completion(YES, nil);
         }
     }

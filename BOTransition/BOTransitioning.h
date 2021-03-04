@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
+UIKIT_EXTERN const NSNotificationName BOTransitionVCViewDidMoveToContainer;
 
 @interface BOTransitioning : NSObject <UIViewControllerAnimatedTransitioning, UIViewControllerInteractiveTransitioning>
 

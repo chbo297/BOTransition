@@ -58,29 +58,6 @@ static __weak UIResponder *sf_firstResponder = nil;
                     method_getTypeEncoding(originalMethod));
 }
 
-+ (void)addCATransaction:(NSString *)key completionTask:(void(^)(void))task {
-    if (![NSThread isMainThread]) {
-        return;
-    }
-    
-    if (task) {
-        static NSMutableArray<void(^)(void)> *sf_taskAr; //即用即创建，用完释放
-        if (!sf_taskAr) {
-            sf_taskAr = @[task].mutableCopy;
-            [CATransaction setCompletionBlock:^{
-                NSMutableArray<void(^)(void)> *tempar = sf_taskAr;
-                sf_taskAr = nil;
-                for (void(^thetask)(void) in tempar) {
-                    thetask();
-                }
-                [tempar removeAllObjects];
-            }];
-        } else {
-            [sf_taskAr addObject:task];
-        }
-    }
-}
-
 + (CGRect)rectWithAspectFitForBounding:(CGRect)bounding size:(CGSize)size {
     CGFloat staspect = CGRectGetHeight(bounding) / CGRectGetWidth(bounding);
     CGFloat mvaspect = size.height / size.width;

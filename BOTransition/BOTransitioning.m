@@ -11,35 +11,6 @@
 #import "BOTransitionNCProxy.h"
 #import "BOTransitionUtility.h"
 
-@interface UIResponder (BOTransition)
-
-/*
- 获取APP的FirstResponder
- */
-+ (UIResponder *)bo_trans_obtainFirstResponder;
-
-@end
-
-@implementation UIResponder (BOTransition)
-
-static UIResponder *sf_firstResponder = nil;
-
-+ (UIResponder *)bo_trans_obtainFirstResponder {
-    
-    //发送一个没有目标的空消息，借用系统的查找方法找到first响应者
-    [[UIApplication sharedApplication] sendAction:@selector(bo_trans_actFirstResponder:)
-                                               to:nil
-                                             from:nil
-                                         forEvent:nil];
-    return sf_firstResponder;
-}
-
-- (void)bo_trans_actFirstResponder:(id)sender {
-    sf_firstResponder = self;
-}
-
-@end
-
 @interface BOTransitionElement ()
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *,
@@ -436,6 +407,9 @@ NSDictionary * _Nullable info)> *
 const NSNotificationName BOTransitionWillAndMustCompletion =\
 @"BOTransitionWillAndMustCompletion";
 
+const NSNotificationName BOTransitionVCViewDidMoveToContainer =\
+@"BOTransitionVCViewDidMoveToContainer";
+
 static CGFloat sf_default_transition_dur = 0.22f;
 
 @interface BOTransitioning () <BOTransitionGestureDelegate>
@@ -467,6 +441,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 @property (nonatomic, assign) BOOL shouldRunAniCompletionBlock;
 
+@property (nonatomic, assign) BOOL startWithInteractive;
+
 @end
 
 @implementation BOTransitioning
@@ -496,7 +472,9 @@ static CGFloat sf_default_transition_dur = 0.22f;
     _moveVCConfig = _moveVC.bo_transitionConfig;
 }
 
-- (BOOL)setupTransitionContext:(id<UIViewControllerContextTransitioning>)transitionContext {
+- (BOOL)setupTransitionContext:(id<UIViewControllerContextTransitioning>)transitionContext
+                   interactive:(BOOL)interactive {
+    _startWithInteractive = interactive;
     if (!transitionContext
         || BOTransitionTypeNone == _transitionType
         || BOTransitionActNone == _transitionAct) {
@@ -631,39 +609,52 @@ static CGFloat sf_default_transition_dur = 0.22f;
     UIView *container = _transitionContext.containerView;
     switch (_transitionAct) {
         case BOTransitionActMoveIn: {
-            //把moveVC移入图层，直接设置为finalFrame，转场效果靠transform动画
-            
-            self.moveVC.view.frame = [_transitionContext finalFrameForViewController:self.moveVC];
-            
-            if (self.moveVC.view.superview != container) {
+            if (self.moveVC) {
+                //把moveVC移入图层，直接设置为finalFrame，转场效果靠transform动画
+                self.moveVC.view.frame = [_transitionContext finalFrameForViewController:self.moveVC];
                 
-                [container addSubview:self.moveVC.view];
+                if (self.moveVC.view.superview != container) {
+                    
+                    [container addSubview:self.moveVC.view];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:BOTransitionVCViewDidMoveToContainer
+                                                                        object:self
+                                                                      userInfo:@{
+                                                                          @"vc": self.moveVC
+                                                                      }];
+                }
             }
         }
             break;
         case BOTransitionActMoveOut: {
-            switch (_transitionType) {
-                case BOTransitionTypeNavigation: {
-                    //把baseVC移入图层，直接设置为finalFrame，转场效果靠transform动画
-                    self.baseVC.view.frame = [_transitionContext finalFrameForViewController:self.baseVC];
-                    if (self.baseVC.view.superview != container) {
-                        
-                        [container insertSubview:self.baseVC.view
-                                    belowSubview:self.moveVC.view];
-                        
+            if (self.baseVC) {
+                switch (_transitionType) {
+                    case BOTransitionTypeNavigation: {
+                        //把baseVC移入图层，直接设置为finalFrame，转场效果靠transform动画
+                        self.baseVC.view.frame = [_transitionContext finalFrameForViewController:self.baseVC];
+                        if (self.baseVC.view.superview != container) {
+                            
+                            [container insertSubview:self.baseVC.view
+                                        belowSubview:self.moveVC.view];
+                            [[NSNotificationCenter defaultCenter] postNotificationName:BOTransitionVCViewDidMoveToContainer
+                                                                                object:self
+                                                                              userInfo:@{
+                                                                                  @"vc": self.baseVC
+                                                                              }];
+                            
+                        }
                     }
+                        break;
+                    case BOTransitionTypeModalPresentation: {
+                        //不需要做
+                    }
+                        break;
+                    case BOTransitionTypeTabBar: {
+                        //wei shi xian
+                    }
+                        break;
+                    default:
+                        break;
                 }
-                    break;
-                case BOTransitionTypeModalPresentation: {
-                    //不需要做
-                }
-                    break;
-                case BOTransitionTypeTabBar: {
-                    //wei shi xian
-                }
-                    break;
-                default:
-                    break;
             }
         }
             break;
@@ -738,15 +729,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 // This method can only  be a nop if the transition is interactive and not a percentDriven interactive transition.
 - (void)animateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
-    if (![self setupTransitionContext:transitionContext]) {
-        __weak typeof(self) ws = self;
-        [BOTransitionUtility addCATransaction:@"boanimateTransition"
-                               completionTask:^{
-            [ws makeTransitionComplete:NO isInteractive:NO];
-        }];
+    if (![self setupTransitionContext:transitionContext interactive:NO]) {
+        [self makeTransitionComplete:NO isInteractive:NO];
         return;
     }
     
+    [self makeAnimateTransition:transitionContext];
+}
+
+- (void)makeAnimateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     [self initialViewHierarchy];
     
     [self loadEffectControlAr:NO];
@@ -807,13 +798,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
                        subInfo:nil];
     }];
     
-    [[NSNotificationCenter defaultCenter]\
-     postNotificationName:BOTransitionWillAndMustCompletion
-     object:self
-     userInfo:@{
-         @"finish": @(YES),
-     }];
-    
     transitioninfo.percentComplete = 1;
     
     BOOL needsani = elementar.count > 0;
@@ -870,8 +854,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
         
         [self finalViewHierarchy];
         
-        [self makeTransitionComplete:YES isInteractive:NO];
+        [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
     }];
+    
+    [[NSNotificationCenter defaultCenter]\
+     postNotificationName:BOTransitionWillAndMustCompletion
+     object:self
+     userInfo:@{
+         @"finish": @(YES),
+     }];
 }
 
 - (void)makeTransitionComplete:(BOOL)didComplete isInteractive:(BOOL)interactive {
@@ -879,6 +870,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [_transitionElementAr removeAllObjects];
     _transitionElementAr = nil;
     _triggerInteractiveTransitioning = NO;
+    _startWithInteractive = NO;
     
     //ModalPresentation的moveIn时，以及moveOut失败时不清空baseVC、moveVC信息，手势交互还需要用到
     BOOL shouldclearvccontext = YES;
@@ -921,6 +913,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [_transitionElementAr removeAllObjects];
     _transitionElementAr = nil;
     _triggerInteractiveTransitioning = NO;
+    _startWithInteractive = NO;
     _transitionContext = nil;
     
     //ModalPresentation的moveIn时，以及moveOut失败时不清空baseVC、moveVC信息，手势交互还需要用到
@@ -940,19 +933,27 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 #pragma mark - triggerInteractiveTransitioning
 
+- (BOOL)wantsInteractiveStart {
+    //需要返回NO，防止startInteractiveTransition使用动画时，系统自动把动画stop
+    return NO;
+}
+
 - (void)startInteractiveTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
-    if (![self setupTransitionContext:transitionContext]
-        || !self.triggerInteractiveTransitioning
-        || (UIGestureRecognizerStateBegan != self.transitionGes.transitionGesState
-            && UIGestureRecognizerStateChanged != self.transitionGes.transitionGesState)) {
-        __weak typeof(self) ws = self;
-        [BOTransitionUtility addCATransaction:@"bostartInteractiveTransition"
-                               completionTask:^{
-            [ws makeTransitionComplete:NO isInteractive:YES];
-        }];
+    if (![self setupTransitionContext:transitionContext interactive:YES]) {
+        [self makeTransitionComplete:NO isInteractive:YES];
+        return;
+    } else if (!self.triggerInteractiveTransitioning
+               || (UIGestureRecognizerStateBegan != self.transitionGes.transitionGesState
+                   && UIGestureRecognizerStateChanged != self.transitionGes.transitionGesState)) {
+        //        [self makeTransitionComplete:NO isInteractive:YES];
+        [self makeAnimateTransition:transitionContext];
         return;
     }
     
+    [self makrInteractiveTransition:transitionContext];
+}
+
+- (void)makrInteractiveTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     [self initialViewHierarchy];
     
     [self loadEffectControlAr:YES];
@@ -1057,14 +1058,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
                  completion:(void (^ __nullable)(BOOL finished))completion {
     if (duration <= 0) {
         if (modifyUIBlock) {
+            [CATransaction begin];
             modifyUIBlock();
-        }
-        
-        if (completion) {
-            [BOTransitionUtility addCATransaction:@"noanit"
-                                   completionTask:^{
-                completion(YES);
-            }];
+            if (completion) {
+                //必须等提交后再执行completion，不然系统会乱(和系统内部机制相关，原理待整理)
+                [CATransaction setCompletionBlock:^{
+                    completion(YES);
+                }];
+            }
+            [CATransaction commit];
         }
         return;
     }
@@ -1076,6 +1078,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     self.timeRuler.alpha = 0;
     //暂不开启手势中断动画功能
+    [CATransaction begin];
     [UIView animateWithDuration:duration
                           delay:0
                         options:(UIViewAnimationOptionAllowAnimatedContent
@@ -1092,6 +1095,12 @@ static CGFloat sf_default_transition_dur = 0.22f;
             completion(finished);
         }
     }];
+    /*
+     先提交动画，
+     这样即使后面有复杂运算阻塞主线程，动画也已经开始播放了，
+     不会使UI看起来卡
+     */
+    [CATransaction commit];
 }
 
 #pragma mark - gesture
@@ -1192,10 +1201,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     if ([subInfo[@"type"] isEqualToString:@"needsRecoverWhenTouchDown"]) {
         return @(YES);
-    }
-    
-    if (ges.beganWithOtherSVBounces) {
-        return @(NO);
     }
     
     if (_transitionContext) {
@@ -1316,7 +1321,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
          | UISwipeGestureRecognizerDirectionDown);
         BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
         BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
-        if ((ges.triggerDirectionInfo.mainDirection & tconfig.moveOutGesDirection) > 0
+        if (!ges.beganWithOtherSVBounces
+            && (ges.triggerDirectionInfo.mainDirection & tconfig.moveOutGesDirection) > 0
             && initialisVertical == triggerisVertical) {
             BOOL isvalid = NO;
             switch (ges.otherSVRespondedDirectionRecord.count) {
@@ -1531,12 +1537,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 [self.timeRuler.layer removeAllAnimations];
                 break;
             } else if (ges.userInfo.count > 0) {
-                /*
-                 将正在活跃UI控件终止，比如文本输入、键盘弹出状态等，
-                 调用resignFirstResponder将键盘收起，防止页面滑走后键盘异常
-                 */
-                UIResponder *currFirstResponder = [UIResponder bo_trans_obtainFirstResponder];
-                [currFirstResponder resignFirstResponder];
+                if (BOTransitionTypeNavigation != self.transitionType) {
+                    /*
+                     BOTransitionTypeNavigation会在will方法中自己处理，这里就不用额外处理了
+                     其它类型需要处理下
+                     */
+                    UIResponder *currFirstResponder = [BOTransitionUtility obtainFirstResponder];
+                    [currFirstResponder resignFirstResponder];
+                }
                 
                 void (^beganblock)(void) = ges.userInfo[@"beganBlock"];
                 if (beganblock) {
