@@ -39,8 +39,8 @@ typedef struct BOTransitionPanGestureBrief {
  @"otherSVResponse": @(type) 0 不能滑动 不能bounces  1 for bounces  2 normal scroll  当前方向上其它ScrollView的响应情况
  }
  */
-- (NSNumber *)boTransitionGesShouldAndWillBegin:(BOTransitionPanGesture *)ges
-                                        subInfo:(nullable NSDictionary *)subInfo;
+- (nullable NSNumber *)boTransitionGesShouldAndWillBegin:(BOTransitionPanGesture *)ges
+                                                 subInfo:(nullable NSDictionary *)subInfo;
 
 - (void)boTransitionGesStateDidChange:(BOTransitionPanGesture *)ges;
 

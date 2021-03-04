@@ -64,32 +64,19 @@ static __weak UIResponder *sf_firstResponder = nil;
     }
     
     if (task) {
-        static NSMutableArray<void(^)(void)> *taskAr;//即用即创建，用完释放
-        static BOOL runInCompletionBlock = NO; //正在执行block的标志位，防止外部传入有冲突的mask(在completion再次插入task)
-        if (runInCompletionBlock) {
-            NSLog(@"⚠️error:bm_addCATransactionCompletionTask的task中再次添加了task");
-            return;
-        }
-        if (!taskAr) {
-            taskAr = @[task].mutableCopy;
-            [CATransaction begin];
-            void (^originblock)(void) = [CATransaction completionBlock];
+        static NSMutableArray<void(^)(void)> *sf_taskAr; //即用即创建，用完释放
+        if (!sf_taskAr) {
+            sf_taskAr = @[task].mutableCopy;
             [CATransaction setCompletionBlock:^{
-                runInCompletionBlock = YES;
-                if (originblock) {
-                    originblock();
-                }
-                
-                for (void(^thetask)(void) in taskAr) {
+                NSMutableArray<void(^)(void)> *tempar = sf_taskAr;
+                sf_taskAr = nil;
+                for (void(^thetask)(void) in tempar) {
                     thetask();
                 }
-                [taskAr removeAllObjects];
-                taskAr = nil;
-                runInCompletionBlock = NO;
+                [tempar removeAllObjects];
             }];
-            [CATransaction commit];
         } else {
-            [taskAr addObject:task];
+            [sf_taskAr addObject:task];
         }
     }
 }
@@ -179,7 +166,7 @@ static __weak UIResponder *sf_firstResponder = nil;
         }
     }
     
-    return idx;
+    return hier;
 }
 
 @end

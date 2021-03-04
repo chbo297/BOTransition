@@ -225,7 +225,13 @@
      将正在活跃UI控件终止，比如文本输入、键盘弹出状态等，
      调用resignFirstResponder将键盘收起，防止页面滑走后键盘异常
      */
-    [[BOTransitionUtility obtainFirstResponder] resignFirstResponder];
+    UIResponder *responder = [BOTransitionUtility obtainFirstResponder];
+    if ([responder isKindOfClass:[UIResponder class]]
+        && [responder respondsToSelector:@selector(canResignFirstResponder)]
+        && [responder canResignFirstResponder]
+        && [responder respondsToSelector:@selector(resignFirstResponder)]) {
+        [responder resignFirstResponder];
+    }
     
     if (self.ncProxy.navigationControllerDelegate
         && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:willShowViewController:animated:)]) {
@@ -314,10 +320,12 @@
 
 @interface UINavigationController (BOTransition_inner)
 
-- (void)bo_transitioning_setViewControllers:(NSArray<UIViewController *> *)viewControllers
-                                   animated:(BOOL)animated;
-- (NSArray<__kindof UIViewController *> *)bo_transitioning_popToViewController:(UIViewController *)viewController
-                                                                      animated:(BOOL)animated;
+- (void)bo_trans_setViewControllers:(NSArray<UIViewController *> *)viewControllers
+                           animated:(BOOL)animated;
+- (NSArray<__kindof UIViewController *> *)bo_trans_popToViewController:(UIViewController *)viewController
+                                                              animated:(BOOL)animated;
+- (void)bo_trans_pushViewController:(UIViewController *)viewController
+                           animated:(BOOL)animated;
 
 @end
 
@@ -327,15 +335,18 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         /*
-         添加一个方法bo_transitioning_setViewControllers复制
+         添加一个方法bo_trans_setViewControllers复制
          setViewControllers
          的实现
          */
         [BOTransitionUtility copyOriginMeth:@selector(setViewControllers:animated:)
-                                     newSel:@selector(bo_transitioning_setViewControllers:animated:)
+                                     newSel:@selector(bo_trans_setViewControllers:animated:)
                                       class:self];
         [BOTransitionUtility copyOriginMeth:@selector(popToViewController:animated:)
-                                     newSel:@selector(bo_transitioning_popToViewController:animated:)
+                                     newSel:@selector(bo_trans_popToViewController:animated:)
+                                      class:self];
+        [BOTransitionUtility copyOriginMeth:@selector(pushViewController:animated:)
+                                     newSel:@selector(bo_trans_pushViewController:animated:)
                                       class:self];
     });
 }
@@ -377,24 +388,47 @@
     }
     
     NSArray<UIViewController *> *originvcar = self.viewControllers.copy;
-    BOOL ispop = NO;
+    //0set 1push 2pop
+    NSInteger pushact = 0;
     if (viewControllers.count > 0
-        && viewControllers.count < originvcar.count) {
-        __block BOOL isequal = YES;
-        [viewControllers enumerateObjectsUsingBlock:^(UIViewController * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (originvcar[idx] != obj) {
-                isequal = NO;
-                *stop = YES;
+        && originvcar.count > 0
+        && viewControllers.count != originvcar.count) {
+        NSInteger mincount = MIN((NSInteger)viewControllers.count, (NSInteger)originvcar.count);
+        if (mincount > 0) {
+            BOOL isequal = YES;
+            for (NSInteger idx = 0; idx < mincount; idx++) {
+                if (viewControllers[idx] != originvcar[idx]) {
+                    isequal = NO;
+                    break;
+                }
             }
-        }];
-        
-        ispop = isequal;
+            
+            if (isequal) {
+                if (viewControllers.count > originvcar.count) {
+                    if (viewControllers.count == originvcar.count + 1) {
+                        pushact = 1;
+                    }
+                } else {
+                    pushact = 2;
+                }
+            }
+        }
     }
-    if (ispop) {
-        //pop是用setViewControllers后，self.viewControllers状态有问题，使用popToViewController没问题
-        [self bo_transitioning_popToViewController:viewControllers.lastObject animated:animated];
-    } else {
-        [self bo_transitioning_setViewControllers:viewControllers animated:animated];
+    
+    switch (pushact) {
+        case 1: {
+            [self bo_trans_pushViewController:viewControllers.lastObject animated:animated];
+        }
+            break;
+        case 2: {
+            //pop是用setViewControllers后，self.viewControllers状态有问题，使用popToViewController没问题
+            [self bo_trans_popToViewController:viewControllers.lastObject animated:animated];
+        }
+            break;
+        default: {
+            [self bo_trans_setViewControllers:viewControllers animated:animated];
+        }
+            break;
     }
     
     if (completion) {
@@ -407,21 +441,7 @@
                 completion(!context.cancelled, nil);
             }];
         } else {
-            //不需要等待ncDidShowVCCallback再结束了，直接当结束就好了,系统是兼容没转场的时候连续调用的
-            //            if (viewControllers.lastObject != originvcar.lastObject) {
-            //                __weak typeof(ncproxy) wkncp = ncproxy;
-            //                __weak typeof(self) ws = self;
-            //                ncproxy.transitionNCHandler.ncDidShowVCCallback = ^(UINavigationController *nc, UIViewController *vc, BOOL animated) {
-            //                    if (ws == nc) {
-            //                        void (^savcompletion)(BOOL finish, NSDictionary *info) = completion;
-            //                        wkncp.transitionNCHandler.ncDidShowVCCallback = nil;
-            //                        savcompletion(YES, nil);
-            //                    }
-            //                };
-            //            } else {
             completion(YES, nil);
-            //            }
-            
         }
     }
     

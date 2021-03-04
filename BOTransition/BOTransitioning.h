@@ -53,7 +53,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
  2 保留otherges
  0 没有判断出结果
  */
-+ (NSInteger)checkWithVC:(UIViewController *)vc
++ (NSInteger)checkWithVC:(nullable UIViewController *)vc
           transitionType:(BOTransitionType)transitionType
                 makeFail:(BOOL)makeFail
                  baseGes:(UIGestureRecognizer *)ges

@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 
-@property (nonatomic, readwrite, nullable) NSDictionary *configInfo;
+@property (nonatomic, readwrite, nullable, strong) NSDictionary *configInfo;
 
 - (void)bo_transitioning:(BOTransitioning *)transitioning
           prepareForStep:(BOTransitionStep)step
@@ -88,10 +88,10 @@ NS_ASSUME_NONNULL_BEGIN
  YES: 触发交互式退场
  NO: 不可以开始并且取消本次手势响应
  */
-- (NSNumber *)bo_trans_shouldMoveOutVC:(UIViewController *)viewController
-                               gesture:(UIGestureRecognizer *)gesture
-                        transitionType:(BOTransitionType)transitionType
-                               subInfo:(nullable NSDictionary *)subInfo;
+- (nullable NSNumber *)bo_trans_shouldMoveOutVC:(UIViewController *)viewController
+                                        gesture:(UIGestureRecognizer *)gesture
+                                 transitionType:(BOTransitionType)transitionType
+                                        subInfo:(nullable NSDictionary *)subInfo;
 
 /*
  成功触发交互式退场后，如
@@ -116,9 +116,9 @@ NS_ASSUME_NONNULL_BEGIN
  @(NO)，终止该手势
  @(YES)，允许该手势
  */
-- (NSNumber *)bo_trans_shouldRecTransitionGes:(UIGestureRecognizer *)gesture
-                               transitionType:(BOTransitionType)transitionType
-                                      subInfo:(nullable NSDictionary *)subInfo;
+- (nullable NSNumber *)bo_trans_shouldRecTransitionGes:(UIGestureRecognizer *)gesture
+                                        transitionType:(BOTransitionType)transitionType
+                                               subInfo:(nullable NSDictionary *)subInfo;
 
 @end
 
