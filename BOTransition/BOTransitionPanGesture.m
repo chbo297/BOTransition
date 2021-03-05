@@ -63,6 +63,13 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     return [self initWithTransitionGesDelegate:nil];
 }
 
+- (NSMutableDictionary *)userInfo {
+    if (!_userInfo) {
+        _userInfo = [NSMutableDictionary new];
+    }
+    return _userInfo;
+}
+
 - (CGPoint)velocityInCurrView {
     if (_touchInfoAr.count < 2) {
         return CGPointZero;

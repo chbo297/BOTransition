@@ -857,12 +857,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
         [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
     }];
     
-    [[NSNotificationCenter defaultCenter]\
-     postNotificationName:BOTransitionWillAndMustCompletion
-     object:self
-     userInfo:@{
-         @"finish": @(YES),
-     }];
+    [CATransaction flush];
+    [CATransaction begin];
+    [CATransaction setCompletionBlock:^{
+        [[NSNotificationCenter defaultCenter]\
+         postNotificationName:BOTransitionWillAndMustCompletion
+         object:self
+         userInfo:@{
+             @"finish": @(YES),
+         }];
+    }];
+    [CATransaction commit];
 }
 
 - (void)makeTransitionComplete:(BOOL)didComplete isInteractive:(BOOL)interactive {
@@ -1056,18 +1061,26 @@ static CGFloat sf_default_transition_dur = 0.22f;
          percentStartAndEnd:(CGPoint)percentStartAndEnd
               modifyUIBlock:(void (^)(void))modifyUIBlock
                  completion:(void (^ __nullable)(BOOL finished))completion {
+    if (!modifyUIBlock && !completion) {
+        return;
+    }
+    
     if (duration <= 0) {
+        [CATransaction flush];
+        [CATransaction begin];
+        
         if (modifyUIBlock) {
-            [CATransaction begin];
             modifyUIBlock();
-            if (completion) {
-                //必须等提交后再执行completion，不然系统会乱(和系统内部机制相关，原理待整理)
-                [CATransaction setCompletionBlock:^{
-                    completion(YES);
-                }];
-            }
-            [CATransaction commit];
         }
+        
+        if (completion) {
+            //必须等提交后再执行completion，不然系统会乱(和系统内部机制相关，原理待整理)
+            [CATransaction setCompletionBlock:^{
+                completion(YES);
+            }];
+        }
+        
+        [CATransaction commit];
         return;
     }
     
@@ -1078,7 +1091,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     self.timeRuler.alpha = 0;
     //暂不开启手势中断动画功能
-    [CATransaction begin];
     [UIView animateWithDuration:duration
                           delay:0
                         options:(UIViewAnimationOptionAllowAnimatedContent
@@ -1095,12 +1107,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
             completion(finished);
         }
     }];
-    /*
-     先提交动画，
-     这样即使后面有复杂运算阻塞主线程，动画也已经开始播放了，
-     不会使UI看起来卡
-     */
-    [CATransaction commit];
 }
 
 #pragma mark - gesture
@@ -1239,12 +1245,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
             }
                 break;
             case BOTransitionTypeNavigation: {
-                ges.userInfo = @{
-                    @"beganBlock": ^{
-                        ws.triggerInteractiveTransitioning = YES;
-                        [ws.navigationController pushViewController:moveInVC animated:YES];
-                    }
-                };
+                [ges.userInfo setObject:^{
+                    ws.triggerInteractiveTransitioning = YES;
+                    [ws.navigationController pushViewController:moveInVC animated:YES];
+                }
+                                 forKey:@"beganBlock"];
                 return @(YES);
             }
             case BOTransitionTypeTabBar: {
@@ -1266,6 +1271,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     NSNumber *shouldMoveOut;
+    /*
+     手势触发后，如果又回到原点，是否允许终止本次转场
+     */
+    BOOL allowrecover = NO;
     //读取快捷属性
     if (tconfig.moveOutSeriousGesDirection & ges.triggerDirectionInfo.mainDirection) {
         /*
@@ -1365,6 +1374,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     break;
             }
             
+            if (isvalid) {
+                allowrecover = YES;
+            }
+            
             shouldMoveOut = @(isvalid);
         }
     }
@@ -1392,33 +1405,35 @@ static CGFloat sf_default_transition_dur = 0.22f;
         if (shouldMoveOut.boolValue) {
             switch (self.transitionType) {
                 case BOTransitionTypeModalPresentation: {
-                    ges.userInfo = @{
-                        @"beganBlock": ^{
-                            ws.triggerInteractiveTransitioning = YES;
-                            [firstResponseVC.presentingViewController dismissViewControllerAnimated:YES
-                                                                                         completion:nil];
-                        }
-                    };
+                    [ges.userInfo setObject:^{
+                        ws.triggerInteractiveTransitioning = YES;
+                        [firstResponseVC.presentingViewController dismissViewControllerAnimated:YES
+                                                                                     completion:nil];
+                    }
+                                     forKey:@"beganBlock"];
+                    [ges.userInfo setObject:@(allowrecover)
+                                     forKey:@"allowRecover"];
                     return @(YES);
                 }
                 case BOTransitionTypeNavigation: {
-                    ges.userInfo = @{
-                        @"beganBlock": ^{
-                            UINavigationController *sfnc = self.navigationController;
-                            ws.triggerInteractiveTransitioning = YES;
-                            BOOL takeover = NO;
-                            if ([configdelegate respondsToSelector:@selector(bo_trans_actMoveOutVC:gesture:transitionType:subInfo:)]) {
-                                takeover = [configdelegate bo_trans_actMoveOutVC:firstResponseVC
-                                                                         gesture:ges
-                                                                  transitionType:ws.transitionType
-                                                                         subInfo:@{@"nc": sfnc}];
-                            }
-                            
-                            if (!takeover) {
-                                [ws.navigationController popViewControllerAnimated:YES];
-                            }
+                    [ges.userInfo setObject:^{
+                        UINavigationController *sfnc = ws.navigationController;
+                        ws.triggerInteractiveTransitioning = YES;
+                        BOOL takeover = NO;
+                        if ([configdelegate respondsToSelector:@selector(bo_trans_actMoveOutVC:gesture:transitionType:subInfo:)]) {
+                            takeover = [configdelegate bo_trans_actMoveOutVC:firstResponseVC
+                                                                     gesture:ges
+                                                              transitionType:ws.transitionType
+                                                                     subInfo:@{@"nc": sfnc}];
                         }
-                    };
+                        
+                        if (!takeover) {
+                            [ws.navigationController popViewControllerAnimated:YES];
+                        }
+                    }
+                                     forKey:@"beganBlock"];
+                    [ges.userInfo setObject:@(allowrecover)
+                                     forKey:@"allowRecover"];
                     return @(YES);
                 }
                 case BOTransitionTypeTabBar: {
@@ -1549,8 +1564,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 void (^beganblock)(void) = ges.userInfo[@"beganBlock"];
                 if (beganblock) {
                     beganblock();
+                    [ges.userInfo removeObjectForKey:@"beganBlock"];
                 }
-                ges.userInfo = nil;
             }
         }
         case UIGestureRecognizerStateChanged: {
@@ -1575,8 +1590,12 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                         currPt:curloc
                               triggerDirection:ges.triggerDirectionInfo.mainDirection
                                      hasElePin:haselepin]) {
-                //需要取消了
-                [ges makeGesStateCanceledButCanRetryBegan];
+                NSNumber *allowRecoverval = [ges.userInfo objectForKey:@"allowRecover"];
+                if (nil != allowRecoverval
+                    && YES == allowRecoverval.boolValue) {
+                    //需要取消了
+                    [ges makeGesStateCanceledButCanRetryBegan];
+                }
             }
         }
             break;
@@ -1805,12 +1824,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
             if (self.moveVCConfig.allowInteractionInAnimating) {
                 [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
             } else if (BOTransitionTypeNavigation == self.transitionType) {
-                [[NSNotificationCenter defaultCenter]\
-                 postNotificationName:BOTransitionWillAndMustCompletion
-                 object:self
-                 userInfo:@{
-                     @"finish": @(cancomplete),
-                 }];
+                [CATransaction flush];
+                [CATransaction begin];
+                [CATransaction setCompletionBlock:^{
+                    [[NSNotificationCenter defaultCenter]\
+                     postNotificationName:BOTransitionWillAndMustCompletion
+                     object:self
+                     userInfo:@{
+                         @"finish": @(cancomplete),
+                     }];
+                }];
+                [CATransaction commit];
             }
         }
             break;
