@@ -441,9 +441,21 @@
                 completion(!context.cancelled, nil);
             }];
         } else {
-            //保障渲染后，再调用completion
-            [CATransaction flush];
-            completion(YES, nil);
+            if (viewControllers.lastObject
+                && originvcar.lastObject != viewControllers.lastObject) {
+                __weak typeof(ncproxy.transitionNCHandler) wkhd = ncproxy.transitionNCHandler;
+                wkhd.ncDidShowVCCallback = ^(UINavigationController *nc, UIViewController *vc, BOOL animated) {
+                    wkhd.ncDidShowVCCallback = nil;
+                    if (vc == viewControllers.lastObject) {
+                        completion(YES, nil);
+                    } else {
+                        completion(NO, nil);
+                    }
+
+                };
+            } else {
+                completion(YES, nil);
+            }
         }
     }
     
