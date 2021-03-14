@@ -12,6 +12,8 @@
 
 + (UIResponder *)obtainFirstResponder;
 
++ (void)swizzleMethodTargetCls:(Class)targetCls originalSel:(SEL)originalSel
+                        srcCls:(Class)srcCls srcSel:(SEL)srcSel;
 + (void)copyOriginMeth:(SEL)originSel newSel:(SEL)newSel class:(Class)cls;
 
 + (CGRect)rectWithAspectFitForBounding:(CGRect)bounding size:(CGSize)size;

@@ -138,7 +138,8 @@
 @property (nonatomic, weak) UINavigationController *navigationController;
 @property (nonatomic, strong) BOTransitioning *transitioning;
 
-@property (nonatomic, copy) void(^ncDidShowVCCallback)(UINavigationController *nc, UIViewController *vc, BOOL animated);
+@property (nonatomic, copy) void(^viewDidLayoutSubviewsCallback)(UINavigationController *nc,
+BOOL layoutYESOrCancelNO);
 
 @end
 
@@ -241,21 +242,6 @@
     }
 }
 
-- (void)navigationController:(UINavigationController *)navigationController
-       didShowViewController:(UIViewController *)viewController
-                    animated:(BOOL)animated {
-    if (self.ncDidShowVCCallback) {
-        self.ncDidShowVCCallback(navigationController, viewController, animated);
-    }
-    
-    if (self.ncProxy.navigationControllerDelegate
-        && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:didShowViewController:animated:)]) {
-        [self.ncProxy.navigationControllerDelegate navigationController:navigationController
-                                                  didShowViewController:viewController
-                                                               animated:animated];
-    }
-}
-
 @end
 
 
@@ -348,7 +334,20 @@
         [BOTransitionUtility copyOriginMeth:@selector(pushViewController:animated:)
                                      newSel:@selector(bo_trans_pushViewController:animated:)
                                       class:self];
+        [BOTransitionUtility swizzleMethodTargetCls:self
+                                        originalSel:@selector(viewDidLayoutSubviews)
+                                             srcCls:self
+                                             srcSel:@selector(bo_trans_viewDidLayoutSubviews)];
     });
+}
+
+- (void)bo_trans_viewDidLayoutSubviews {
+    [self bo_trans_viewDidLayoutSubviews];
+    void (^vdlsc)(UINavigationController *, BOOL) =\
+    self.bo_transProxy.transitionNCHandler.viewDidLayoutSubviewsCallback;
+    if (vdlsc) {
+        vdlsc(self, YES);
+    }
 }
 
 - (BOTransitionNCProxy *)bo_transProxy {
@@ -381,10 +380,19 @@
 
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
-                completion:(void (^)(BOOL finish, NSDictionary *info))completion {
-    BOTransitionNCProxy *ncproxy = self.bo_transProxy;
-    if (!ncproxy) {
+                completion:(void (^)(BOOL finish,
+                                     NSDictionary *info))completion {
+    BOTransitionNCHandler *ncHandler = self.bo_transProxy.transitionNCHandler;
+    if (!ncHandler) {
         return;
+    }
+    /*
+     有未完成的待回调
+     （上次调用setViewControllers:animated:completion:还没完成，completion还没执行）
+     先把上次的取消掉
+     */
+    if (ncHandler.viewDidLayoutSubviewsCallback) {
+        ncHandler.viewDidLayoutSubviewsCallback(self, NO);
     }
     
     NSArray<UIViewController *> *originvcar = self.viewControllers.copy;
@@ -431,34 +439,66 @@
             break;
     }
     
-    if (completion) {
-        //如果有转场动画，设置结束回调
-        id <UIViewControllerTransitionCoordinator> tcdt =\
-        viewControllers.lastObject.transitionCoordinator;
-        if (tcdt) {
-            [tcdt animateAlongsideTransition:nil
-                                  completion:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
-                completion(!context.cancelled, nil);
-            }];
+    //如果有转场动画，设置结束回调
+    id <UIViewControllerTransitionCoordinator> tcdt =\
+    viewControllers.lastObject.transitionCoordinator;
+    if (tcdt
+        && viewControllers.lastObject != originvcar.lastObject) {
+        /*
+         有转场动画时，以动画结束为依据
+         */
+        [tcdt animateAlongsideTransition:nil
+                              completion:^(id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
+            completion(!context.cancelled, nil);
+        }];
+    } else {
+        //set完后，栈是否变化成功
+        __block BOOL setsuc = YES;
+        if (viewControllers.count != self.viewControllers.count) {
+            setsuc = NO;
         } else {
-            if (viewControllers.lastObject
-                && originvcar.lastObject != viewControllers.lastObject) {
-                __weak typeof(ncproxy.transitionNCHandler) wkhd = ncproxy.transitionNCHandler;
-                wkhd.ncDidShowVCCallback = ^(UINavigationController *nc, UIViewController *vc, BOOL animated) {
-                    wkhd.ncDidShowVCCallback = nil;
-                    if (vc == viewControllers.lastObject) {
-                        completion(YES, nil);
+            [viewControllers enumerateObjectsUsingBlock:^(UIViewController * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                if (obj != self.viewControllers[idx]) {
+                    setsuc = NO;
+                    *stop = YES;
+                }
+            }];
+        }
+        
+        //是否展示内容发生变更
+        BOOL changedisplay = (originvcar.lastObject != viewControllers.lastObject);
+        //如果发生了变化或者没有更新成功，就需要等待layout生效后再completion
+        BOOL waitlayout = (changedisplay || !setsuc);
+        
+        if (waitlayout) {
+            __weak typeof(ncHandler) wkhd = ncHandler;
+            wkhd.viewDidLayoutSubviewsCallback =\
+            ^(UINavigationController *nc, BOOL layoutYESOrCancelNO) {
+                if (layoutYESOrCancelNO) {
+                    __block BOOL setsuc2 = YES;
+                    if (viewControllers.count != self.viewControllers.count) {
+                        setsuc2 = NO;
                     } else {
-                        completion(NO, nil);
+                        [viewControllers enumerateObjectsUsingBlock:^(UIViewController * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                            if (obj != self.viewControllers[idx]) {
+                                setsuc2 = NO;
+                                *stop = YES;
+                            }
+                        }];
                     }
-
-                };
-            } else {
-                completion(YES, nil);
-            }
+                    if (setsuc2) {
+                        wkhd.viewDidLayoutSubviewsCallback = nil;
+                        completion(YES, nil);
+                    }
+                } else {
+                    wkhd.viewDidLayoutSubviewsCallback = nil;
+                    completion(NO, nil);
+                }
+            };
+        } else {
+            completion(YES, nil);
         }
     }
-    
 }
 
 @end

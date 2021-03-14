@@ -50,6 +50,20 @@ static __weak UIResponder *sf_firstResponder = nil;
     return [UIResponder bo_trans_obtainFirstResponder];
 }
 
++ (void)swizzleMethodTargetCls:(Class)targetCls originalSel:(SEL)originalSel
+                        srcCls:(Class)srcCls srcSel:(SEL)srcSel {
+    Method originalMethod = class_getInstanceMethod(targetCls, originalSel);
+    Method swizzledMethod = class_getInstanceMethod(srcCls, srcSel);
+    BOOL didAddMethod =\
+    class_addMethod(targetCls, originalSel, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));
+    
+    if (didAddMethod) {
+        class_replaceMethod(targetCls, srcSel, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));
+    } else {
+        method_exchangeImplementations(originalMethod, swizzledMethod);
+    }
+}
+
 + (void)copyOriginMeth:(SEL)originSel newSel:(SEL)newSel class:(Class)cls {
     Method originalMethod = class_getInstanceMethod(cls, originSel);
     class_addMethod(cls,

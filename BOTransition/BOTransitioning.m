@@ -436,7 +436,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 @property (nonatomic, strong) NSValue *innerAnimatingVal;
 
-//shijiankedu
+//时间刻度
 @property (nonatomic, strong) UIView *timeRuler;
 
 @property (nonatomic, assign) BOOL shouldRunAniCompletionBlock;
@@ -857,6 +857,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
         [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
     }];
     
+    UIViewController *maynewvc =\
+    (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
+    NSString *vcPtStr =\
+    (maynewvc ? [NSString stringWithFormat:@"%p", maynewvc] : @"");
     [CATransaction flush];
     [CATransaction begin];
     [CATransaction setCompletionBlock:^{
@@ -865,6 +869,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
          object:self
          userInfo:@{
              @"finish": @(YES),
+             @"vcPt": vcPtStr
          }];
     }];
     [CATransaction commit];
@@ -1065,27 +1070,28 @@ static CGFloat sf_default_transition_dur = 0.22f;
         return;
     }
     
-    if (duration <= 0) {
-        [CATransaction flush];
-        [CATransaction begin];
-        
-        if (modifyUIBlock) {
-            modifyUIBlock();
-        }
-        
-        if (completion) {
-            //必须等提交后再执行completion，不然系统会乱(和系统内部机制相关，原理待整理)
-            [CATransaction setCompletionBlock:^{
-                completion(YES);
-            }];
-        }
-        
-        [CATransaction commit];
-        return;
-    }
+    //暂不用<= 0试试，系统的UIView animateWithDuration:0的表现也没差
+//    if (duration <= 0) {
+//        [CATransaction flush];
+//        [CATransaction begin];
+//
+//        if (modifyUIBlock) {
+//            modifyUIBlock();
+//        }
+//
+//        if (completion) {
+//            //必须等提交后再执行completion，不然系统会乱(和系统内部机制相关，原理待整理)
+//            [CATransaction setCompletionBlock:^{
+//                completion(YES);
+//            }];
+//        }
+//
+//        [CATransaction commit];
+//        return;
+//    }
     
     if (_innerAnimatingVal) {
-        NSLog(@"~~~~~~~~animateWithDuration出错");
+        NSLog(@"~~~!!!execAnimateDuration上次动画还没结束");
     }
     _innerAnimatingVal = @(percentStartAndEnd);
     
@@ -1824,6 +1830,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
             if (self.moveVCConfig.allowInteractionInAnimating) {
                 [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
             } else if (BOTransitionTypeNavigation == self.transitionType) {
+                UIViewController *maynewvc =\
+                (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
+                NSString *vcPtStr =\
+                (maynewvc ? [NSString stringWithFormat:@"%p", maynewvc] : @"");
                 [CATransaction flush];
                 [CATransaction begin];
                 [CATransaction setCompletionBlock:^{
@@ -1832,6 +1842,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                      object:self
                      userInfo:@{
                          @"finish": @(cancomplete),
+                         @"vcPt": vcPtStr
                      }];
                 }];
                 [CATransaction commit];
