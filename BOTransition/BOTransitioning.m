@@ -857,6 +857,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
         [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
     }];
     
+    //传递内存地址作为标记信息，不传指针是为了防止CompletionBlock延缓释放时机
     UIViewController *maynewvc =\
     (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
     NSString *vcPtStr =\
@@ -1830,6 +1831,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
             if (self.moveVCConfig.allowInteractionInAnimating) {
                 [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
             } else if (BOTransitionTypeNavigation == self.transitionType) {
+                //传指针地址作为标记，防止持有指针本身拖缓释放时机
                 UIViewController *maynewvc =\
                 (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
                 NSString *vcPtStr =\

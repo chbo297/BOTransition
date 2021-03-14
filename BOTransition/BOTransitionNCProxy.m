@@ -138,6 +138,7 @@
 @property (nonatomic, weak) UINavigationController *navigationController;
 @property (nonatomic, strong) BOTransitioning *transitioning;
 
+//用来抓取viewDidLayoutSubviews方法
 @property (nonatomic, copy) void(^viewDidLayoutSubviewsCallback)(UINavigationController *nc,
 BOOL layoutYESOrCancelNO);
 
