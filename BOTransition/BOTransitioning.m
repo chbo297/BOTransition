@@ -404,11 +404,12 @@ NSDictionary * _Nullable info)> *
 
 @end
 
-const NSNotificationName BOTransitionWillAndMustCompletion =\
-@"BOTransitionWillAndMustCompletion";
 
 const NSNotificationName BOTransitionVCViewDidMoveToContainer =\
 @"BOTransitionVCViewDidMoveToContainer";
+
+const NSNotificationName BOTransitionWillAndMustCompletion =\
+@"BOTransitionWillAndMustCompletion";
 
 static CGFloat sf_default_transition_dur = 0.22f;
 
@@ -710,14 +711,22 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [self.timeRuler removeFromSuperview];
 }
 
+/*
+ 结束时，把图层放置到结束状态
+ */
 - (void)finalViewHierarchy {
+    
     switch (_transitionAct) {
         case BOTransitionActMoveIn: {
-            
+            /*
+             什么也不需要做，moveView在开始时已经移入进来了
+             */
         }
             break;
         case BOTransitionActMoveOut: {
-            [self.moveVC.view removeFromSuperview];
+            /*
+             什么也不需要做，系统会自动在completeTransition方法里把moveView移出
+             */
         }
             break;
         default:

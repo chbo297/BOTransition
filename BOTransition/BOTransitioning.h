@@ -13,8 +13,21 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
+/*
+ BOTransitionVCViewDidMoveToContainer:
+ notification.userInfo:
+ "vc": <如果转场成功，即将展示的VC>
+ */
 UIKIT_EXTERN const NSNotificationName BOTransitionVCViewDidMoveToContainer;
+
+/*
+ BOTransitionWillAndMustCompletion:
+ notification.userInfo:
+ @"finish": @(YES), //YES成功完成，NO被取消(如手势未完成又滑回去了)
+ @"vcPt": <如果转场成功，即将展示的VC的%p字符串>
+ (该notific会在CATransaction的CompletionBlock执行，为了不影响其释放时机，传地址字符串)
+ */
+UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
 @interface BOTransitioning : NSObject <UIViewControllerAnimatedTransitioning, UIViewControllerInteractiveTransitioning>
 
