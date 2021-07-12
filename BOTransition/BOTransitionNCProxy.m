@@ -489,7 +489,13 @@ BOOL layoutYESOrCancelNO);
                     }
                     if (setsuc2) {
                         wkhd.viewDidLayoutSubviewsCallback = nil;
-                        completion(YES, nil);
+                        /*
+                         iOS13以下，LayoutSubviews时机时当前转场可能还没结束，在当前调用push/pop可能会失效。
+                         这里统一放到渲染完成后再调用completion，保障在completion中调用下次push/pop可正常执行
+                         */
+                        [CATransaction setCompletionBlock:^{
+                            completion(YES, nil);
+                        }];
                     }
                 } else {
                     wkhd.viewDidLayoutSubviewsCallback = nil;
