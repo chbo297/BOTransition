@@ -528,7 +528,7 @@
 				DEVELOPMENT_TEAM = 8ED2N2GBR7;
 				GCC_INCREASE_PRECOMPILED_HEADER_SHARING = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = /Users/chengbo/XcodeDocuments/gitDocuments/BOTransitionDemo/BOTransitionDemo/PrefixHeader.pch;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/BOTransitionDemo/PrefixHeader.pch";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/Masonry/Masonry.framework/Headers\"",
@@ -555,7 +555,7 @@
 				DEVELOPMENT_TEAM = 8ED2N2GBR7;
 				GCC_INCREASE_PRECOMPILED_HEADER_SHARING = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = /Users/chengbo/XcodeDocuments/gitDocuments/BOTransitionDemo/BOTransitionDemo/PrefixHeader.pch;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/BOTransitionDemo/PrefixHeader.pch";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/Masonry/Masonry.framework/Headers\"",

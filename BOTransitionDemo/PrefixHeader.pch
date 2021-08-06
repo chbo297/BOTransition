@@ -12,6 +12,6 @@
 // You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
 #import <Masonry/Masonry.h>
 #import "CCUtil.h"
-//#import "BOTransition.h"
+#import "BOTransition.h"
 
 #endif /* PrefixHeader_pch */
