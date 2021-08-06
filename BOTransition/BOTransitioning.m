@@ -15,9 +15,8 @@
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *,
 NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
-BOTransitionElement *transitionItem, BOTransitionInfo transitionInfo,
-NSDictionary * _Nullable info)> *
-> *blockDic;
+                        BOTransitionElement *transitionItem, BOTransitionInfo transitionInfo,
+                        NSDictionary * _Nullable info)> *> *blockDic;
 
 @end
 
@@ -871,9 +870,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
     (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
     NSString *vcPtStr =\
     (maynewvc ? [NSString stringWithFormat:@"%p", maynewvc] : @"");
-    [CATransaction flush];
-    [CATransaction begin];
-    [CATransaction setCompletionBlock:^{
+    //等动画提交并开始渲染后，再通知BOTransitionWillAndMustCompletion，使用addOperationWithBlock可以实现这个时机
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         [[NSNotificationCenter defaultCenter]\
          postNotificationName:BOTransitionWillAndMustCompletion
          object:self
@@ -882,7 +880,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
              @"vcPt": vcPtStr
          }];
     }];
-    [CATransaction commit];
 }
 
 - (void)makeTransitionComplete:(BOOL)didComplete isInteractive:(BOOL)interactive {

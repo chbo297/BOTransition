@@ -140,7 +140,7 @@
 
 //用来抓取viewDidLayoutSubviews方法
 @property (nonatomic, copy) void(^viewDidLayoutSubviewsCallback)(UINavigationController *nc,
-BOOL layoutYESOrCancelNO);
+                                                                 BOOL layoutYESOrCancelNO);
 
 @end
 
@@ -489,11 +489,12 @@ BOOL layoutYESOrCancelNO);
                     }
                     if (setsuc2) {
                         wkhd.viewDidLayoutSubviewsCallback = nil;
+                        
                         /*
-                         iOS13以下，LayoutSubviews时机时当前转场可能还没结束，在当前调用push/pop可能会失效。
-                         这里统一放到渲染完成后再调用completion，保障在completion中调用下次push/pop可正常执行
+                         layoutsubviews时，本次转场似乎还没完全结束，此时在completion中调用push/pop在一些时机下有可能失败
+                         防止外部业务在completion调用push/pop失败，这里放到下一个runloop确保转场结束后再调用completion
                          */
-                        [CATransaction setCompletionBlock:^{
+                        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                             completion(YES, nil);
                         }];
                     }
