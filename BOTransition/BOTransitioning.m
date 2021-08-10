@@ -1822,9 +1822,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
                 NSString *vcPtStr =\
                 (maynewvc ? [NSString stringWithFormat:@"%p", maynewvc] : @"");
-                [CATransaction flush];
-                [CATransaction begin];
-                [CATransaction setCompletionBlock:^{
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                     [[NSNotificationCenter defaultCenter]\
                      postNotificationName:BOTransitionWillAndMustCompletion
                      object:self
@@ -1833,7 +1831,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
                          @"vcPt": vcPtStr
                      }];
                 }];
-                [CATransaction commit];
             }
         }
             break;

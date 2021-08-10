@@ -25,7 +25,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionVCViewDidMoveToContainer;
  notification.userInfo:
  @"finish": @(YES), //YES成功完成，NO被取消(如手势未完成又滑回去了)
  @"vcPt": <如果转场成功，即将展示的VC的%p字符串>
- (该notific会在CATransaction的CompletionBlock执行，为了不影响其释放时机，传地址字符串)
+ (该notific会在转场动画提交执行后的下个runloop执行，为了不影响其释放时机，传地址字符串)
  */
 UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
