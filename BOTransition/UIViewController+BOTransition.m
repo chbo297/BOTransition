@@ -51,4 +51,8 @@
     }
 }
 
+- (void)bo_transitioningWillCompletion:(BOOL)willCompletion userInfo:(NSDictionary *)userInfo {
+    
+}
+
 @end

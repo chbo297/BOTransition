@@ -735,6 +735,48 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [self.timeRuler removeFromSuperview];
 }
 
+- (void)sendWillComplete:(BOOL)willComplete
+                  fromVC:(__weak UIViewController *)fromVC
+                    toVC:(__weak UIViewController *)toVC
+               toVCPtStr:(NSString *)toVCPtStr {
+    if ([fromVC respondsToSelector:@selector(bo_transitioningWillCompletion:userInfo:)]) {
+        [fromVC bo_transitioningWillCompletion:willComplete userInfo:nil];
+    }
+    if ([toVC respondsToSelector:@selector(bo_transitioningWillCompletion:userInfo:)]) {
+        [toVC bo_transitioningWillCompletion:willComplete userInfo:nil];
+    }
+    
+    [[NSNotificationCenter defaultCenter]\
+     postNotificationName:BOTransitionWillAndMustCompletion
+     object:self
+     userInfo:@{
+         @"finish": @(willComplete),
+         @"vcPt": toVCPtStr ? : @""
+     }];
+}
+
+- (void)transitionAnimationDidEmit:(BOOL)willComplete {
+    __weak UIViewController *fromvc;
+    __weak UIViewController *tovc;
+    if (self.transitionAct == BOTransitionActMoveIn) {
+        fromvc = self.baseVC;
+        tovc = self.moveVC;
+    } else {
+        fromvc = self.moveVC;
+        tovc = self.baseVC;
+    }
+    
+    //传递内存地址作为标记信息，不传指针是为了防止CompletionBlock延缓释放时机
+    NSString *vcPtStr =\
+    (tovc ? [NSString stringWithFormat:@"%p", tovc] : @"");
+    
+    //传弱指针是为了不影响释放时机
+    //等提交的动画开始渲染后，再通知BOTransitionWillAndMustCompletion，使用addOperationWithBlock可以实现这个时机
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [self sendWillComplete:willComplete fromVC:fromvc toVC:tovc toVCPtStr:vcPtStr];
+    }];
+}
+
 // This method can only  be a nop if the transition is interactive and not a percentDriven interactive transition.
 - (void)animateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     if (![self setupTransitionContext:transitionContext interactive:NO]) {
@@ -865,21 +907,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
         [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
     }];
     
-    //传递内存地址作为标记信息，不传指针是为了防止CompletionBlock延缓释放时机
-    UIViewController *maynewvc =\
-    (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
-    NSString *vcPtStr =\
-    (maynewvc ? [NSString stringWithFormat:@"%p", maynewvc] : @"");
-    //等动画提交并开始渲染后，再通知BOTransitionWillAndMustCompletion，使用addOperationWithBlock可以实现这个时机
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        [[NSNotificationCenter defaultCenter]\
-         postNotificationName:BOTransitionWillAndMustCompletion
-         object:self
-         userInfo:@{
-             @"finish": @(YES),
-             @"vcPt": vcPtStr
-         }];
-    }];
+    [self transitionAnimationDidEmit:YES];
 }
 
 - (void)makeTransitionComplete:(BOOL)didComplete isInteractive:(BOOL)interactive {
@@ -1816,21 +1844,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
             
             if (self.moveVCConfig.allowInteractionInAnimating) {
                 [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
-            } else if (BOTransitionTypeNavigation == self.transitionType) {
-                //传指针地址作为标记，防止持有指针本身拖缓释放时机
-                UIViewController *maynewvc =\
-                (self.transitionAct == BOTransitionActMoveIn ? self.moveVC : self.baseVC);
-                NSString *vcPtStr =\
-                (maynewvc ? [NSString stringWithFormat:@"%p", maynewvc] : @"");
-                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                    [[NSNotificationCenter defaultCenter]\
-                     postNotificationName:BOTransitionWillAndMustCompletion
-                     object:self
-                     userInfo:@{
-                         @"finish": @(cancomplete),
-                         @"vcPt": vcPtStr
-                     }];
-                }];
+            } else {
+                [self transitionAnimationDidEmit:cancomplete];
             }
         }
             break;
