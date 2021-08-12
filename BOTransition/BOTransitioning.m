@@ -739,11 +739,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
                   fromVC:(__weak UIViewController *)fromVC
                     toVC:(__weak UIViewController *)toVC
                toVCPtStr:(NSString *)toVCPtStr {
-    if ([fromVC respondsToSelector:@selector(bo_transitioningWillCompletion:userInfo:)]) {
-        [fromVC bo_transitioningWillCompletion:willComplete userInfo:nil];
+    if ([fromVC respondsToSelector:@selector(bo_transitionWillCompletion:userInfo:)]) {
+        [fromVC bo_transitionWillCompletion:willComplete userInfo:nil];
     }
-    if ([toVC respondsToSelector:@selector(bo_transitioningWillCompletion:userInfo:)]) {
-        [toVC bo_transitioningWillCompletion:willComplete userInfo:nil];
+    if ([toVC respondsToSelector:@selector(bo_transitionWillCompletion:userInfo:)]) {
+        [toVC bo_transitionWillCompletion:willComplete userInfo:nil];
     }
     
     [[NSNotificationCenter defaultCenter]\
