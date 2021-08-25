@@ -289,8 +289,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 
                 [_touchInfoAr addObject:@((CGRect){locpt, [NSDate date].timeIntervalSince1970, 0})];
                 
-                if (_touchInfoAr.count > 6) {
-                    [_touchInfoAr removeObjectAtIndex:1];
+                if (_touchInfoAr.count > 9) {
+                    [_touchInfoAr removeObjectAtIndex:2];
                 }
                 
                 self.originState = state;
@@ -305,8 +305,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 CGPoint locpt = [touch locationInView:self.view];
                 [_touchInfoAr addObject:@((CGRect){locpt, [NSDate date].timeIntervalSince1970, 0})];
                 
-                if (_touchInfoAr.count > 3) {
-                    [_touchInfoAr removeObjectAtIndex:1];
+                if (_touchInfoAr.count > 9) {
+                    [_touchInfoAr removeObjectAtIndex:2];
                 }
                 
                 self.originState = state;
@@ -876,92 +876,154 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         return 0;
     }
     
-    CGFloat onepixel = (1.f / [UIScreen mainScreen].scale);
-    
     __block BOOL hasscroll = NO;
     __block BOOL hasbounces = NO;
     [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        BOOL gesvalid = NO;
         switch (obj.panGestureRecognizer.state) {
-            case UIGestureRecognizerStateCancelled:
-            case UIGestureRecognizerStateEnded:
-            case UIGestureRecognizerStateFailed:
-                return;
+            case UIGestureRecognizerStateBegan:
+            case UIGestureRecognizerStateChanged:
+                gesvalid = YES;
+                break;
             default:
                 break;
         }
+        
+        if (!gesvalid) {
+            return;
+        }
+        
         UIEdgeInsets insets = sf_common_contentInset(obj);
         CGSize contentsz = obj.contentSize;
         CGPoint offset = obj.contentOffset;
         CGSize boundsz = obj.bounds.size;
         switch (gesDirection) {
             case UISwipeGestureRecognizerDirectionUp:
-                if ((contentsz.height + insets.bottom)
-                    >
-                    (offset.y + boundsz.height + onepixel)) {
-                    hasscroll = YES;
-                    *stop = YES;
-                } else if (obj.bounces) {
-                    if (obj.alwaysBounceVertical) {
-                        hasbounces = YES;
+                if (contentsz.height + insets.top + insets.bottom > boundsz.height) {
+                    //上下能正常滚动
+                    if ((offset.y + boundsz.height) < (contentsz.height + insets.bottom)) {
+                        //能正常响应
+                        hasscroll = YES;
                     } else {
-                        if (contentsz.height + insets.top + insets.bottom > boundsz.height) {
+                        //不能响应了，需要bounces
+                        if (obj.bounces) {
+                            hasbounces = YES;
+                        } else {
+                            //不能响应
+                        }
+                    }
+                } else {
+                    //上下不能正常滚动
+                    if (obj.bounces && obj.alwaysBounceVertical) {
+                        //可bounces
+                        if (offset.y < -insets.top) {
+                            //在头部bounces中，向上滑是正常恢复的方向，判定为正常滑动
+                            hasscroll = YES;
+                        } else {
+                            //正常状态或底部bounces状态，向上滑是bounces行为
                             hasbounces = YES;
                         }
+                    } else {
+                        //不可bounces，什么也不能响应
                     }
                 }
                 break;
             case UISwipeGestureRecognizerDirectionDown:
-                if (offset.y
-                    >
-                    (-insets.top + onepixel)) {
-                    hasscroll = YES;
-                    *stop = YES;
-                } else if (obj.bounces) {
-                    if (obj.alwaysBounceVertical) {
-                        hasbounces = YES;
+                if (contentsz.height + insets.top + insets.bottom > boundsz.height) {
+                    //上下能正常滚动
+                    if (offset.y > -insets.top) {
+                        //能正常响应
+                        hasscroll = YES;
                     } else {
-                        if (contentsz.height + insets.top + insets.bottom > boundsz.height) {
+                        //不能响应了，需要bounces
+                        if (obj.bounces) {
+                            hasbounces = YES;
+                        } else {
+                            //不能响应
+                        }
+                    }
+                } else {
+                    //上下不能正常滚动
+                    if (obj.bounces && obj.alwaysBounceVertical) {
+                        //可bounces
+                        if (offset.y > -insets.top) {
+                            //在底部bounces中，向下滑是正常恢复的方向，判定为正常滑动
+                            hasscroll = YES;
+                        } else {
+                            //正常状态或头部bounces状态，向下滑是bounces行为
                             hasbounces = YES;
                         }
+                    } else {
+                        //不可bounces，什么也不能响应
                     }
                 }
                 break;
             case UISwipeGestureRecognizerDirectionLeft:
-                if ((contentsz.width + insets.right)
-                    >
-                    (offset.x + boundsz.width + onepixel)) {
-                    hasscroll = YES;
-                    *stop = YES;
-                } else if (obj.bounces) {
-                    if (obj.alwaysBounceHorizontal) {
-                        hasbounces = YES;
+                if (contentsz.width + insets.left + insets.right > boundsz.width) {
+                    //左右能正常滚动
+                    if ((offset.x + boundsz.width) < (contentsz.width + insets.right)) {
+                        //能正常响应
+                        hasscroll = YES;
                     } else {
-                        if (contentsz.width + insets.left + insets.right > boundsz.width) {
+                        //不能响应了，需要bounces
+                        if (obj.bounces) {
+                            hasbounces = YES;
+                        } else {
+                            //不能响应
+                        }
+                    }
+                } else {
+                    //左右不能正常滚动
+                    if (obj.bounces && obj.alwaysBounceHorizontal) {
+                        //可bounces
+                        if (offset.x < -insets.left) {
+                            //在左侧bounces中，向左滑是正常恢复的方向，判定为正常滑动
+                            hasscroll = YES;
+                        } else {
+                            //正常状态或底部bounces状态，向上滑是bounces行为
                             hasbounces = YES;
                         }
+                    } else {
+                        //不可bounces，什么也不能响应
                     }
                 }
                 break;
             case UISwipeGestureRecognizerDirectionRight:
-                if (offset.x
-                    >
-                    (-insets.left + onepixel)) {
-                    hasscroll = YES;
-                    *stop = YES;
-                } else if (obj.bounces) {
-                    if (obj.alwaysBounceHorizontal) {
-                        hasbounces = YES;
+                if (contentsz.width + insets.left + insets.right > boundsz.width) {
+                    //左右能正常滚动
+                    if (offset.x > -insets.left) {
+                        //能正常响应
+                        hasscroll = YES;
                     } else {
-                        if (contentsz.width + insets.left + insets.right > boundsz.width) {
+                        //不能响应了，需要bounces
+                        if (obj.bounces) {
+                            hasbounces = YES;
+                        } else {
+                            //不能响应
+                        }
+                    }
+                } else {
+                    //左右不能正常滚动
+                    if (obj.bounces && obj.alwaysBounceHorizontal) {
+                        //可bounces
+                        if (offset.x > -insets.left) {
+                            //在底部bounces中，向下滑是正常恢复的方向，判定为正常滑动
+                            hasscroll = YES;
+                        } else {
+                            //正常状态或头部bounces状态，向下滑是bounces行为
                             hasbounces = YES;
                         }
+                    } else {
+                        //不可bounces，什么也不能响应
                     }
                 }
                 break;
             default:
                 break;
         }
+        
     }];
+    
     if (hasscroll) {
         return 2;
     } else if (hasbounces) {
