@@ -7,6 +7,7 @@
 //
 
 #import "BOTransitionPanGesture.h"
+#import "BOTransitionUtility.h"
 
 static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) {
     if (@available(iOS 11.0, *)) {
@@ -152,6 +153,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (_careOtherDic) {
         [_careOtherDic removeAllObjects];
     }
+    
+    [_userInfo removeAllObjects];
 }
 
 - (void)makeGesStateCanceledButCanRetryBegan {
@@ -433,7 +436,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }];
     }
     
-    if (shouldbegin) {
+    if (nil != shouldbegin) {
         if (shouldbegin.boolValue) {
             [self correctAndSaveCurSVOffsetSugDirection:drinfo.mainDirection];
             [self beganTransitionGesState];
@@ -1017,6 +1020,47 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     [_touchInfoAr insertObject:@((CGRect){beganPt, CGSizeZero}) atIndex:0];
 }
 
+- (BOOL)calculateIfMarginTrigger {
+    /*
+     边缘手势判定，需要满足：
+     1.从屏幕边缘滑入
+     2.没有被其它scrollView提前响应过
+     3.方向是左边或右边
+     */
+    BOTransitionPanGesture *ges = self;
+    BOOL ismargin = NO;
+    if (!ges.delayTrigger
+        && UIGestureRecognizerStatePossible == self.transitionGesState) {
+        CGPoint pt1 = ges.touchInfoAr.firstObject.CGRectValue.origin;
+        CGPoint ptmaybegan = pt1;
+        if (ges.touchInfoAr.count >= 2) {
+            CGPoint pt2 = ges.touchInfoAr[1].CGRectValue.origin;
+            ptmaybegan.x = [BOTransitionUtility lerpV0:pt1.x v1:pt2.x t:-1];
+            ptmaybegan.y = [BOTransitionUtility lerpV0:pt1.y v1:pt2.y t:-1];
+        }
+        
+        CGFloat marginres = 27;
+        switch (ges.triggerDirectionInfo.mainDirection) {
+            case UISwipeGestureRecognizerDirectionLeft:
+                if (ptmaybegan.x
+                    >=
+                    CGRectGetMaxX(ges.view.bounds) - marginres) {
+                    ismargin = YES;
+                }
+                break;
+            case UISwipeGestureRecognizerDirectionRight:
+                if (ptmaybegan.x <= CGRectGetMinX(ges.view.bounds) + marginres) {
+                    ismargin = YES;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    
+    return ismargin;
+}
+
 + (BOOL)tryMakeGesFail:(UIGestureRecognizer *)gesShouldFail
                  byGes:(UIGestureRecognizer *)ges
                  force:(BOOL)force {
@@ -1025,7 +1069,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         if (gesShouldFail.delegate &&
             [gesShouldFail.delegate respondsToSelector:@selector(gestureRecognizer:shouldRecognizeSimultaneouslyWithGestureRecognizer:)]) {
             shouldSimultaneously = [gesShouldFail.delegate gestureRecognizer:gesShouldFail
-                shouldRecognizeSimultaneouslyWithGestureRecognizer:ges];
+                          shouldRecognizeSimultaneouslyWithGestureRecognizer:ges];
         }
     }
     

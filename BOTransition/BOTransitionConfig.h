@@ -48,7 +48,8 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
 @property (nonatomic, weak) id<BOTransitionEffectControl> baseVCDelegate;
 
 /*
- BOTransitionConfig是附在一个VC上1对1的，configDelegate可以提供一些关于该VC的配置信息
+ BOTransitionConfig是附在一个VC上1对1的，configDelegate可以提供一些关于该VC的配置信息，若VC有BOTransitionConfig，但configDelegate是nil
+ 组件会自动尝试把vc当做configDelegate执行代理方法
  */
 @property (nonatomic, weak) id<BOTransitionConfigDelegate> configDelegate;
 
@@ -106,27 +107,29 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
  */
 @property (nonatomic, strong, nullable) NSDictionary *moveOutEffectConfigForInteractive;
 
+@property (nonatomic, strong, nullable) NSDictionary *moveInEffectConfigForInteractive;
+
 + (NSDictionary *)effectDicForEffect:(BOTransitionEffect)transitionEffect;
 
 /*
- 支持的moveOut弹出手势方向
- 比如想同时支持右滑和下滑可以设置为：
- UISwipeGestureRecognizerDirectionRight|UISwipeGestureRecognizerDirectionDown
- (考虑到moveIn的一般是比较个性化的手势需求，使用configDelegate去定义，不支持快捷属性)
- default: UISwipeGestureRecognizerDirectionRight
+ 附着在本config所属的vc上的手势转场，一个NSDictionary代表一个手势方向和对应的事件（比如弹出页面，或者弹出页面）
+ direction: UISwipeGestureRecognizerDirection(NSUInteger) //触发的方向
+ margin: @(YES/NO) nil=NO //是否必须在边缘开始, YES时会优先其他scrollView进行相应
+ allowBeganWithOtherSVBounces: @(YES/NO)
+ act: @(1/2) 1moveout(把当前vc关闭)  2movein（从当前vc弹出一个新vc）
  */
-@property (nonatomic, assign) UISwipeGestureRecognizerDirection moveOutGesDirection;
+@property (nonatomic, readonly, nullable) NSMutableArray<NSDictionary *> *gesInfoAr;
 
-/*
- YES: 严格的手势触发条件，手势的开始位置必须在屏幕边缘，手势的开始方向必须与trigger方向相同，
- 手势开始后，不触发或取消页面内其他手势，YES只支出UISwipeGestureRecognizerDirectionLeft和Right，因为上下有系统的浮窗
- NO : 宽松的手势触发条件，只要在手势过程中有moveOutGesDirection的方向即可触发转场，
- 与页面内其他手势不互斥，可以先完成页面内的scrollView的滑动，再触发moveOut手势
- default: YES
- 
- note: YES时moveOutGesDirection必须是横向的，因为会判断屏幕边缘滑入，从上或从下滑入就和系统的面板冲突了。
- */
-@property (nonatomic, assign) UISwipeGestureRecognizerDirection moveOutSeriousGesDirection;
+- (void)addGesInfoMoveOut:(BOOL)moveOut
+                direction:(UISwipeGestureRecognizerDirection)direction
+            seriousMargin:(BOOL)seriousMargin
+                 userInfo:(nullable NSDictionary *)userInfo;
+
+//移除指定手势
+- (void)removeGesInfo:(NSDictionary *)gesInfo;
+
+//移除所有的moveout/movein手势
+- (void)removeGesInfoWithMoveOut:(BOOL)moveOut;
 
 /*
  如果修改了bo_transitionConfig中的applyToModalPresentation/presentoverTheContext值，

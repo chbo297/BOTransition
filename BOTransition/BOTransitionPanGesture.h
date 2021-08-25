@@ -70,6 +70,7 @@ typedef struct BOTransitionPanGestureBrief {
 
 //首次产生滑动方向时的信息
 @property (nonatomic, readonly) BOTransitionGesSliceInfo initialDirectionInfo;
+
 /*
  排除其他scrollView影响后，真正触发本手势时的方向信息，
  若没有其他scrollView影响时
@@ -79,6 +80,9 @@ typedef struct BOTransitionPanGestureBrief {
 @property (nonatomic, readonly) BOTransitionGesSliceInfo triggerDirectionInfo;
 
 @property (nonatomic, readonly) NSMutableArray<NSValue *> *touchInfoAr;
+
+//判断当前是否从变化划入触发的
+- (BOOL)calculateIfMarginTrigger;
 
 //BOTransitionGesDirection array
 @property (nonatomic, readonly) NSSet<NSNumber *> *otherSVRespondedDirectionRecord;

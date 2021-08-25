@@ -25,6 +25,8 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
 
 @interface BOTransitionConfig ()
 
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *gesInfoAr;
+
 @end
 
 @implementation BOTransitionConfig
@@ -74,8 +76,6 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _moveOutGesDirection = 0;
-        _moveOutSeriousGesDirection = 0;
         _applyToModalPresentation = YES;
     }
     return self;
@@ -92,7 +92,10 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionRight
+                                seriousMargin:YES
+                                     userInfo:nil];
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -105,7 +108,7 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = 0;
+                    
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -128,7 +131,10 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionRight
+                                seriousMargin:YES
+                                     userInfo:nil];
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -149,7 +155,10 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionRight
+                                seriousMargin:YES
+                                     userInfo:nil];
                 },
         },
         
@@ -175,7 +184,10 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionRight
+                                seriousMargin:YES
+                                     userInfo:nil];
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -188,7 +200,10 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
-                    config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionRight
+                                seriousMargin:YES
+                                     userInfo:nil];
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -225,13 +240,69 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
     if (infoDic.count > 0) {
         NSNumber *gesTriggerDirectionval = infoDic[@"gesTriggerDirection"];
         if (nil != gesTriggerDirectionval) {
-            self.moveOutGesDirection = gesTriggerDirectionval.unsignedIntegerValue;
+            [self addGesInfoMoveOut:YES
+                          direction:gesTriggerDirectionval.unsignedIntegerValue
+                      seriousMargin:NO userInfo:nil];
         }
         
         void (^configblock)(BOTransitionConfig *config) = infoDic[@"configBlock"];
         if (configblock) {
             configblock(self);
         }
+    }
+}
+
+- (void)addGesInfoMoveOut:(BOOL)moveOut
+                direction:(UISwipeGestureRecognizerDirection)direction
+            seriousMargin:(BOOL)seriousMargin
+                 userInfo:(NSDictionary *)userInfo {
+    if (!_gesInfoAr) {
+        _gesInfoAr = @[].mutableCopy;
+    }
+    
+    NSMutableDictionary *mudic = @{
+        @"act": @(moveOut ? 1 : 2),
+        @"direction": @(direction),
+        @"margin": @(seriousMargin)
+    }.mutableCopy;
+    
+    if (userInfo
+        && userInfo.count > 0) {
+        [mudic addEntriesFromDictionary:userInfo];
+    }
+    
+    [_gesInfoAr addObject:mudic];
+}
+
+- (void)removeGesInfoWithMoveOut:(BOOL)moveOut {
+    NSMutableArray *toremovear = @[].mutableCopy;
+    
+    NSInteger removeact = moveOut ? 1 : 2;
+    [_gesInfoAr enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSNumber *actnum = [obj objectForKey:@"act"];
+        if (nil != actnum
+            && actnum.integerValue == removeact) {
+            [toremovear addObject:obj];
+        }
+    }];
+    
+    if (toremovear.count > 0) {
+        [_gesInfoAr removeObjectsInArray:toremovear];
+    }
+    
+    if (0 == _gesInfoAr.count) {
+        _gesInfoAr = nil;
+    }
+}
+
+- (void)removeGesInfo:(NSDictionary *)gesInfo {
+    if (!gesInfo) {
+        return;
+    }
+    
+    [_gesInfoAr removeObject:gesInfo];
+    if (0 == _gesInfoAr.count) {
+        _gesInfoAr = nil;
     }
 }
 

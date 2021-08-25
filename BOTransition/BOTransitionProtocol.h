@@ -71,16 +71,44 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (CGFloat)bo_transitioningDistanceCoefficient:(UISwipeGestureRecognizerDirection)direction;
 
+/*
+ 根据当前的ges计算转场的进度，若实现，可以介入和指定percent。不实现或返回nil时使用内置默认行为
+ return @(CGFloat)
+ */
+- (NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning
+                                 gesture:(BOTransitionPanGesture *)gesture;
+
+/*
+ 控制当前percent和手势是否应该完成转场或是取消转场，不实现或返回nil时使用内置默认行为
+ @intentComplete 手势有速度时，会给出一个倾向性的建议，倾向结束@(YES) 倾向取消@(NO), 无速度或速度很小无倾向nil
+ @return @(BOOL)
+ */
+- (NSNumber *)bo_transitioningShouldFinish:(BOTransitioning *)transitioning
+                           percentComplete:(CGFloat)percentComplete
+                            intentComplete:(NSNumber *)intentComplete
+                                   gesture:(BOTransitionPanGesture *)gesture;
+
 @end
 
 @protocol BOTransitionConfigDelegate <BOTransitionEffectControl>
 
 @optional
 
-//当该手势触发时，是否需要以该手势为交互，用transitionType展示某个VC
-- (UIViewController *)bo_trans_moveInVCWithGes:(BOTransitionPanGesture *)gesture
-                                transitionType:(BOTransitionType)transitionType
-                                       subInfo:(nullable NSDictionary *)subInfo;
+/*
+ 当该手势触发时，是否需要以该手势为交互，用transitionType展示某个VC
+ return param:
+ 
+ vc/moveInBlock二选一，都选优先vc
+ {
+ vc: 要入场的vc，
+ moveInBlock: ^{
+ //如果业务方去自己pushvc，请在这个block中保障pushVC、present等的调用
+ }
+ }
+ */
+- (NSDictionary *)bo_trans_moveInVCWithGes:(BOTransitionPanGesture *)gesture
+                            transitionType:(BOTransitionType)transitionType
+                                   subInfo:(nullable NSDictionary *)subInfo;
 
 /*
  当该手势触发时，是否需要退场该viewController
