@@ -35,7 +35,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 //保存正在响应手势的UIScrollView，对它们的状态进行检测来判断是否应该开始dismiss
 @property (nonatomic, strong) NSMutableArray<UIScrollView *> *currPanScrollVAr;
 @property (nonatomic, strong) NSMutableArray<NSValue *> *currPanScrollVSavOffsetAr;
-@property (nonatomic, assign) BOOL beganWithOtherSVBounces;
+@property (nonatomic, assign) BOOL beganWithSVBounces;
 
 @property (nonatomic, assign) BOTransitionPanGestureBrief lastGesBrief;
 @property (nonatomic, assign) BOOL needsRecoverWhenTouchDown;
@@ -147,7 +147,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     //这个不用频繁释放了吧
     //    _otherGesWillExecSimultaneouslyStrategy = nil;
     
-    _beganWithOtherSVBounces = NO;
+    _beganWithSVBounces = NO;
     [self clearCurrSVRecord];
     
     if (_careOtherDic) {
@@ -174,7 +174,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     [_currPanScrollVSavOffsetAr removeAllObjects];
     [_otherSVRespondedDirectionRecord removeAllObjects];
     _delayTrigger = NO;
-    _beganWithOtherSVBounces = NO;
+    _beganWithSVBounces = NO;
 }
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer {
@@ -271,7 +271,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 }];
                 
                 if ([self currPanSVInBounces]) {
-                    _beganWithOtherSVBounces = YES;
+                    _beganWithSVBounces = YES;
                 }
             } else {
                 return;

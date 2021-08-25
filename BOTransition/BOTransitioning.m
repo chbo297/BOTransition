@@ -1321,10 +1321,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 2 != otherSVResponseval.integerValue) {
                 //没有其他scrollview相应，或者响应到底或者bounces了，可以实施其他手势了
                 
-                BOOL allowBeganWithOtherSVBounces = NO;
-                NSNumber *allowBeganWithOtherSVBouncesnum = [gesinfo objectForKey:@"allowBeganWithOtherSVBounces"];
-                if (nil != allowBeganWithOtherSVBouncesnum) {
-                    allowBeganWithOtherSVBounces = allowBeganWithOtherSVBouncesnum.boolValue;
+                BOOL allowBeganWithSVBounces = NO;
+                NSNumber *allowBeganWithSVBouncesnum = [gesinfo objectForKey:@"allowBeganWithSVBounces"];
+                if (nil != allowBeganWithSVBouncesnum) {
+                    allowBeganWithSVBounces = allowBeganWithSVBouncesnum.boolValue;
                 }
                 
                 UISwipeGestureRecognizerDirection verd =\
@@ -1337,8 +1337,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
                  方向相符
                  起始横竖和触发横竖相符
                  */
-                if ((!ges.beganWithOtherSVBounces
-                     || allowBeganWithOtherSVBounces)
+                if ((!ges.beganWithSVBounces
+                     || allowBeganWithSVBounces)
                     && (ges.triggerDirectionInfo.mainDirection & regdirection) > 0
                     && initialisVertical == triggerisVertical) {
                     

@@ -87,7 +87,7 @@ typedef struct BOTransitionPanGestureBrief {
 //BOTransitionGesDirection array
 @property (nonatomic, readonly) NSSet<NSNumber *> *otherSVRespondedDirectionRecord;
 @property (nonatomic, readonly) BOOL delayTrigger;
-@property (nonatomic, readonly) BOOL beganWithOtherSVBounces;
+@property (nonatomic, readonly) BOOL beganWithSVBounces;
 
 @property (nonatomic, readonly) UIGestureRecognizerState transitionGesState;
 

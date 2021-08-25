@@ -115,7 +115,7 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
  附着在本config所属的vc上的手势转场，一个NSDictionary代表一个手势方向和对应的事件（比如弹出页面，或者弹出页面）
  direction: UISwipeGestureRecognizerDirection(NSUInteger) //触发的方向
  margin: @(YES/NO) nil=NO //是否必须在边缘开始, YES时会优先其他scrollView进行相应
- allowBeganWithOtherSVBounces: @(YES/NO)
+ allowBeganWithSVBounces: @(YES/NO)
  act: @(1/2) 1moveout(把当前vc关闭)  2movein（从当前vc弹出一个新vc）
  */
 @property (nonatomic, readonly, nullable) NSMutableArray<NSDictionary *> *gesInfoAr;
