@@ -1483,6 +1483,18 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 NSDictionary *moveindic = [configdelegate bo_trans_moveInVCWithGes:ges
                                                                     transitionType:self.transitionType
                                                                            subInfo:subInfo];
+                if (!moveindic
+                    || 0 == moveindic.count) {
+                    return nil;
+                }
+                
+                NSString *actstr = [moveindic objectForKey:@"act"];
+                if (actstr
+                    && [actstr isEqualToString:@"fail"]) {
+                    //显式cancel
+                    return @(NO);
+                }
+                
                 moveInVC = [moveindic objectForKey:@"vc"];
                 __weak typeof(self) ws = self;
                 if (moveInVC
@@ -1522,7 +1534,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                         [ges.userInfo setObject:validgesinfo ? : @{} forKey:@"triggerGesInfo"];
                         return @(YES);
                     } else {
-                        return @(NO);
+                        return nil;
                     }
                 }
                 
