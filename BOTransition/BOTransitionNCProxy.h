@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class BOTransitioning;
 @interface BOTransitionNCProxy : NSProxy <UINavigationControllerDelegate, UIGestureRecognizerDelegate>
 
+//转场执行者
 @property (nonatomic, readonly) BOTransitioning *transitioning;
 
 /*
@@ -47,6 +48,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
+                completion:(void (^ _Nullable)(BOOL finish, NSDictionary * _Nullable info))completion;
+
+- (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
+                  animated:(BOOL)animated
+                  userInfo:(nullable NSDictionary *)userInfo
                 completion:(void (^ _Nullable)(BOOL finish, NSDictionary * _Nullable info))completion;
 
 @end

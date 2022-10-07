@@ -29,7 +29,7 @@ typedef NS_ENUM(NSUInteger, BOTransitionStep) {
     BOTransitionStepInitialAnimatableProperties,
     BOTransitionStepTransitioning,
     BOTransitionStepFinalAnimatableProperties,
-    BOTransitionStepCompleted,
+    BOTransitionStepFinished,
     BOTransitionStepCancelled,
     
     BOTransitionStepInteractiveEnd,
@@ -68,25 +68,27 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*
  不实现的默认情况下，竖滑整个container高代表全程，横滑整个container的宽代表全程
+ return @(CGFloat)
  */
-- (CGFloat)bo_transitioningDistanceCoefficient:(UISwipeGestureRecognizerDirection)direction;
+- (nullable NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
+              distanceCoefficientForGes:(BOTransitionPanGesture *)gesture;
 
 /*
  根据当前的ges计算转场的进度，若实现，可以介入和指定percent。不实现或返回nil时使用内置默认行为
  return @(CGFloat)
  */
-- (NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning
-                                 gesture:(BOTransitionPanGesture *)gesture;
+- (nullable NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning
+                                          gesture:(BOTransitionPanGesture *)gesture;
 
 /*
  控制当前percent和手势是否应该完成转场或是取消转场，不实现或返回nil时使用内置默认行为
  @intentComplete 手势有速度时，会给出一个倾向性的建议，倾向结束@(YES) 倾向取消@(NO), 无速度或速度很小无倾向nil
  @return @(BOOL)
  */
-- (NSNumber *)bo_transitioningShouldFinish:(BOTransitioning *)transitioning
-                           percentComplete:(CGFloat)percentComplete
-                            intentComplete:(NSNumber *)intentComplete
-                                   gesture:(BOTransitionPanGesture *)gesture;
+- (nullable NSNumber *)bo_transitioningShouldFinish:(BOTransitioning *)transitioning
+                                    percentComplete:(CGFloat)percentComplete
+                                     intentComplete:(NSNumber *)intentComplete
+                                            gesture:(BOTransitionPanGesture *)gesture;
 
 @end
 
@@ -103,12 +105,15 @@ NS_ASSUME_NONNULL_BEGIN
  vc: 要入场的vc，
  moveInBlock: ^{
  //如果业务方去自己pushvc，请在这个block中保障pushVC、present等的调用
+ },
+ act: @"fail" 手势判定不符合，直接cancel该手势
  }
- }
+ 
+ 返回nil或nsdictionary没内容时，不做任何操作，不cancel手势，允许手势变化时再询问
  */
-- (NSDictionary *)bo_trans_moveInVCWithGes:(BOTransitionPanGesture *)gesture
-                            transitionType:(BOTransitionType)transitionType
-                                   subInfo:(nullable NSDictionary *)subInfo;
+- (nullable NSDictionary *)bo_trans_moveInVCWithGes:(BOTransitionPanGesture *)gesture
+                                     transitionType:(BOTransitionType)transitionType
+                                            subInfo:(nullable NSDictionary *)subInfo;
 
 /*
  当该手势触发时，是否需要退场该viewController

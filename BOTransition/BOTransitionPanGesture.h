@@ -36,8 +36,22 @@ typedef struct BOTransitionPanGestureBrief {
  
  @{
  @"type": @"needsRecoverWhenTouchDown",
- @"otherSVResponse": @(type) 0 不能滑动 不能bounces  1 for bounces  2 normal scroll  当前方向上其它ScrollView的响应情况
+ @"otherSVResponse": @{info: @(CGPoint), gesAr: NSHashTable<UIGestureRecognizer>}见下述
  }
+ 
+ @{info: @(CGPoint), gesAr: NSHashTable<UIGestureRecognizer>}
+  一次只支持传一个方向
+  info {x, y}
+  x:
+  0 不能滑动 不能bounces
+  1 for  bounces
+  2 normal scroll
+  
+  y:
+  1 手势是可能的状态
+  2 手势明确启动了
+  
+ gesAr: NSHashTable<UIGestureRecognizer>
  */
 - (nullable NSNumber *)boTransitionGesShouldAndWillBegin:(BOTransitionPanGesture *)ges
                                                  subInfo:(nullable NSDictionary *)subInfo;
@@ -45,19 +59,21 @@ typedef struct BOTransitionPanGestureBrief {
 - (void)boTransitionGesStateDidChange:(BOTransitionPanGesture *)ges;
 
 /*
- 0: 共存
+ 0: 默认（ges内置会共存），不做处理
  1: ges优先
  2: otherGes优先
  3: 不判断，保留原有优先级
+ 4: ges优先并强制fail掉other
  */
 - (NSInteger)boTransitionGRStrategyForGes:(BOTransitionPanGesture *)ges
                                  otherGes:(UIGestureRecognizer *)otherGes;
 
 /*
  用来处理nc嵌套nc之类的情况，两个转场手势的冲突处理
+ 0 默认行为（内置会根据一些策略fail掉其中一个），不做处理
  1 保留ges
  2 保留otherges
- 0 没有判断出结果
+ 
  */
 - (NSInteger)checkTransitionGes:(UIGestureRecognizer *)tGes
              otherTransitionGes:(UIGestureRecognizer *)otherTGes
@@ -79,13 +95,31 @@ typedef struct BOTransitionPanGestureBrief {
  */
 @property (nonatomic, readonly) BOTransitionGesSliceInfo triggerDirectionInfo;
 
+/*
+ CGRect
+ x, y, 时间戳, 0
+ */
 @property (nonatomic, readonly) NSMutableArray<NSValue *> *touchInfoAr;
 
 //判断当前是否从变化划入触发的
 - (BOOL)calculateIfMarginTrigger;
 
-//BOTransitionGesDirection array
-@property (nonatomic, readonly) NSSet<NSNumber *> *otherSVRespondedDirectionRecord;
+/*
+ @(UISwipeGestureRecognizerDirection): @{info: @(CGPoint), gesAr: NSHashTable<UIGestureRecognizer>}
+ 
+  info {x, y}
+  x:
+  0 不能滑动 不能bounces
+  1 for  bounces
+  2 normal scroll
+  
+  y:
+  1 手势是可能的状态
+  2 手势明确启动了
+  
+ gesAr: NSHashTable<UIGestureRecognizer>
+ */
+@property (nonatomic, readonly, nonnull) NSDictionary<NSNumber *, NSDictionary *> *otherSVRespondedDirectionRecord;
 @property (nonatomic, readonly) BOOL delayTrigger;
 @property (nonatomic, readonly) BOOL beganWithSVBounces;
 

@@ -7,7 +7,6 @@
 //
 
 #import "BOTransitionEffectElementExpensionImp.h"
-#import "BOTransitioning.h"
 
 @implementation BOTransitionEffectElementExpensionImp
 
@@ -19,20 +18,21 @@
     };
 }
 
-- (CGFloat)bo_transitioningDistanceCoefficient:(UISwipeGestureRecognizerDirection)direction {
-    switch (direction) {
+- (NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
+     distanceCoefficientForGes:(BOTransitionPanGesture *)gesture {
+    switch (gesture.triggerDirectionInfo.mainDirection) {
         case UISwipeGestureRecognizerDirectionUp:
-            return 0.84;
+            return @(0.84);
         case UISwipeGestureRecognizerDirectionLeft:
-            return 1;
+            return @(1);
         case UISwipeGestureRecognizerDirectionDown:
-            return 0.84;
+            return @(0.84);
         case UISwipeGestureRecognizerDirectionRight:
-            return 1;
+            return @(1);
         default:
             break;
     }
-    return 0;
+    return nil;
 }
 
 - (void)bo_transitioning:(BOTransitioning *)transitioning
@@ -92,7 +92,7 @@
                     }
                         break;
                     case UIViewContentModeScaleAspectFill: {
-                        
+                 
                         startrt = [BOTransitionUtility rectWithAspectFillForBounding:startviewrt size:movedrt.size];
                     }
                         break;
@@ -127,7 +127,7 @@
                 startrt = (CGRect){CGRectGetMidX(baseviewrt), CGRectGetMidY(baseviewrt), startsz};
             }
             
-            boardelement.transitionView = transitioning.moveVC.view;
+            boardelement.transitionView = transitioning.moveTransBoard;
             boardelement.frameAllow = !disableBoardMove;
             boardelement.frameShouldPin = pinGes;
             boardelement.frameOrigin = movedrt;
@@ -213,7 +213,7 @@
                                              NSDictionary * _Nullable subInfo) {
                         [transitionElement.transitionView removeFromSuperview];
                     }];
-                    [itemelement addToStep:BOTransitionStepCompleted
+                    [itemelement addToStep:BOTransitionStepFinished
                                      block:^(BOTransitioning * _Nonnull blockTrans,
                                              BOTransitionStep step,
                                              BOTransitionElement * _Nonnull transitionElement,
@@ -257,10 +257,10 @@
                                        NSDictionary * _Nullable subInfo) {
                     UIView *blockcontainer = blockTrans.transitionContext.containerView;
                     transitionElement.transitionView.frame = blockcontainer.bounds;
-                    [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveVC.view];
+                    [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveTransBoard];
                 }];
                 if (BOTransitionActMoveOut == transitioning.transitionAct) {
-                    [bgelement addToStep:BOTransitionStepCompleted
+                    [bgelement addToStep:BOTransitionStepFinished
                                    block:^(BOTransitioning * _Nonnull blockTrans,
                                            BOTransitionStep step,
                                            BOTransitionElement * _Nonnull transitionElement,
@@ -287,6 +287,197 @@
             break;
     }
     
+}
+
+@end
+
+
+@implementation BOTransitionElement (Effect)
+
+- (void)makeTransitionEffect:(NSDictionary *)userInfo {
+    NSString *actstr = [userInfo objectForKey:@"act"];
+    if (actstr.length > 0) {
+        if ([actstr isEqualToString:@"autoAddToContainer"]) {
+            NSInteger hierarchy = 2;
+            if ([userInfo objectForKey:@"hierarchy"]) {
+                hierarchy = [userInfo[@"hierarchy"] integerValue];
+            }
+            [self addToStep:BOTransitionStepInstallElements
+                      block:^(BOTransitioning * _Nonnull blockTrans,
+                              BOTransitionStep step,
+                              BOTransitionElement * _Nonnull te,
+                              BOTransitionInfo transitionInfo,
+                              NSDictionary * _Nullable subInfo) {
+                switch (hierarchy) {
+                    case 0: {
+                        [blockTrans.transitionContext.containerView insertSubview:te.transitionView atIndex:0];
+                    }
+                        break;
+                    case 1: {
+                        if (blockTrans.moveTransBoard.superview == blockTrans.transitionContext.containerView) {
+                            [blockTrans.transitionContext.containerView insertSubview:te.transitionView belowSubview:blockTrans.moveTransBoard];
+                        } else {
+                            [blockTrans.transitionContext.containerView addSubview:te.transitionView];
+                        }
+                    }
+                        break;
+                    case 2: {
+                        [blockTrans.transitionContext.containerView addSubview:te.transitionView];
+                    }
+                        break;
+                    case 4: {
+                        [te.fromView.superview addSubview:te.transitionView];
+                    }
+                        break;
+                    default: {
+                        [blockTrans.transitionContext.containerView addSubview:te.transitionView];
+                    }
+                        break;
+                }
+            }];
+            
+            [self addToStep:BOTransitionStepCancelled
+                      block:^(BOTransitioning * _Nonnull blockTrans,
+                              BOTransitionStep step,
+                              BOTransitionElement * _Nonnull te,
+                              BOTransitionInfo transitionInfo,
+                              NSDictionary * _Nullable subInfo) {
+                [te.transitionView removeFromSuperview];
+            }];
+            [self addToStep:BOTransitionStepFinished
+                      block:^(BOTransitioning * _Nonnull blockTrans,
+                              BOTransitionStep step,
+                              BOTransitionElement * _Nonnull te,
+                              BOTransitionInfo transitionInfo,
+                              NSDictionary * _Nullable subInfo) {
+                [te.transitionView removeFromSuperview];
+            }];
+        }
+    } else {
+        
+        [self addToStep:BOTransitionStepInstallElements
+                  block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+            if (!transitionElement.fromView
+                || !transitionElement.toView) {
+                return;
+            }
+            
+            CGFloat alphaCalPow = 1;
+            if ([userInfo objectForKey:@"alphaCalPow"]) {
+                alphaCalPow = [userInfo[@"alphaCalPow"] floatValue];
+            }
+            
+            UIView *container = transitioning.transitionContext.containerView;
+            
+            UIView *fromview = transitionElement.fromView;
+            UIView *toview = transitionElement.toView;
+            CGRect fromviewrt = [fromview convertRect:fromview.bounds toView:container];
+            CGRect toviewrt = [toview convertRect:toview.bounds toView:container];
+            
+            CGRect fromrt = fromviewrt;
+            CGRect tort = CGRectZero;
+            
+            BOTransitionElement *fromele = [BOTransitionElement elementWithType:BOTransitionElementTypeNormal];
+            fromele.transitionView = [fromview snapshotViewAfterScreenUpdates:NO];
+            fromele.frameAllow = YES;
+            fromele.frameShouldPin = NO;
+            fromele.frameAnimationWithTransform = NO;
+            fromele.frameBarrierInContainer = UIRectEdgeNone;
+            fromele.alphaAllow = YES;
+            fromele.alphaCalPow = alphaCalPow;
+            
+            fromele.frameOrigin = fromviewrt;
+            fromele.frameFrom = fromrt;
+            
+            UIViewContentMode zcm = UIViewContentModeScaleAspectFit;
+            if ([userInfo objectForKey:@"zoomContentMode"]) {
+                zcm = [userInfo[@"zoomContentMode"] integerValue];
+            }
+            
+            switch (zcm) {
+                case UIViewContentModeScaleToFill: {
+                    tort = toviewrt;
+                }
+                    break;
+                case UIViewContentModeScaleAspectFit: {
+                    tort = [BOTransitionUtility rectWithAspectFitForBounding:toviewrt size:fromviewrt.size];
+                }
+                    break;
+                case UIViewContentModeScaleAspectFill: {
+                    tort = [BOTransitionUtility rectWithAspectFillForBounding:toviewrt size:fromviewrt.size];
+                }
+                    break;
+                case UIViewContentModeTop: {
+                    CGFloat originy = CGRectGetMinY(toviewrt);
+                    tort = [BOTransitionUtility rectWithAspectFitForBounding:toviewrt size:fromviewrt.size];
+                    tort.origin.y = originy;
+                }
+                    break;
+                default: {
+                    tort = toviewrt;
+                }
+                    break;
+            }
+            
+            fromele.frameTo = tort;
+            
+            fromele.alphaFrom = 1;
+            fromele.alphaTo = 0;
+            
+            fromele.fromView = fromview;
+            fromele.fromViewAutoHidden = YES;
+            [fromele makeTransitionEffect:@{
+                @"act": @"autoAddToContainer",
+                @"hierarchy": [transitionElement.userInfo objectForKey:@"hierarchy"] ? : @(2)
+            }];
+            
+            [transitionElement addSubElement:fromele];
+            
+            NSInteger tovieweffect = 0;
+            if ([userInfo objectForKey:@"toViewEffect"]) {
+                tovieweffect = [userInfo[@"toViewEffect"] integerValue];
+            }
+            
+            BOTransitionElement *toele = [BOTransitionElement elementWithType:BOTransitionElementTypeNormal];
+            switch (tovieweffect) {
+                case 0: {
+                    UIView *tts = [toview snapshotViewAfterScreenUpdates:YES];
+                    toele.transitionView = tts;
+                    toele.frameAllow = YES;
+                    [toele makeTransitionEffect:@{@"act": @"autoAddToContainer"}];
+                }
+                    break;
+                case 1: {
+                    toele.transitionView = toview;
+                    toele.frameAllow = NO;
+                }
+                    break;
+                default:
+                    break;
+            }
+            
+            toele.frameShouldPin = NO;
+            toele.frameAnimationWithTransform = NO;
+            toele.frameBarrierInContainer = UIRectEdgeNone;
+            toele.alphaAllow = YES;
+            toele.alphaCalPow = alphaCalPow;
+            
+            toele.frameOrigin = toviewrt;
+            toele.frameFrom = fromviewrt;
+            
+            toele.frameTo = toviewrt;
+            
+            toele.alphaOrigin = toview.alpha;
+            toele.alphaFrom = 0;
+            toele.alphaTo = 1;
+            
+            toele.toView = toview;
+            toele.toViewAutoHidden = NO;
+            
+            [transitionElement addSubElement:toele];
+            
+        }];
+    }
 }
 
 @end

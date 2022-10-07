@@ -13,6 +13,10 @@
 
 @interface BOTransitionElement ()
 
+@property (nonatomic, strong) NSMutableDictionary *userInfo;
+
+@property (nonatomic, strong, nullable) NSMutableArray<BOTransitionElement *> *subEleAr;
+
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *,
 NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                         BOTransitionElement *transitionItem, BOTransitionInfo transitionInfo,
@@ -41,6 +45,44 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
         _toViewAutoHidden = YES;
     }
     return self;
+}
+
+- (NSMutableDictionary *)userInfo {
+    if (!_userInfo) {
+        _userInfo = @{}.mutableCopy;
+    }
+    return _userInfo;;
+}
+
+- (void)addSubElement:(BOTransitionElement *)element {
+    if (!element) {
+        return;
+    }
+    
+    if (!_subEleAr) {
+        _subEleAr = @[].mutableCopy;
+    }
+    element.superElement = self;
+    [_subEleAr addObject:element];
+}
+
+- (void)removeSubElement:(BOTransitionElement *)element {
+    [_subEleAr removeObject:element];
+    element.superElement = nil;
+    if (_subEleAr) {
+        _subEleAr = nil;
+    }
+}
+
+/*
+ 优先使用自己的，自己没有则继承super的
+ */
+- (CGFloat (^)(CGFloat))innerPercentWithTransitionPercent {
+    if (_innerPercentWithTransitionPercent) {
+        return _innerPercentWithTransitionPercent;
+    } else {
+        return [self.superElement innerPercentWithTransitionPercent];
+    }
 }
 
 - (NSMutableDictionary<NSNumber *,NSMutableArray<void (^)(BOTransitioning *,
@@ -100,219 +142,222 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
     }];
     
     UIView *thetrView = self.transitionView;
-    if (!thetrView) {
-        return;
-    }
-    BOOL ani = NO;
-    NSNumber *anival = [subInfo objectForKey:@"ani"];
-    if (nil != anival) {
-        ani = anival.boolValue;
-    }
-    if (ani) {
-        self.alphaLastBeforeAni = @(thetrView.alpha);
-        self.frameLastBeforeAni = @(thetrView.frame);
+    if (thetrView) {
+        BOOL ani = NO;
+        NSNumber *anival = [subInfo objectForKey:@"ani"];
+        if (nil != anival) {
+            ani = anival.boolValue;
+        }
+        if (ani) {
+            self.alphaLastBeforeAni = @(thetrView.alpha);
+            self.frameLastBeforeAni = @(thetrView.frame);
+        }
+        
+        __weak typeof(self) ws = self;
+        switch (step) {
+            case BOTransitionStepAfterInstallElements: {
+                if (self.fromView &&
+                    self.fromViewAutoHidden) {
+                    BOOL originfromhidden = self.fromView.hidden;
+                    self.fromView.hidden = YES;
+                    [self addToStep:BOTransitionStepCancelled
+                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+                        ws.fromView.hidden = originfromhidden;
+                    }];
+                    [self addToStep:BOTransitionStepFinished
+                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+                        ws.fromView.hidden = originfromhidden;
+                    }];
+                }
+                
+                if (self.toView &&
+                    self.toViewAutoHidden) {
+                    BOOL origintohidden = self.toView.hidden;
+                    self.toView.hidden = YES;
+                    [self addToStep:BOTransitionStepCancelled
+                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+                        ws.toView.hidden = origintohidden;
+                    }];
+                    [self addToStep:BOTransitionStepFinished
+                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+                        ws.toView.hidden = origintohidden;
+                    }];
+                }
+            }
+                break;
+            case BOTransitionStepInitialAnimatableProperties: {
+                if (self.frameAllow) {
+                    if (transitionInfo.interactive) {
+                        CGPoint beganPt = transitionInfo.panBeganLoc;
+                        CGRect thevrt = self.frameFrom;
+                        self.framePinAnchor = CGPointMake((beganPt.x - CGRectGetMidX(thevrt)) / CGRectGetWidth(thevrt),
+                                                          (beganPt.y - CGRectGetMidY(thevrt)) / CGRectGetHeight(thevrt));
+                    }
+                    
+                    if (self.frameAnimationWithTransform) {
+                        thetrView.transform = CGAffineTransformIdentity;
+                        thetrView.frame = self.frameOrigin;
+                        if (CGRectEqualToRect(self.frameFrom, self.frameOrigin)) {
+                            thetrView.transform = CGAffineTransformIdentity;
+                        } else {
+                            thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:self.frameFrom];
+                        }
+                    } else {
+                        thetrView.frame = self.frameFrom;
+                    }
+                }
+                
+                if (self.alphaAllow) {
+                    thetrView.alpha = self.alphaFrom;
+                }
+            }
+                break;
+            case BOTransitionStepTransitioning: {
+                CGFloat percentComplete = transitionInfo.percentComplete;
+                if (self.innerPercentWithTransitionPercent) {
+                    percentComplete = self.innerPercentWithTransitionPercent(percentComplete);
+                }
+                if (self.frameAllow) {
+                    CGRect rtorigin = self.frameOrigin;
+                    CGRect rtto = self.frameTo;
+                    CGRect rtfrom = self.frameFrom;
+                    CGFloat upc = pow(percentComplete, self.frameCalPow);
+                    CGFloat scalepercent = (transitionInfo.interactive ?
+                                            MIN(self.frameInteractiveLimit, upc)
+                                            :
+                                            upc);
+                    
+                    CGSize tsz =\
+                    CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
+                                                        v1:CGRectGetWidth(rtto) t:scalepercent],
+                               [BOTransitionUtility lerpV0:CGRectGetHeight(rtfrom)
+                                                        v1:CGRectGetHeight(rtto) t:scalepercent]);
+                    
+                    CGPoint tocenter;
+                    CGRect currt;
+                    if (self.frameShouldPin && transitionInfo.interactive) {
+                        tocenter =\
+                        CGPointMake(transitionInfo.panCurrLoc.x - tsz.width * self.framePinAnchor.x,
+                                    transitionInfo.panCurrLoc.y - tsz.height * self.framePinAnchor.y);
+                        currt = (CGRect){tocenter.x - tsz.width / 2.f, tocenter.y - tsz.height / 2.f, tsz};
+                        if (self.frameBarrierInContainer > 0) {
+                            CGRect containerbounds = thetrView.superview.bounds;
+                            CGFloat topext = CGRectGetMinY(containerbounds) - CGRectGetMinY(currt);
+                            CGFloat downext = CGRectGetMaxY(currt) - CGRectGetMaxY(containerbounds);
+                            CGPoint offset = CGPointZero;
+                            if (topext > 0
+                                && (UIRectEdgeTop & self.frameBarrierInContainer)) {
+                                if (downext > 0) {
+                                    NSLog(@"error:%s ~~~1", __func__);
+                                } else {
+                                    offset.y = topext;
+                                }
+                            } else {
+                                if (downext > 0
+                                    && (UIRectEdgeBottom & self.frameBarrierInContainer)) {
+                                    offset.y = -downext;
+                                } else {
+                                    //mei wenti
+                                }
+                            }
+                            
+                            CGFloat leftext = CGRectGetMinX(containerbounds) - CGRectGetMinX(currt);
+                            CGFloat rightext = CGRectGetMaxX(currt) - CGRectGetMaxX(containerbounds);
+                            if (leftext > 0
+                                && (UIRectEdgeLeft & self.frameBarrierInContainer)) {
+                                if (rightext > 0) {
+                                    NSLog(@"error:%s ~~~2", __func__);
+                                } else {
+                                    offset.x = leftext;
+                                }
+                            } else {
+                                if (rightext > 0
+                                    && (UIRectEdgeRight & self.frameBarrierInContainer)) {
+                                    offset.x = -rightext;
+                                } else {
+                                    //mei wenti
+                                }
+                            }
+                            
+                            currt.origin.x += offset.x;
+                            currt.origin.y += offset.y;
+                            
+                            self.framePinAnchor =\
+                            CGPointMake((transitionInfo.panCurrLoc.x - CGRectGetMidX(currt)) / CGRectGetWidth(currt),
+                                        (transitionInfo.panCurrLoc.y - CGRectGetMidY(currt)) / CGRectGetHeight(currt));
+                        }
+                        
+                    } else {
+                        tocenter =\
+                        CGPointMake([BOTransitionUtility lerpV0:CGRectGetMidX(rtfrom)
+                                                             v1:CGRectGetMidX(rtto) t:percentComplete],
+                                    [BOTransitionUtility lerpV0:CGRectGetMidY(rtfrom)
+                                                             v1:CGRectGetMidY(rtto) t:percentComplete]);
+                        currt = (CGRect){tocenter.x - tsz.width / 2.f, tocenter.y - tsz.height / 2.f, tsz};
+                    }
+                    
+                    if (self.frameAnimationWithTransform) {
+                        thetrView.transform = [BOTransitionUtility getTransform:rtorigin to:currt];
+                    } else {
+                        thetrView.frame = currt;
+                    }
+                    
+                }
+                
+                if (self.alphaAllow) {
+                    CGFloat upc = pow(percentComplete, self.alphaCalPow);
+                    
+                    CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
+                                                                v1:self.alphaTo
+                                                                 t:(transitionInfo.interactive ?
+                                                                    MIN(self.alphaInteractiveLimit, upc)
+                                                                    :
+                                                                    upc)];
+                    thetrView.alpha = curalpha;
+                }
+            }
+                break;
+            case BOTransitionStepFinalAnimatableProperties: {
+                if (self.frameAllow) {
+                    if (self.frameAnimationWithTransform) {
+                        
+                        if (CGRectEqualToRect(self.frameOrigin, self.frameTo)) {
+                            thetrView.transform = CGAffineTransformIdentity;
+                        } else {
+                            thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:self.frameTo];
+                        }
+                    } else {
+                        thetrView.frame = self.frameTo;
+                    }
+                }
+                
+                if (self.alphaAllow) {
+                    thetrView.alpha = self.alphaTo;
+                }
+            }
+                break;
+                
+            case BOTransitionStepCancelled:
+            case BOTransitionStepFinished: {
+                if (self.frameAllow && !self.frameAnimationWithTransform) {
+                    thetrView.frame = self.frameOrigin;
+                }
+                if (self.alphaAllow) {
+                    thetrView.alpha = self.alphaOrigin;
+                }
+            }
+                break;
+            default:
+                break;
+        }
     }
     
-    __weak typeof(self) ws = self;
-    switch (step) {
-        case BOTransitionStepAfterInstallElements: {
-            if (self.fromView &&
-                self.fromViewAutoHidden) {
-                BOOL originfromhidden = self.fromView.hidden;
-                self.fromView.hidden = YES;
-                [self addToStep:BOTransitionStepCancelled
-                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                    ws.fromView.hidden = originfromhidden;
-                }];
-                [self addToStep:BOTransitionStepCompleted
-                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                    ws.fromView.hidden = originfromhidden;
-                }];
-            }
-            
-            if (self.toView &&
-                self.toViewAutoHidden) {
-                BOOL origintohidden = self.toView.hidden;
-                self.toView.hidden = YES;
-                [self addToStep:BOTransitionStepCancelled
-                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                    ws.toView.hidden = origintohidden;
-                }];
-                [self addToStep:BOTransitionStepCompleted
-                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                    ws.toView.hidden = origintohidden;
-                }];
-            }
-        }
-            break;
-        case BOTransitionStepInitialAnimatableProperties: {
-            if (self.frameAllow) {
-                
-                if (transitionInfo.interactive) {
-                    CGPoint beganPt = transitionInfo.panBeganLoc;
-                    CGRect thevrt = self.frameFrom;
-                    self.framePinAnchor = CGPointMake((beganPt.x - CGRectGetMidX(thevrt)) / CGRectGetWidth(thevrt),
-                                                      (beganPt.y - CGRectGetMidY(thevrt)) / CGRectGetHeight(thevrt));
-                }
-                if (self.frameAnimationWithTransform) {
-                    thetrView.transform = CGAffineTransformIdentity;
-                    if (CGRectEqualToRect(self.frameFrom, self.frameOrigin)) {
-                        thetrView.transform = CGAffineTransformIdentity;
-                    } else {
-                        
-                        thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:self.frameFrom];
-                    }
-                } else {
-                    thetrView.frame = self.frameFrom;
-                }
-                
-            }
-            
-            if (self.alphaAllow) {
-                thetrView.alpha = self.alphaFrom;
-            }
-        }
-            break;
-        case BOTransitionStepTransitioning: {
-            CGFloat percentComplete = transitionInfo.percentComplete;
-            
-            if (self.frameAllow) {
-                CGRect rtorigin = self.frameOrigin;
-                CGRect rtto = self.frameTo;
-                CGRect rtfrom = self.frameFrom;
-                CGFloat upc = pow(percentComplete, self.frameCalPow);
-                CGFloat scalepercent = (transitionInfo.interactive ?
-                                        MIN(self.frameInteractiveLimit, upc)
-                                        :
-                                        upc);
-                
-                CGSize tsz =\
-                CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
-                                                    v1:CGRectGetWidth(rtto) t:scalepercent],
-                           [BOTransitionUtility lerpV0:CGRectGetHeight(rtfrom)
-                                                    v1:CGRectGetHeight(rtto) t:scalepercent]);
-                
-                CGPoint tocenter;
-                CGRect currt;
-                if (self.frameShouldPin && transitionInfo.interactive) {
-                    tocenter =\
-                    CGPointMake(transitionInfo.panCurrLoc.x - tsz.width * self.framePinAnchor.x,
-                                transitionInfo.panCurrLoc.y - tsz.height * self.framePinAnchor.y);
-                    currt = (CGRect){tocenter.x - tsz.width / 2.f, tocenter.y - tsz.height / 2.f, tsz};
-                    if (self.frameBarrierInContainer > 0) {
-                        CGRect containerbounds = thetrView.superview.bounds;
-                        CGFloat topext = CGRectGetMinY(containerbounds) - CGRectGetMinY(currt);
-                        CGFloat downext = CGRectGetMaxY(currt) - CGRectGetMaxY(containerbounds);
-                        CGPoint offset = CGPointZero;
-                        if (topext > 0
-                            && (UIRectEdgeTop & self.frameBarrierInContainer)) {
-                            if (downext > 0) {
-                                //!!!!!errror
-                                NSLog(@"~~~~~~~~！！！过大");
-                            } else {
-                                offset.y = topext;
-                            }
-                        } else {
-                            if (downext > 0
-                                && (UIRectEdgeBottom & self.frameBarrierInContainer)) {
-                                offset.y = -downext;
-                            } else {
-                                //mei wenti
-                            }
-                        }
-                        
-                        CGFloat leftext = CGRectGetMinX(containerbounds) - CGRectGetMinX(currt);
-                        CGFloat rightext = CGRectGetMaxX(currt) - CGRectGetMaxX(containerbounds);
-                        if (leftext > 0
-                            && (UIRectEdgeLeft & self.frameBarrierInContainer)) {
-                            if (rightext > 0) {
-                                //!!!!!errror
-                                NSLog(@"~~~~~~~~！！！过大");
-                            } else {
-                                offset.x = leftext;
-                            }
-                        } else {
-                            if (rightext > 0
-                                && (UIRectEdgeRight & self.frameBarrierInContainer)) {
-                                offset.x = -rightext;
-                            } else {
-                                //mei wenti
-                            }
-                        }
-                        
-                        currt.origin.x += offset.x;
-                        currt.origin.y += offset.y;
-                        
-                        self.framePinAnchor =\
-                        CGPointMake((transitionInfo.panCurrLoc.x - CGRectGetMidX(currt)) / CGRectGetWidth(currt),
-                                    (transitionInfo.panCurrLoc.y - CGRectGetMidY(currt)) / CGRectGetHeight(currt));
-                    }
-                    
-                } else {
-                    
-                    
-                    tocenter =\
-                    CGPointMake([BOTransitionUtility lerpV0:CGRectGetMidX(rtfrom)
-                                                         v1:CGRectGetMidX(rtto) t:percentComplete],
-                                [BOTransitionUtility lerpV0:CGRectGetMidY(rtfrom)
-                                                         v1:CGRectGetMidY(rtto) t:percentComplete]);
-                    currt = (CGRect){tocenter.x - tsz.width / 2.f, tocenter.y - tsz.height / 2.f, tsz};
-                }
-                
-                if (self.frameAnimationWithTransform) {
-                    thetrView.transform = [BOTransitionUtility getTransform:rtorigin to:currt];
-                } else {
-                    thetrView.frame = currt;
-                }
-                
-            }
-            
-            if (self.alphaAllow) {
-                CGFloat upc = pow(percentComplete, self.alphaCalPow);
-                
-                CGFloat curalpha = [BOTransitionUtility lerpV0:self.alphaFrom
-                                                            v1:self.alphaTo
-                                                             t:(transitionInfo.interactive ?
-                                                                MIN(self.alphaInteractiveLimit, upc)
-                                                                :
-                                                                upc)];
-                thetrView.alpha = curalpha;
-            }
-        }
-            break;
-        case BOTransitionStepFinalAnimatableProperties: {
-            if (self.frameAllow) {
-                if (self.frameAnimationWithTransform) {
-                    
-                    if (CGRectEqualToRect(self.frameOrigin, self.frameTo)) {
-                        thetrView.transform = CGAffineTransformIdentity;
-                    } else {
-                        thetrView.transform = [BOTransitionUtility getTransform:self.frameOrigin to:self.frameTo];
-                    }
-                } else {
-                    thetrView.frame = self.frameTo;
-                }
-            }
-            
-            if (self.alphaAllow) {
-                thetrView.alpha = self.alphaTo;
-            }
-        }
-            break;
-            
-        case BOTransitionStepCancelled:
-        case BOTransitionStepCompleted: {
-            if (self.frameAllow && !self.frameAnimationWithTransform) {
-                thetrView.frame = self.frameOrigin;
-            }
-            if (self.alphaAllow) {
-                thetrView.alpha = self.alphaOrigin;
-            }
-        }
-            break;
-        default:
-            break;
-    }
+    [self.subEleAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [obj execTransitioning:transitioning
+                          step:step
+                transitionInfo:transitionInfo
+                       subInfo:subInfo];
+    }];
 }
 
 - (CGFloat)interruptAnimation:(BOTransitionInfo)transitionInfo {
@@ -332,6 +377,10 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
         }
         
     }
+    
+    [self.subEleAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [obj interruptAnimation:transitionInfo];
+    }];
     
     return -1;
 }
@@ -399,6 +448,12 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
         }
         
     }
+    
+    [self.subEleAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [obj interruptAnimationAndResetPorperty:transitioning
+                                 transitionInfo:transitionInfo
+                                        subInfo:subInfo];
+    }];
 }
 
 @end
@@ -421,6 +476,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 //present/push动作的入场VC以及 dismiss/pop动作的离场VC
 @property (nonatomic, strong) UIViewController *moveVC;
+
+@property (nonatomic, strong) UIView *baseTransBoard;
+@property (nonatomic, strong) UIView *moveTransBoard;
+
+@property (nonatomic, assign) BOOL isBaseTransBoardCustom;
+@property (nonatomic, assign) BOOL isMoveTransBoardCustom;
+
+@property (nonatomic, assign) BOOL hasAddBaseWhenInitialViewHierarchy;
+@property (nonatomic, assign) BOOL hasAddMoveWhenInitialViewHierarchy;
 
 @property (nonatomic, strong) UIView *commonBg;
 
@@ -516,16 +580,30 @@ static CGFloat sf_default_transition_dur = 0.22f;
     NSMutableArray<id<BOTransitionEffectControl>> *controlar = [NSMutableArray new];
     
     NSDictionary *effectconfig;
-    if (BOTransitionActMoveIn == self.transitionAct) {
-        effectconfig = self.moveVCConfig.moveInEffectConfig;
-    } else {
-        if (interactive) {
-            effectconfig = (self.moveVCConfig.moveOutEffectConfigForInteractive.count > 0 ?
-                            self.moveVCConfig.moveOutEffectConfigForInteractive
-                            :
-                            self.moveVCConfig.moveOutEffectConfig);
+    
+    if (interactive) {
+        NSDictionary *triggerGesInfo = [self.transitionGes.userInfo objectForKey:@"triggerGesInfo"];
+        if ([triggerGesInfo isKindOfClass:[NSDictionary class]]
+            && triggerGesInfo.count > 0) {
+            NSDictionary *econfig = [triggerGesInfo objectForKey:@"effectConfig"];
+            if ([econfig isKindOfClass:[econfig class]]) {
+                effectconfig = econfig;
+            }
+        }
+    }
+    
+    if (!effectconfig) {
+        if (BOTransitionActMoveIn == self.transitionAct) {
+            effectconfig = self.moveVCConfig.moveInEffectConfig;
         } else {
-            effectconfig = self.moveVCConfig.moveOutEffectConfig;
+            if (interactive) {
+                effectconfig = (self.moveVCConfig.moveOutEffectConfigForInteractive.count > 0 ?
+                                self.moveVCConfig.moveOutEffectConfigForInteractive
+                                :
+                                self.moveVCConfig.moveOutEffectConfig);
+            } else {
+                effectconfig = self.moveVCConfig.moveOutEffectConfig;
+            }
         }
     }
     
@@ -546,7 +624,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     id<BOTransitionEffectControl> baseVCDelegate = self.moveVCConfig.baseVCDelegate;
     if (!baseVCDelegate) {
-        //可以不判断protocol，省的有人不声明protocol只实现方法
+        //可以不判断protocol，允许使用者不声明protocol只实现方法
         baseVCDelegate = (id)self.baseVC;
     }
     
@@ -605,107 +683,222 @@ static CGFloat sf_default_transition_dur = 0.22f;
     return sf_default_transition_dur;
 }
 
-- (void)initialViewHierarchy {
-    UIView *container = _transitionContext.containerView;
-    switch (_transitionAct) {
-        case BOTransitionActMoveIn: {
-            if (self.moveVC) {
-                //把moveVC移入图层，直接设置为finalFrame，转场效果靠transform动画
-                self.moveVC.view.frame = [_transitionContext finalFrameForViewController:self.moveVC];
-                
-                if (self.moveVC.view.superview != container) {
-                    
-                    [container addSubview:self.moveVC.view];
-                    [[NSNotificationCenter defaultCenter] postNotificationName:BOTransitionVCViewDidMoveToContainer
-                                                                        object:self
-                                                                      userInfo:@{
-                                                                          @"vc": self.moveVC
-                                                                      }];
-                }
-            }
+- (UIView *)obtainTransBoardForVC:(BOOL)baseYESorMoveNO isCreate:(BOOL *)isCreate {
+    UIViewController *vc = baseYESorMoveNO ? self.baseVC : self.moveVC;
+    
+    if (!vc) {
+        if (isCreate) {
+            *isCreate = NO;
         }
-            break;
-        case BOTransitionActMoveOut: {
-            if (self.baseVC) {
-                switch (_transitionType) {
-                    case BOTransitionTypeNavigation: {
-                        //把baseVC移入图层，直接设置为finalFrame，转场效果靠transform动画
-                        self.baseVC.view.frame = [_transitionContext finalFrameForViewController:self.baseVC];
-                        if (self.baseVC.view.superview != container) {
-                            
-                            [container insertSubview:self.baseVC.view
-                                        belowSubview:self.moveVC.view];
-                            [[NSNotificationCenter defaultCenter] postNotificationName:BOTransitionVCViewDidMoveToContainer
-                                                                                object:self
-                                                                              userInfo:@{
-                                                                                  @"vc": self.baseVC
-                                                                              }];
-                            
-                        }
-                    }
-                        break;
-                    case BOTransitionTypeModalPresentation: {
-                        //不需要做
-                    }
-                        break;
-                    case BOTransitionTypeTabBar: {
-                        //wei shi xian
-                    }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-            break;
-        default:
-            break;
+        return nil;
     }
     
+    UIView *retview = vc.view;
+    BOOL retiscreate = NO;
+    
+    if (BOTransitionTypeNavigation == _transitionType
+        && vc.presentedViewController
+        && [vc.presentedViewController viewIfLoaded]) {
+        UIView *tcontainer = self.transitionContext.containerView;
+        UIView *vcsuperview = vc.view.superview;
+        UIView *pretransv = vc.presentedViewController.view.superview;
+        if (pretransv) {
+            UIView *prevcsuperview = pretransv.superview;
+            if (!vcsuperview
+                || !prevcsuperview) {
+                //都没有在图层(或者有一个有图层--用来容错)，可以放在一起
+                UIView *board = [[UIView alloc] initWithFrame:tcontainer.bounds];
+                [board addSubview:vc.view];
+                [board addSubview:pretransv];
+                if (vcsuperview) {
+                    [vcsuperview addSubview:board];
+                }
+                retiscreate = YES;
+                retview = board;
+            } else if (vcsuperview
+                       && prevcsuperview
+                       && vcsuperview == prevcsuperview) {
+                if (vcsuperview == tcontainer) {
+                    //已经是总容器了，再添加一个board用来转场
+                    UIView *board = [[UIView alloc] initWithFrame:tcontainer.bounds];
+                    [board addSubview:vc.view];
+                    [board addSubview:pretransv];
+                    [vcsuperview addSubview:board];
+                    retiscreate = YES;
+                    retview = board;
+                } else if (nil == vcsuperview.superview
+                           || vcsuperview.superview == tcontainer
+                           || vcsuperview.superview.superview == tcontainer) {
+                    //不在图层中，或已经是总容器的子视图了
+                    retiscreate = NO;
+                    
+                    /*
+                     系统的navigation先push一个vcA，该vcA再用over方式present一个vcB
+                     此时手势返回vcA，中途取消，系统自己的navigation的UIViewControllerWrapperView容器居然错乱了，
+                     导致：（UI展示倒是正常，但是图层冗余了，有好多层WrapperView）
+                     分析是由于apple没有处理好在pop过程中自动生成的vcA和vcB的共同容器，自动创建了，但没自动销毁，
+                     导致navigation重新计算vcA的图层位置时，创建了新的WrapperView来承载。就会每操作一次重复创建一个WrapperView
+                     这里识别这种情况，把该vcA和vcB的共同容器定义为custom（自创建类型，接管其移除行为），帮助系统移除该view
+                     效果上看，用该方式可修复此问题。
+                     */
+                    if (!baseYESorMoveNO) {
+                        //暂不介入系统地这个bug
+//                        retiscreate = YES;
+                    }
+                    
+                    retview = vcsuperview;
+                }
+            }
+        }
+    }
+    
+    CGRect vcrt = [_transitionContext finalFrameForViewController:vc];
+    if (!CGRectIsEmpty(vcrt)
+        && CGRectEqualToRect(retview.frame, vcrt)) {
+        //容器使用finalFrame
+        retview.frame = vcrt;
+    }
+    
+    if (vc.view != retview) {
+        //若有容器，内部的origin为0即可
+        vcrt.origin = CGPointZero;
+        if (!CGRectIsEmpty(vcrt)
+            && CGRectEqualToRect(vc.view.frame, vcrt)) {
+            vc.view.frame = vcrt;
+        }
+    }
+    
+    if (isCreate) {
+        *isCreate = retiscreate;
+    }
+    
+    return retview;
+}
+
+- (void)removeViewFromSuperAndRecoverSub:(UIView *)theView {
+    if (!theView) {
+        return;
+    }
+    
+    UIView *thesuperview = theView.superview;
+    CGPoint boardorigin = theView.frame.origin;
+    
+    __block NSInteger locidx = NSNotFound;
+    if (thesuperview) {
+        locidx = [thesuperview.subviews indexOfObject:theView];
+        [theView removeFromSuperview];
+    }
+    
+    NSArray<UIView *> *subviews = theView.subviews;
+    for (UIView *obj in subviews) {
+        [obj removeFromSuperview];
+        
+        if (boardorigin.x != 0
+            || boardorigin.y != 0) {
+            CGRect objrt = obj.frame;
+            objrt.origin.x += boardorigin.x;
+            objrt.origin.y += boardorigin.y;
+            obj.frame = objrt;
+        }
+        
+        if (NSNotFound != locidx
+            && thesuperview) {
+            [thesuperview insertSubview:obj atIndex:locidx];
+            locidx++;
+        }
+    }
+}
+
+- (void)removeCustomTransBoard {
+    if (self.isBaseTransBoardCustom) {
+        [self removeViewFromSuperAndRecoverSub:self.baseTransBoard];
+        
+        self.baseTransBoard = nil;
+    }
+    
+    if (self.isMoveTransBoardCustom) {
+        [self removeViewFromSuperAndRecoverSub:self.moveTransBoard];
+        self.moveTransBoard = nil;
+    }
+}
+
+- (void)initialViewHierarchy {
+    UIView *container = _transitionContext.containerView;
+    
+    if (!container) {
+        return;
+    }
+    
+    //先确保base和move的view都放入图层中
+    BOOL iscreate = NO;
+    self.baseTransBoard = [self obtainTransBoardForVC:YES isCreate:&iscreate];
+    self.isBaseTransBoardCustom = iscreate;
+    
+    self.moveTransBoard = [self obtainTransBoardForVC:NO isCreate:&iscreate];
+    self.isMoveTransBoardCustom = iscreate;
+    
+    if (BOTransitionTypeNavigation == _transitionType) {
+        //navigation时，都在container里
+        if (self.baseTransBoard.superview != container) {
+            [container addSubview:self.baseTransBoard];
+            _hasAddBaseWhenInitialViewHierarchy = YES;
+        }
+        
+        if (self.moveTransBoard.superview != container) {
+            [container addSubview:self.moveTransBoard];
+            _hasAddMoveWhenInitialViewHierarchy = YES;
+        }
+        
+        NSUInteger baseidx = [container.subviews indexOfObject:self.baseTransBoard];
+        NSUInteger moveidx = [container.subviews indexOfObject:self.moveTransBoard];
+        if (NSNotFound != baseidx
+            && NSNotFound != moveidx
+            && baseidx > moveidx) {
+            [container insertSubview:self.moveTransBoard aboveSubview:self.baseTransBoard];
+        }
+    } else {
+        //present时，只有moveview在container里
+        if (self.moveTransBoard.superview != container) {
+            [container addSubview:self.moveTransBoard];
+        }
+    }
+    
+    //发送消息
+    id sender = (BOTransitionTypeNavigation == _transitionType ?
+                 self.navigationController : nil);
+    NSDictionary *senduserinfo = nil;
+    UIViewController *didaddvc = (BOTransitionActMoveIn == _transitionAct) ? self.moveVC : self.baseVC;
+    if (didaddvc) {
+        senduserinfo = @{
+            @"vc": didaddvc
+        };
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:BOTransitionVCViewDidMoveToContainer
+                                                        object:sender
+                                                      userInfo:senduserinfo];
+    
+    //添加用来测量动画时间的view
     if (self.timeRuler.superview != container) {
         [container addSubview:self.timeRuler];
     }
 }
 
 - (void)revertInitialViewHierarchy {
-    switch (_transitionAct) {
-        case BOTransitionActMoveIn: {
-            //把moveVC移入图层，直接设置为finalFrame，转场效果靠transform动画
-            [self.moveVC.view removeFromSuperview];
-        }
-            break;
-        case BOTransitionActMoveOut: {
-            //把baseVC移入图层，直接设置为finalFrame，转场效果靠transform动画
-            if (self.moveVC.view.superview != _transitionContext.containerView) {
-                self.moveVC.view.frame = [_transitionContext initialFrameForViewController:self.moveVC];
-                [_transitionContext.containerView addSubview:self.moveVC.view];
-            } else {
-                
-            }
-            
-            switch (_transitionType) {
-                case BOTransitionTypeNavigation: {
-                    if (self.baseVC.view.superview == _transitionContext.containerView) {
-                        [self.baseVC.view removeFromSuperview];
-                    }
-                }
-                    break;
-                case BOTransitionTypeModalPresentation: {
-                    //不需要做
-                }
-                    break;
-                case BOTransitionTypeTabBar: {
-                    //wei shi xian
-                }
-                    break;
-                default:
-                    break;
-            }
-        }
-            break;
-        default:
-            break;
+    //moveIn的revert，若有移入过move视图，移除
+    if (BOTransitionActMoveIn == _transitionAct
+        && _hasAddMoveWhenInitialViewHierarchy
+        && self.moveTransBoard.superview == _transitionContext.containerView) {
+        [self.moveTransBoard removeFromSuperview];
     }
+    
+    //moveOut的revert，若有移入过base视图，移除
+    if (BOTransitionActMoveOut == _transitionAct
+        && _hasAddBaseWhenInitialViewHierarchy
+        && self.baseTransBoard.superview == _transitionContext.containerView) {
+        [self.baseTransBoard removeFromSuperview];
+    }
+    
+    [self removeCustomTransBoard];
     
     [self.timeRuler removeFromSuperview];
 }
@@ -718,44 +911,78 @@ static CGFloat sf_default_transition_dur = 0.22f;
     switch (_transitionAct) {
         case BOTransitionActMoveIn: {
             /*
-             什么也不需要做，moveView在开始时已经移入进来了
+             moveView在开始时已经移入进来了
              */
         }
             break;
         case BOTransitionActMoveOut: {
             /*
-             什么也不需要做，系统会自动在completeTransition方法里把moveView移出
+             系统会自动在completeTransition方法里把moveView移出，这里手动移出做下保障
              */
+            if (BOTransitionTypeNavigation == self.transitionType) {
+                [self.moveTransBoard removeFromSuperview];
+            }
         }
             break;
         default:
             break;
     }
     
+    [self removeCustomTransBoard];
+    
     [self.timeRuler removeFromSuperview];
 }
 
-- (void)sendWillComplete:(BOOL)willComplete
-                  fromVC:(__weak UIViewController *)fromVC
-                    toVC:(__weak UIViewController *)toVC
-               toVCPtStr:(NSString *)toVCPtStr {
-    if ([fromVC respondsToSelector:@selector(bo_transitionWillCompletion:userInfo:)]) {
-        [fromVC bo_transitionWillCompletion:willComplete userInfo:nil];
+- (void)ncViewDidLayoutSubviews:(UINavigationController *)nc {
+    if (self.navigationController == nc
+        && BOTransitionTypeNavigation == self.transitionType
+        && _transitionContext
+        && _baseTransBoard
+        && _moveTransBoard) {
+        
+        NSUInteger bidx = [_transitionContext.containerView.subviews indexOfObject:_baseTransBoard];
+        NSUInteger midx = [_transitionContext.containerView.subviews indexOfObject:_moveTransBoard];
+        if (NSNotFound != bidx
+            && NSNotFound != midx
+            && bidx > midx) {
+            [_transitionContext.containerView insertSubview:_moveTransBoard aboveSubview:_baseTransBoard];
+        }
     }
-    if ([toVC respondsToSelector:@selector(bo_transitionWillCompletion:userInfo:)]) {
-        [toVC bo_transitionWillCompletion:willComplete userInfo:nil];
-    }
-    
-    [[NSNotificationCenter defaultCenter]\
-     postNotificationName:BOTransitionWillAndMustCompletion
-     object:self
-     userInfo:@{
-         @"finish": @(willComplete),
-         @"vcPt": toVCPtStr ? : @""
-     }];
 }
 
-- (void)transitionAnimationDidEmit:(BOOL)willComplete {
+- (void)sendWillFinish:(BOOL)willFinish
+                fromVC:(__weak UIViewController *)fromVC
+                  toVC:(__weak UIViewController *)toVC
+             toVCPtStr:(NSString *)toVCPtStr {
+    NSMutableDictionary *sendinfo = @{
+        @"act": @(self.transitionAct),
+    }.mutableCopy;
+    if (fromVC) {
+        [sendinfo setObject:fromVC forKey:@"fromeVC"];
+    }
+    if (toVC) {
+        [sendinfo setObject:toVC forKey:@"toVC"];
+    }
+    
+    if ([fromVC respondsToSelector:@selector(bo_transitionWillCompletion:)]) {
+        [fromVC bo_transitionWillCompletion:sendinfo];
+    }
+    if ([toVC respondsToSelector:@selector(bo_transitionWillCompletion:)]) {
+        [toVC bo_transitionWillCompletion:sendinfo];
+    }
+    
+    id sender = (BOTransitionTypeNavigation == _transitionType ?
+                 self.navigationController : nil);
+    [[NSNotificationCenter defaultCenter]\
+     postNotificationName:BOTransitionWillAndMustCompletion
+     object:sender
+     userInfo:@{
+        @"willFinish": @(willFinish),
+        @"vcPt": toVCPtStr ? : @""
+    }];
+}
+
+- (void)transitionAnimationDidEmit:(BOOL)willFinish {
     __weak UIViewController *fromvc;
     __weak UIViewController *tovc;
     if (self.transitionAct == BOTransitionActMoveIn) {
@@ -773,24 +1000,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
     /*
      传弱指针是为了不影响释放时机
      等提交的动画开始渲染后，再通知BOTransitionWillAndMustCompletion，使用addOperationWithBlock可以实现这个时机
-     
-     transitionAnimationDidEmit:方法目前被调用的时机只有两个：1.runloopBeforeWaiting中的CA提交时。2.source0中的用户交互手势结束后
-     其中的1后面没有再执行Block的时机了，只有等到CA提交完动画播放后的下个runloop才会执行block
-     其中的2后面还有一个block执行时机，这个时机内动画还没有提交，可以判断一下然后再丢一个Block即可到达动画提交后的下个runloop的block
      */
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        CAAnimation *troani = [self.timeRuler.layer.presentationLayer animationForKey:@"opacity"];
-        if (troani
-            && troani.beginTime > 0) {
-            //有动画且动画已经开始播放，直接发送即可
-            [self sendWillComplete:willComplete fromVC:fromvc toVC:tovc toVCPtStr:vcPtStr];
-        } else {
-            //没动画，命中情况2 再丢一个Block
-            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                [self sendWillComplete:willComplete fromVC:fromvc toVC:tovc toVCPtStr:vcPtStr];
-            }];
-        }
-    }];
+    __weak typeof(self) ws = self;
+    [BOTransitionUtility addOperationBlockAfterScreenUpdates:^{
+        [ws sendWillFinish:willFinish fromVC:fromvc toVC:tovc toVCPtStr:vcPtStr];
+    } userInfo:nil];
 }
 
 // This method can only  be a nop if the transition is interactive and not a percentDriven interactive transition.
@@ -867,77 +1081,116 @@ static CGFloat sf_default_transition_dur = 0.22f;
     transitioninfo.percentComplete = 1;
     
     BOOL needsani = elementar.count > 0;
-    [self execAnimateDuration:needsani ? sf_default_transition_dur : 0
-           percentStartAndEnd:CGPointMake(0, 1)
-                modifyUIBlock:^{
-        [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                           NSUInteger idx,
-                                                           BOOL * _Nonnull stop) {
-            if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                [obj bo_transitioning:self
-                       prepareForStep:BOTransitionStepTransitioning
-                       transitionInfo:transitioninfo
-                             elements:elementar];
-            }
+    if (needsani) {
+        //有动画时，依次执行对应的生命周期
+        [self execAnimateDuration:sf_default_transition_dur
+               percentStartAndEnd:CGPointMake(0, 1)
+                    modifyUIBlock:^{
+            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
+                                                               NSUInteger idx,
+                                                               BOOL * _Nonnull stop) {
+                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+                    [obj bo_transitioning:self
+                           prepareForStep:BOTransitionStepTransitioning
+                           transitionInfo:transitioninfo
+                                 elements:elementar];
+                }
+            }];
+            
+            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
+                                                               NSUInteger idx,
+                                                               BOOL * _Nonnull stop) {
+                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+                    [obj bo_transitioning:self
+                           prepareForStep:BOTransitionStepFinalAnimatableProperties
+                           transitionInfo:transitioninfo
+                                 elements:elementar];
+                }
+            }];
+            
+            [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                [obj execTransitioning:self
+                                  step:BOTransitionStepFinalAnimatableProperties
+                        transitionInfo:transitioninfo
+                               subInfo:nil];
+            }];
+        }
+                       completion:^(BOOL finished) {
+            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
+                                                               NSUInteger idx,
+                                                               BOOL * _Nonnull stop) {
+                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+                    [obj bo_transitioning:self
+                           prepareForStep:BOTransitionStepFinished
+                           transitionInfo:transitioninfo
+                                 elements:elementar];
+                }
+            }];
+            
+            [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                [obj execTransitioning:self
+                                  step:BOTransitionStepFinished
+                        transitionInfo:transitioninfo
+                               subInfo:nil];
+            }];
+            
+            [self finalViewHierarchy];
+            
+            [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
         }];
+    } else {
         
-        [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                           NSUInteger idx,
-                                                           BOOL * _Nonnull stop) {
-            if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                [obj bo_transitioning:self
-                       prepareForStep:BOTransitionStepFinalAnimatableProperties
-                       transitionInfo:transitioninfo
-                             elements:elementar];
-            }
-        }];
-        
-        [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [obj execTransitioning:self
-                              step:BOTransitionStepFinalAnimatableProperties
-                    transitionInfo:transitioninfo
-                           subInfo:nil];
+        //系统似乎不支持直接结束，需要有一个动画过程或者下个runloop才能调用结束。否则会周期错乱。
+        [self execAnimateDuration:0
+               percentStartAndEnd:CGPointMake(0, 1)
+                    modifyUIBlock:nil
+                       completion:^(BOOL finished) {
+            //无动画时，直接完成变为结束状态，然后调用makeTransitionComplete告诉系统完成了转场。
+            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
+                                                               NSUInteger idx,
+                                                               BOOL * _Nonnull stop) {
+                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+                    [obj bo_transitioning:self
+                           prepareForStep:BOTransitionStepFinished
+                           transitionInfo:transitioninfo
+                                 elements:elementar];
+                }
+            }];
+            
+            [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                [obj execTransitioning:self
+                                  step:BOTransitionStepFinished
+                        transitionInfo:transitioninfo
+                               subInfo:nil];
+            }];
+            [self finalViewHierarchy];
+            
+            [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
         }];
     }
-                   completion:^(BOOL finished) {
-        [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                           NSUInteger idx,
-                                                           BOOL * _Nonnull stop) {
-            if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                [obj bo_transitioning:self
-                       prepareForStep:BOTransitionStepCompleted
-                       transitionInfo:transitioninfo
-                             elements:elementar];
-            }
-        }];
-        
-        [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [obj execTransitioning:self
-                              step:BOTransitionStepCompleted
-                    transitionInfo:transitioninfo
-                           subInfo:nil];
-        }];
-        
-        [self finalViewHierarchy];
-        
-        [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
-    }];
     
     [self transitionAnimationDidEmit:YES];
 }
 
-- (void)makeTransitionComplete:(BOOL)didComplete isInteractive:(BOOL)interactive {
+- (void)makeTransitionComplete:(BOOL)isFinish isInteractive:(BOOL)interactive {
     _effectControlAr = nil;
     [_transitionElementAr removeAllObjects];
     _transitionElementAr = nil;
     _triggerInteractiveTransitioning = NO;
     _startWithInteractive = NO;
     
+    _baseTransBoard = nil;
+    _moveTransBoard = nil;
+    _isBaseTransBoardCustom = NO;
+    _isMoveTransBoardCustom = NO;
+    _hasAddBaseWhenInitialViewHierarchy = NO;
+    _hasAddMoveWhenInitialViewHierarchy = NO;
+    
     //ModalPresentation的moveIn时，以及moveOut失败时不清空baseVC、moveVC信息，手势交互还需要用到
     BOOL shouldclearvccontext = YES;
     if (BOTransitionTypeModalPresentation == _transitionType
         && (BOTransitionActMoveOut != _transitionAct
-            || YES != didComplete)) {
+            || YES != isFinish)) {
         shouldclearvccontext = NO;
     }
     
@@ -955,7 +1208,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     _transitionAct = BOTransitionActNone;
     
     if (interactive) {
-        if (didComplete) {
+        if (isFinish) {
             [self.transitionContext finishInteractiveTransition];
             [self.transitionContext completeTransition:YES];
         } else {
@@ -963,7 +1216,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
             [self.transitionContext completeTransition:NO];
         }
     } else {
-        [self.transitionContext completeTransition:didComplete];
+        [self.transitionContext completeTransition:isFinish];
     }
     
     _transitionContext = nil;
@@ -1011,10 +1264,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
         return;
     }
     
-    [self makrInteractiveTransition:transitionContext];
+    [self makeInteractiveTransition:transitionContext];
 }
 
-- (void)makrInteractiveTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
+- (void)makeInteractiveTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     [self initialViewHierarchy];
     
     [self loadEffectControlAr:YES];
@@ -1024,7 +1277,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
     CGPoint curloc = ges.touchInfoAr.lastObject.CGRectValue.origin;
     CGFloat percentComplete = [self obtainPercentCompletionBegan:beganloc
                                                             curr:curloc
-                                                       direction:ges.triggerDirectionInfo.mainDirection];
+                                                             ges:ges
+                                                     distanceCoe:nil];
     BOTransitionInfo transitioninfo = {percentComplete, YES, beganloc, curloc};
     
     NSMutableArray<BOTransitionElement *> *elementar = @[].mutableCopy;
@@ -1094,6 +1348,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }];
     
     self.transitionElementAr = elementar;
+    
+    [self.transitionContext updateInteractiveTransition:0];
 }
 
 - (UIViewController *)obtainFirstResponseVC {
@@ -1122,7 +1378,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     if (_innerAnimatingVal) {
-        NSLog(@"~~~!!!execAnimateDuration上次动画还没结束");
+        NSLog(@"error:%s ~~~execAnimateDuration上次动画还没结束", __func__);
     }
     _innerAnimatingVal = @(percentStartAndEnd);
     
@@ -1148,6 +1404,13 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 #pragma mark - gesture
 
+/*
+ 0: 默认（ges内置会共存），不做处理
+ 1: ges优先
+ 2: otherGes优先
+ 3: 不判断，保留原有优先级
+ 4: ges优先并强制fail掉other
+ */
 - (NSInteger)boTransitionGRStrategyForGes:(BOTransitionPanGesture *)ges otherGes:(UIGestureRecognizer *)otherGes {
     UIViewController *curmoveVC = self.moveVC;
     if (!self.moveVC && BOTransitionTypeNavigation == _transitionType) {
@@ -1173,7 +1436,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     if (tconfig && seriousmargin) {
-        return 1;
+        return 4;
     }
     
     return 3;
@@ -1181,7 +1444,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 - (CGFloat)obtainPercentCompletionBegan:(CGPoint)began
                                    curr:(CGPoint)curr
-                              direction:(UISwipeGestureRecognizerDirection)direction {
+                                    ges:(BOTransitionPanGesture *)ges
+                            distanceCoe:(CGFloat *)coe {
     UIView *container = self.transitionContext.containerView;
     if (!container) {
         return 0;
@@ -1210,17 +1474,20 @@ static CGFloat sf_default_transition_dur = 0.22f;
         __block BOOL hasmakecoe = NO;
         [self.effectControlAr enumerateObjectsWithOptions:NSEnumerationReverse
                                                usingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ([obj respondsToSelector:@selector(bo_transitioningDistanceCoefficient:)]) {
-                distanceCoe =\
-                [obj bo_transitioningDistanceCoefficient:direction];
-                hasmakecoe = YES;
-                *stop = YES;
+            if ([obj respondsToSelector:@selector(bo_transitioning:distanceCoefficientForGes:)]) {
+                NSNumber *distanceCoenum =\
+                [obj bo_transitioning:self distanceCoefficientForGes:ges];
+                if (nil != distanceCoenum) {
+                    distanceCoe = distanceCoenum.floatValue;
+                    hasmakecoe = YES;
+                    *stop = YES;
+                }
             }
         }];
         
         CGSize containersz = container.bounds.size;
         
-        switch (direction) {
+        switch (ges.triggerDirectionInfo.mainDirection) {
             case UISwipeGestureRecognizerDirectionUp:
                 if (!hasmakecoe) {
                     distanceCoe = 1;
@@ -1252,6 +1519,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
             default:
                 break;
         }
+        
+        if (coe) {
+            *coe = distanceCoe;
+        }
     }
     
     percentComplete = MAX(0.f, MIN(percentComplete, 1.f));
@@ -1266,7 +1537,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
  */
 - (NSNumber *)boTransitionGesShouldAndWillBegin:(BOTransitionPanGesture *)ges
                                         subInfo:(nullable NSDictionary *)subInfo {
-    
     if ([subInfo[@"type"] isEqualToString:@"needsRecoverWhenTouchDown"]) {
         return @(YES);
     }
@@ -1312,80 +1582,78 @@ static CGFloat sf_default_transition_dur = 0.22f;
             if (ismargin
                 && regdirection == ges.triggerDirectionInfo.mainDirection) {
                 gesvalid = @(YES);
+                //allowRecover默认YES，当手势返回原点后，转场会取消，再移动手势会重新尝试触发，有些可以和页面内手势同时响应的场景可以用到
+                //严格的边缘手势就不用了，没有必要，严格的边缘手势并不与页面内的其它手势共存
+                [ges.userInfo setObject:@(NO) forKey:@"allowRecover"];
             } else {
                 gesvalid = @(NO);
             }
         } else {
-            NSNumber *otherSVResponseval = subInfo[@"otherSVResponse"];
-            if (nil == otherSVResponseval ||
-                2 != otherSVResponseval.integerValue) {
+            NSDictionary *otherSVResponsedic = subInfo[@"otherSVResponse"];
+            CGPoint othersvrespt = CGPointZero;
+            NSValue *othersvresval = otherSVResponsedic[@"info"];
+            if (nil != othersvresval) {
+                othersvrespt = othersvresval.CGPointValue;
+            }
+            if (regdirection == ges.triggerDirectionInfo.mainDirection
+                && (2 != othersvrespt.x)) {
                 //没有其他scrollview相应，或者响应到底或者bounces了，可以实施其他手势了
-                
                 BOOL allowBeganWithSVBounces = NO;
                 NSNumber *allowBeganWithSVBouncesnum = [gesinfo objectForKey:@"allowBeganWithSVBounces"];
                 if (nil != allowBeganWithSVBouncesnum) {
                     allowBeganWithSVBounces = allowBeganWithSVBouncesnum.boolValue;
                 }
                 
-                UISwipeGestureRecognizerDirection verd =\
-                (UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown);
-                BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
-                BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
-                
                 /*
                  非其他sv的bounces开始或允许其他sv的bounces开始
                  方向相符
                  起始横竖和触发横竖相符
                  */
-                if ((!ges.beganWithSVBounces
-                     || allowBeganWithSVBounces)
-                    && (ges.triggerDirectionInfo.mainDirection & regdirection) > 0
-                    && initialisVertical == triggerisVertical) {
+                if (!ges.beganWithSVBounces
+                    || allowBeganWithSVBounces) {
                     
-                    BOOL isvalid = NO;
-                    switch (ges.otherSVRespondedDirectionRecord.count) {
-                        case 0: {
-                            isvalid = YES;
-                        }
-                            break;
-                        case 1: {
-                            if (ges.otherSVRespondedDirectionRecord.anyObject.unsignedIntegerValue
-                                ==
-                                ges.triggerDirectionInfo.mainDirection) {
-                                isvalid = YES;
+                    UISwipeGestureRecognizerDirection verd =\
+                    (UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown);
+                    BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
+                    BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
+                    
+                    //命中了方向，且起始方向也一致，才认为此次手势的用户意图符合
+                    if ((ges.triggerDirectionInfo.mainDirection & regdirection) > 0
+                        && initialisVertical == triggerisVertical) {
+                        
+                        __block BOOL othersvconfict = NO;
+                        [ges.otherSVRespondedDirectionRecord enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key,
+                                                                                                 NSDictionary * _Nonnull gesinfo,
+                                                                                                 BOOL * _Nonnull stop) {
+                            CGPoint svrespt = CGPointZero;
+                            NSValue *svresval = gesinfo[@"info"];
+                            if (nil != svresval) {
+                                svrespt = svresval.CGPointValue;
                             }
-                        }
-                            break;
-                        case 2: {
-                            //判断两个方向时否同属竖向或横向
-                            __block BOOL isequal = YES;
-                            __block NSNumber *isvertical = nil;
-                            [ges.otherSVRespondedDirectionRecord enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
-                                BOOL currobjisvertical = ((obj.unsignedIntegerValue & verd) > 0);
-                                
-                                if (!isvertical) {
-                                    isvertical = @(currobjisvertical);
-                                } else {
-                                    if (isvertical.boolValue != currobjisvertical) {
-                                        isequal = NO;
-                                        *stop = YES;
-                                    }
-                                }
-                            }];
                             
-                            if (isequal) {
-                                isvalid = YES;
+                            //如果有一个明确开始过的手势，竖直、左右维度和标识方向不符，则认为意图已经被转移，无效本次手势
+                            if (svrespt.x > 0
+                                && 2 == svrespt.y) {
+                                BOOL theobjisver = ((key.unsignedIntegerValue & verd) > 0);
+                                if (theobjisver != triggerisVertical) {
+                                    othersvconfict = YES;
+                                    *stop = YES;
+                                }
                             }
+                        }];
+                        
+                        if (othersvconfict) {
+                            //响应过了其它sv的其它方向，本手势不进行转场了，显式cancel
+                            gesvalid = @(NO);
+                        } else {
+                            gesvalid = @(YES);
                         }
-                            break;
-                        default:
-                            break;
                     }
-                    
-                    gesvalid = @(isvalid);
+                } else {
+                    //bounces行为和预期不符，显式cancel
+                    gesvalid = @(NO);
                 }
             }
-            
         }
         
         if (nil != gesvalid) {
@@ -1402,6 +1670,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     if (hasvalid) {
+        NSMutableDictionary *processsubinfo = (subInfo ? : @{}).mutableCopy;
+        if (validgesinfo.count > 0) {
+            [processsubinfo addEntriesFromDictionary:validgesinfo];
+        }
+        if (BOTransitionTypeNavigation == self.transitionType
+            && self.navigationController) {
+            [processsubinfo setObject:self.navigationController forKey:@"nc"];
+        }
+        
         if (validismoveout) {
             if (BOTransitionTypeNavigation == self.transitionType) {
                 if (self.navigationController.viewControllers.count <= 1
@@ -1412,19 +1689,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
             }
             
             if ([configdelegate respondsToSelector:@selector(bo_trans_shouldMoveOutVC:gesture:transitionType:subInfo:)]) {
-                NSMutableDictionary *usubif = (subInfo ? : @{}).mutableCopy;
-                if (BOTransitionTypeNavigation == self.transitionType
-                    && self.navigationController) {
-                    [usubif setObject:self.navigationController forKey:@"nc"];
-                }
                 NSNumber *control = [configdelegate bo_trans_shouldMoveOutVC:firstResponseVC
                                                                      gesture:ges
                                                               transitionType:self.transitionType
-                                                                     subInfo:usubif];
-                if (nil != control
-                    && !control.boolValue) {
+                                                                     subInfo:processsubinfo];
+                if (nil == control
+                    || !control.boolValue) {
                     //configdelegate返回不允许
-                    return @(NO);
+                    return control;
                 }
             }
             
@@ -1435,17 +1707,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 
                 BOOL takeover = NO;
                 if ([configdelegate respondsToSelector:@selector(bo_trans_actMoveOutVC:gesture:transitionType:subInfo:)]) {
-                    NSMutableDictionary *actmomudic = @{
-                        @"gesInfo": validgesinfo ? : @{},
-                    }.mutableCopy;
-                    if (BOTransitionTypeNavigation == ws.transitionType
-                        && ws.navigationController) {
-                        [actmomudic setObject:ws.navigationController forKey:@"nc"];
-                    }
                     takeover = [configdelegate bo_trans_actMoveOutVC:firstResponseVC
                                                              gesture:ges
                                                       transitionType:ws.transitionType
-                                                             subInfo:actmomudic];
+                                                             subInfo:processsubinfo];
                 }
                 
                 if (!takeover) {
@@ -1478,11 +1743,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
             UIViewController *moveInVC;
             void (^pushblock)(void);
             //先尝试move0In逻辑，moveIn不需要快捷属性，只读delegate
+            NSMutableDictionary *usubif = (subInfo ? : @{}).mutableCopy;
+            if (validgesinfo.count > 0) {
+                [usubif addEntriesFromDictionary:validgesinfo];
+            }
             if (configdelegate &&
                 [configdelegate respondsToSelector:@selector(bo_trans_moveInVCWithGes:transitionType:subInfo:)]) {
                 NSDictionary *moveindic = [configdelegate bo_trans_moveInVCWithGes:ges
                                                                     transitionType:self.transitionType
-                                                                           subInfo:subInfo];
+                                                                           subInfo:usubif];
                 if (!moveindic
                     || 0 == moveindic.count) {
                     return nil;
@@ -1601,23 +1870,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
     CGPoint beganloc = ges.triggerDirectionInfo.location;
     CGPoint curloc = ges.touchInfoAr.lastObject.CGRectValue.origin;
     
-    __block CGFloat distanceCoe = 1;
-    __block BOOL hasmakecoe = NO;
-    [self.effectControlAr enumerateObjectsWithOptions:NSEnumerationReverse
-                                           usingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioningDistanceCoefficient:)]) {
-            distanceCoe =\
-            [obj bo_transitioningDistanceCoefficient:ges.triggerDirectionInfo.mainDirection];
-            hasmakecoe = YES;
-            *stop = YES;
-        }
-    }];
-    
-    CGFloat percentComplete = [self obtainPercentCompletionBegan:beganloc curr:curloc direction:ges.triggerDirectionInfo.mainDirection];
+    CGFloat distanceCoe = 1;
+    CGFloat percentComplete = [self obtainPercentCompletionBegan:beganloc
+                                                            curr:curloc
+                                                             ges:ges
+                                                     distanceCoe:&distanceCoe];
     BOTransitionInfo transitioninfo = {percentComplete, YES, beganloc, curloc};
     switch (ges.transitionGesState) {
         case UIGestureRecognizerStateBegan: {
-            //            NSLog(@"Began");
             if (_innerAnimatingVal && _transitionContext) {
                 self.shouldRunAniCompletionBlock = NO;
                 CGFloat curanipercent = self.timeRuler.layer.presentationLayer.opacity;
@@ -1652,14 +1912,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 [self.timeRuler.layer removeAllAnimations];
                 break;
             } else if (ges.userInfo.count > 0) {
-                if (BOTransitionTypeNavigation != self.transitionType) {
-                    /*
-                     BOTransitionTypeNavigation会在will方法中自己处理，这里就不用额外处理了
-                     其它类型需要处理下
-                     */
-                    UIResponder *currFirstResponder = [BOTransitionUtility obtainFirstResponder];
-                    [currFirstResponder resignFirstResponder];
-                }
+                /*
+                 将正在活跃UI控件终止，比如文本输入、键盘弹出状态等，
+                 */
+                [ges.view.window endEditing:YES];
                 
                 void (^beganblock)(void) = ges.userInfo[@"beganBlock"];
                 if (beganblock) {
@@ -1672,7 +1928,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
             if (!_transitionContext) {
                 return;
             }
-            //            NSLog(@"Changed");
+            
             __block BOOL haselepin = NO;
             [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 [obj execTransitioning:self
@@ -1750,31 +2006,31 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 default:
                     break;
             }
-            __block BOOL cancomplete = YES;
             
-            __block BOOL hasspecialcancom = NO;
+            __block BOOL canfinish = YES;
+            __block BOOL hasspecialcanfinish = NO;
             [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
                                                                NSUInteger idx,
                                                                BOOL * _Nonnull stop) {
                 if ([obj respondsToSelector:@selector(bo_transitioningShouldFinish:percentComplete:intentComplete:gesture:)]) {
-                    NSNumber *compnum = [obj bo_transitioningShouldFinish:self
-                                                          percentComplete:percentComplete
-                                                           intentComplete:intentcomplete
-                                                                  gesture:self.transitionGes];
-                    if (nil != compnum) {
-                        cancomplete = compnum.boolValue;
-                        hasspecialcancom = YES;
+                    NSNumber *finishnum = [obj bo_transitioningShouldFinish:self
+                                                            percentComplete:percentComplete
+                                                             intentComplete:intentcomplete
+                                                                    gesture:self.transitionGes];
+                    if (nil != finishnum) {
+                        canfinish = finishnum.boolValue;
+                        hasspecialcanfinish = YES;
                         *stop = YES;
                     }
                 }
             }];
             
-            if (!hasspecialcancom) {
+            if (!hasspecialcanfinish) {
                 //代理没有进行指定，使用默认运算
                 if (nil == intentcomplete) {
-                    cancomplete = (percentComplete >= 0.5);
+                    canfinish = (percentComplete >= 0.5);
                 } else {
-                    cancomplete = intentcomplete.boolValue;
+                    canfinish = intentcomplete.boolValue;
                 }
             }
             
@@ -1793,10 +2049,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 [obj execTransitioning:self
                                   step:BOTransitionStepInteractiveEnd
                         transitionInfo:transitioninfo
-                               subInfo:@{@"finish": @(cancomplete)}];
+                               subInfo:@{@"finish": @(canfinish)}];
             }];
             
-            if (cancomplete) {
+            if (canfinish) {
                 CGFloat maxdis = [self obtainMaxFrameChangeCenterDistance:YES];
                 CGFloat mindur = maxdis / 2400.f;
                 if (maxdis > 8) {
@@ -1840,7 +2096,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                                                        BOOL * _Nonnull stop) {
                         if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
                             [obj bo_transitioning:self
-                                   prepareForStep:BOTransitionStepCompleted
+                                   prepareForStep:BOTransitionStepFinished
                                    transitionInfo:transitioninfo
                                          elements:self.transitionElementAr];
                         }
@@ -1848,7 +2104,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     
                     [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                         [obj execTransitioning:self
-                                          step:BOTransitionStepCompleted
+                                          step:BOTransitionStepFinished
                                 transitionInfo:transitioninfo
                                        subInfo:nil];
                     }];
@@ -1949,7 +2205,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
             if (self.moveVCConfig.allowInteractionInAnimating) {
                 [ges saveCurrGesContextAndSetNeedsRecoverWhenTouchDown];
             } else {
-                [self transitionAnimationDidEmit:cancomplete];
+                [self transitionAnimationDidEmit:canfinish];
             }
         }
             break;

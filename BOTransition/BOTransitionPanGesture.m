@@ -26,7 +26,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 @property (nonatomic, assign) BOTransitionGesSliceInfo initialDirectionInfo;
 @property (nonatomic, assign) BOTransitionGesSliceInfo triggerDirectionInfo;
 @property (nonatomic, assign) BOOL delayTrigger;
-@property (nonatomic, strong) NSMutableSet<NSNumber *> *otherSVRespondedDirectionRecord;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSMutableDictionary *> *otherSVRespondedDirectionRecord;
 
 @property (nonatomic, assign) UIGestureRecognizerState transitionGesState;
 
@@ -420,19 +420,12 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     _triggerDirectionInfo = drinfo;
     
     NSNumber *shouldbegin = nil;
-    NSInteger responsesv = [self currPanSVAcceptDirection:drinfo.mainDirection];
-    if (2 == responsesv) {
-        //other sv可以响应，记录历史响应方向，并且不begin
-        [self addRecordOtherSVRespondedDirection:drinfo.mainDirection];
-        if ([self currPanSVAcceptDirection:drinfo.subDirection] > 0) {
-            [self addRecordOtherSVRespondedDirection:drinfo.subDirection];
-        }
-    }
+    NSDictionary *mainresdic = [self currPanSVAcceptDirection:drinfo.mainDirection];
     
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:subInfo:)]) {
         shouldbegin = [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self subInfo:@{
-            @"otherSVResponse": @(responsesv)
+            @"otherSVResponse": mainresdic ? : @{}
         }];
     }
     
@@ -445,12 +438,13 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }
     } else {
         //本次没有开始转场，如果scrollView进行了bounces响应，也记录为已响应方向
-        if (1 == responsesv) {
-            [self addRecordOtherSVRespondedDirection:drinfo.mainDirection];
+        if (mainresdic) {
+            [self addRecordOtherSVRespondedDirection:drinfo.mainDirection infoDic:mainresdic];
         }
         
-        if ([self currPanSVAcceptDirection:drinfo.subDirection] > 0) {
-            [self addRecordOtherSVRespondedDirection:drinfo.subDirection];
+        NSDictionary *subresdic = [self currPanSVAcceptDirection:drinfo.subDirection];
+        if (subresdic) {
+            [self addRecordOtherSVRespondedDirection:drinfo.subDirection infoDic:subresdic];
         }
     }
     
@@ -491,6 +485,12 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         case 2: {
             self.state = UIGestureRecognizerStateFailed;
             sfalive = NO;
+        }
+            break;
+        case 4: {
+            killges = [BOTransitionPanGesture tryMakeGesFail:ges
+                                                       byGes:self
+                                                       force:YES];
         }
             break;
         default:
@@ -750,7 +750,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (_currPanScrollVAr.count > 0 &&
         _currPanScrollVAr.count == _currPanScrollVSavOffsetAr.count) {
         [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [obj setContentOffset:_currPanScrollVSavOffsetAr[idx].CGPointValue];
+            CGPoint theos = _currPanScrollVSavOffsetAr[idx].CGPointValue;
+            if (UIGestureRecognizerStateChanged == obj.panGestureRecognizer.state
+                && !CGPointEqualToPoint(obj.contentOffset, theos)) {
+                [obj setContentOffset:theos];
+            }
         }];
     }
 }
@@ -780,12 +784,69 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     _delayTrigger = NO;
 }
 
-- (void)addRecordOtherSVRespondedDirection:(UISwipeGestureRecognizerDirection)direction {
+/*
+ gesMes: 1可能会触发/2已经明确触发了
+ */
+- (void)addRecordOtherSVRespondedDirection:(UISwipeGestureRecognizerDirection)direction
+                                   infoDic:(NSDictionary *)infoDic {
     if (!_otherSVRespondedDirectionRecord) {
-        _otherSVRespondedDirectionRecord = [[NSMutableSet alloc] init];
+        _otherSVRespondedDirectionRecord = @{}.mutableCopy;
     }
     
-    [_otherSVRespondedDirectionRecord addObject:@(direction)];
+    NSMutableDictionary *directioninfodic = _otherSVRespondedDirectionRecord[@(direction)];
+    if (!directioninfodic) {
+        directioninfodic = @{}.mutableCopy;
+        _otherSVRespondedDirectionRecord[@(direction)] = directioninfodic;
+        
+        [directioninfodic addEntriesFromDictionary:infoDic];
+    } else {
+        CGPoint lastpt = CGPointZero;
+        NSValue *lastptval = directioninfodic[@"info"];
+        if (nil != lastptval) {
+            lastpt = lastptval.CGPointValue;
+        }
+        
+        NSHashTable *lastgesar = directioninfodic[@"gesAr"];
+        if (!lastgesar) {
+            //容错
+            lastgesar = [NSHashTable weakObjectsHashTable];
+            directioninfodic[@"gesAr"] = lastgesar;
+        }
+        
+        CGPoint currpt = CGPointZero;
+        NSValue *currptval = infoDic[@"info"];
+        if (nil != currptval) {
+            currpt = currptval.CGPointValue;
+        }
+        
+        BOOL bigger = NO;
+        if (currpt.y > lastpt.y) {
+            bigger = YES;
+        } else if (currpt.y == lastpt.y
+                   && currpt.x > lastpt.x) {
+            bigger = YES;
+        }
+        
+        if (bigger) {
+            directioninfodic[@"info"] = @(currpt);
+            
+            NSHashTable *lastgesar = directioninfodic[@"gesAr"];
+            NSHashTable *thegesar = infoDic[@"gesAr"];
+            if (thegesar.count > 0) {
+                if (!lastgesar) {
+                    //容错
+                    lastgesar = [NSHashTable weakObjectsHashTable];
+                    directioninfodic[@"gesAr"] = lastgesar;
+                }
+                
+                [[thegesar allObjects] enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                    if (![lastgesar containsObject:obj]) {
+                        [lastgesar addObject:obj];
+                    }
+                }];
+            }
+        }
+    }
 }
 
 - (void)makeGestureStateCanceledOrFailed {
@@ -867,22 +928,35 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 
 /*
  一次只支持传一个方向
+ {x, y}
+ x:
  0 不能滑动 不能bounces
  1 for  bounces
  2 normal scroll
+ 
+ y:
+ 1 手势是可能的状态
+ 2 手势明确启动了
+ 
+ info: @(CGPoint)
+ gesAr: NSHashTable<UIGestureRecognizer>
+ 
  */
-- (NSInteger)currPanSVAcceptDirection:(UISwipeGestureRecognizerDirection)gesDirection {
+- (NSDictionary *)currPanSVAcceptDirection:(UISwipeGestureRecognizerDirection)gesDirection {
     if (_currPanScrollVAr.count <= 0) {
-        return 0;
+        return nil;
     }
     
-    __block BOOL hasscroll = NO;
-    __block BOOL hasbounces = NO;
+    __block CGPoint totalmes = CGPointZero;
+    __block UIGestureRecognizer *theges = nil;
     [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         BOOL gesvalid = NO;
+        BOOL gescertain = NO;
         switch (obj.panGestureRecognizer.state) {
             case UIGestureRecognizerStateBegan:
             case UIGestureRecognizerStateChanged:
+                gescertain = YES;
+            case UIGestureRecognizerStatePossible:
                 gesvalid = YES;
                 break;
             default:
@@ -892,6 +966,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         if (!gesvalid) {
             return;
         }
+        
+        CGPoint gesmes = (CGPoint){0, (gescertain ? 2 : 1)};
         
         UIEdgeInsets insets = sf_common_contentInset(obj);
         CGSize contentsz = obj.contentSize;
@@ -903,11 +979,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //上下能正常滚动
                     if ((offset.y + boundsz.height) < (contentsz.height + insets.bottom)) {
                         //能正常响应
-                        hasscroll = YES;
+                        gesmes.x = 2;
                     } else {
                         //不能响应了，需要bounces
                         if (obj.bounces) {
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         } else {
                             //不能响应
                         }
@@ -918,10 +994,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                         //可bounces
                         if (offset.y < -insets.top) {
                             //在头部bounces中，向上滑是正常恢复的方向，判定为正常滑动
-                            hasscroll = YES;
+                            gesmes.x = 2;
                         } else {
                             //正常状态或底部bounces状态，向上滑是bounces行为
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         }
                     } else {
                         //不可bounces，什么也不能响应
@@ -933,11 +1009,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //上下能正常滚动
                     if (offset.y > -insets.top) {
                         //能正常响应
-                        hasscroll = YES;
+                        gesmes.x = 2;
                     } else {
                         //不能响应了，需要bounces
                         if (obj.bounces) {
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         } else {
                             //不能响应
                         }
@@ -948,10 +1024,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                         //可bounces
                         if (offset.y > -insets.top) {
                             //在底部bounces中，向下滑是正常恢复的方向，判定为正常滑动
-                            hasscroll = YES;
+                            gesmes.x = 2;
                         } else {
                             //正常状态或头部bounces状态，向下滑是bounces行为
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         }
                     } else {
                         //不可bounces，什么也不能响应
@@ -963,11 +1039,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //左右能正常滚动
                     if ((offset.x + boundsz.width) < (contentsz.width + insets.right)) {
                         //能正常响应
-                        hasscroll = YES;
+                        gesmes.x = 2;
                     } else {
                         //不能响应了，需要bounces
                         if (obj.bounces) {
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         } else {
                             //不能响应
                         }
@@ -978,10 +1054,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                         //可bounces
                         if (offset.x < -insets.left) {
                             //在左侧bounces中，向左滑是正常恢复的方向，判定为正常滑动
-                            hasscroll = YES;
+                            gesmes.x = 2;
                         } else {
                             //正常状态或底部bounces状态，向上滑是bounces行为
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         }
                     } else {
                         //不可bounces，什么也不能响应
@@ -993,11 +1069,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //左右能正常滚动
                     if (offset.x > -insets.left) {
                         //能正常响应
-                        hasscroll = YES;
+                        gesmes.x = 2;
                     } else {
                         //不能响应了，需要bounces
                         if (obj.bounces) {
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         } else {
                             //不能响应
                         }
@@ -1008,10 +1084,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                         //可bounces
                         if (offset.x > -insets.left) {
                             //在底部bounces中，向下滑是正常恢复的方向，判定为正常滑动
-                            hasscroll = YES;
+                            gesmes.x = 2;
                         } else {
                             //正常状态或头部bounces状态，向下滑是bounces行为
-                            hasbounces = YES;
+                            gesmes.x = 1;
                         }
                     } else {
                         //不可bounces，什么也不能响应
@@ -1022,15 +1098,26 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 break;
         }
         
+        if (gesmes.y > totalmes.y) {
+            totalmes = gesmes;
+            theges = obj.panGestureRecognizer;
+        } else if (gesmes.y == totalmes.y
+                   && gesmes.x > totalmes.x) {
+            totalmes = gesmes;
+            theges = obj.panGestureRecognizer;
+        }
     }];
     
-    if (hasscroll) {
-        return 2;
-    } else if (hasbounces) {
-        return 1;
-    } else {
-        return 0;
+    if (theges) {
+        NSHashTable *gesar = [NSHashTable weakObjectsHashTable];
+        [gesar addObject:theges];
+        return @{
+            @"info": @(totalmes),
+            @"gesAr": gesar
+        };
     }
+    
+    return nil;
 }
 
 - (BOOL)currPanSVInBounces {

@@ -25,7 +25,7 @@
     switch (step) {
         case BOTransitionStepInstallElements: {
             BOTransitionElement *boardelement = [BOTransitionElement elementWithType:BOTransitionElementTypeBoard];
-            boardelement.transitionView = transitioning.moveVC.view;
+            boardelement.transitionView = transitioning.moveTransBoard;
             boardelement.alphaAllow = YES;
             if (BOTransitionActMoveIn == transitioning.transitionAct) {
                 boardelement.alphaFrom = 0;

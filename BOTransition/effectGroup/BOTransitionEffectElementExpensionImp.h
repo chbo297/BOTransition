@@ -7,6 +7,7 @@
 //
 
 #import "BOTransitionProtocol.h"
+#import "BOTransitioning.h"
 
 NS_ASSUME_NONNULL_BEGIN
 /*
@@ -33,6 +34,17 @@ NS_ASSUME_NONNULL_BEGIN
  @"zoomContentMode": @(UIViewContentMode)
  */
 @property (nonatomic, strong, nullable) NSDictionary *configInfo;
+
+@end
+
+
+@interface BOTransitionElement (Effect)
+
+/*
+ 添加一个BOTransitionStepInstallElements阶段的任务
+ 该任务会根据现有的fromview和toview添加一个不同view转化的动效
+ */
+- (void)makeTransitionEffect:(nullable NSDictionary *)userInfo;
 
 @end
 

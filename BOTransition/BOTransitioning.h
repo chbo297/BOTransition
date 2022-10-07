@@ -44,6 +44,10 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 //present/push动作的入场VC以及 dismiss/pop动作的离场VC
 @property (nonatomic, readonly) UIViewController *moveVC;
 
+//用来转场的容器
+@property (nonatomic, readonly) UIView *baseTransBoard;
+@property (nonatomic, readonly) UIView *moveTransBoard;
+
 @property (nonatomic, readonly) UIView *commonBg;
 @property (nonatomic, readonly) UIView *checkAndInitCommonBg;
 
@@ -73,9 +77,21 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
                  baseGes:(UIGestureRecognizer *)ges
       otherTransitionGes:(UIGestureRecognizer *)otherGes;
 
+//控件自己使用，nc的view布局完成后通知BOTransitioning的方法
+- (void)ncViewDidLayoutSubviews:(UINavigationController *)nc;
+
 @end
 
 @interface BOTransitionElement : NSObject
+
+/*
+ ele可以有子ele
+ */
+@property (nonatomic, readonly, nullable) NSMutableArray<BOTransitionElement *> *subEleAr;
+- (void)addSubElement:(BOTransitionElement *)element;
+- (void)removeSubElement:(BOTransitionElement *)element;
+
+@property (nonatomic, weak) BOTransitionElement *superElement;
 
 + (instancetype)elementWithType:(BOTransitionElementType)type;
 
@@ -105,7 +121,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
  //内部不用，但提供一个可挂载信息的属性，外部有需要时可以用
  @{@"type": @"movedBoard"}
  */
-@property (nonatomic, strong, nullable) NSMutableDictionary *userInfo;
+@property (nonatomic, readonly, nonnull) NSMutableDictionary *userInfo;
 
 - (void)addToStep:(BOTransitionStep)step
             block:(void (^)(BOTransitioning *transitioning,
@@ -150,7 +166,16 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, assign) CGFloat alphaTo;
 @property (nonatomic, assign) CGFloat alphaOrigin;
 
+/*
+ .. 暂无定义，预留字段，给可打断动画使用的，但动画打断的体验不大好先不开启
+ */
 @property (nonatomic, strong) NSNumber *alphaLastBeforeAni;
+
+/*
+ 入参：转场的进度百分比0~1
+ 返回 应用于该转场元素进行frame、alpha等属性变化的百分比
+ */
+@property (nonatomic, copy) CGFloat (^innerPercentWithTransitionPercent)(CGFloat percent);
 
 - (CGFloat)interruptAnimation:(BOTransitionInfo)transitionInfo;
 /*

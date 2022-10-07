@@ -223,18 +223,6 @@
 - (void)navigationController:(UINavigationController *)navigationController
       willShowViewController:(UIViewController *)viewController
                     animated:(BOOL)animated {
-    /*
-     将正在活跃UI控件终止，比如文本输入、键盘弹出状态等，
-     调用resignFirstResponder将键盘收起，防止页面滑走后键盘异常
-     */
-    UIResponder *responder = [BOTransitionUtility obtainFirstResponder];
-    if ([responder isKindOfClass:[UIResponder class]]
-        && [responder respondsToSelector:@selector(canResignFirstResponder)]
-        && [responder canResignFirstResponder]
-        && [responder respondsToSelector:@selector(resignFirstResponder)]) {
-        [responder resignFirstResponder];
-    }
-    
     if (self.ncProxy.navigationControllerDelegate
         && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:willShowViewController:animated:)]) {
         [self.ncProxy.navigationControllerDelegate navigationController:navigationController
@@ -344,6 +332,10 @@
 
 - (void)bo_trans_viewDidLayoutSubviews {
     [self bo_trans_viewDidLayoutSubviews];
+    
+    //通知transitioning该时机
+    [self.bo_transProxy.transitioning ncViewDidLayoutSubviews:self];
+    
     void (^vdlsc)(UINavigationController *, BOOL) =\
     self.bo_transProxy.transitionNCHandler.viewDidLayoutSubviewsCallback;
     if (vdlsc) {
@@ -381,8 +373,19 @@
 
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
                   animated:(BOOL)animated
-                completion:(void (^)(BOOL finish,
-                                     NSDictionary *info))completion {
+                completion:(void (^ _Nullable)(BOOL finish,
+                                               NSDictionary * _Nullable info))completion {
+    [self setViewControllers:viewControllers
+                    animated:animated
+                    userInfo:nil
+                  completion:completion];
+}
+
+- (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers
+                  animated:(BOOL)animated
+                  userInfo:(NSDictionary *)userInfo
+                completion:(void (^ _Nullable)(BOOL finish,
+                                               NSDictionary * _Nullable info))completion {
     BOTransitionNCHandler *ncHandler = self.bo_transProxy.transitionNCHandler;
     if (!ncHandler) {
         return;
@@ -471,6 +474,10 @@
         //如果发生了变化或者没有更新成功，就需要等待layout生效后再completion
         BOOL waitlayout = (changedisplay || !setsuc);
         
+        //不一定会被调用到
+        void (^viewdidlayoutcb)(BOOL finish, NSDictionary * _Nullable info) =\
+        [userInfo objectForKey:@"viewDidLayoutCallBack"];
+        
         if (waitlayout) {
             __weak typeof(ncHandler) wkhd = ncHandler;
             wkhd.viewDidLayoutSubviewsCallback =\
@@ -481,7 +488,7 @@
                         setsuc2 = NO;
                     } else {
                         [viewControllers enumerateObjectsUsingBlock:^(UIViewController * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                            if (obj != self.viewControllers[idx]) {
+                            if (obj != nc.viewControllers[idx]) {
                                 setsuc2 = NO;
                                 *stop = YES;
                             }
@@ -490,21 +497,37 @@
                     if (setsuc2) {
                         wkhd.viewDidLayoutSubviewsCallback = nil;
                         
+                        if (viewControllers.count > 0) {
+                            [[NSNotificationCenter defaultCenter] postNotificationName:BOTransitionVCViewDidMoveToContainer
+                                                                                object:nc
+                                                                              userInfo:@{
+                                                                                  @"vc": viewControllers.lastObject
+                                                                              }];
+                        }
+                        
+                        if (viewdidlayoutcb) {
+                            viewdidlayoutcb(YES, userInfo);
+                        }
+                        
                         /*
                          layoutsubviews时，本次转场似乎还没完全结束，此时在completion中调用push/pop在一些时机下有可能失败
                          防止外部业务在completion调用push/pop失败，这里放到下一个runloop确保转场结束后再调用completion
                          */
                         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                            completion(YES, nil);
+                            completion(YES, userInfo);
                         }];
                     }
                 } else {
                     wkhd.viewDidLayoutSubviewsCallback = nil;
-                    completion(NO, nil);
+                    completion(NO, userInfo);
                 }
             };
         } else {
-            completion(YES, nil);
+            if (viewdidlayoutcb) {
+                viewdidlayoutcb(YES, userInfo);
+            }
+            
+            completion(YES, userInfo);
         }
     }
 }

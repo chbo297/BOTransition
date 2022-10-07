@@ -130,7 +130,10 @@ static CGSize sf_cell_size;
                             vc.bo_transitionConfig =\
                             [BOTransitionConfig makeConfig:^(BOTransitionConfig * _Nonnull config) {
                                 config.transitionEffect = BOTransitionEffectMovingBottom;
-                                config.moveOutSeriousGesDirection = UISwipeGestureRecognizerDirectionRight;
+                                [config addGesInfoMoveOut:YES
+                                                direction:UISwipeGestureRecognizerDirectionRight
+                                            seriousMargin:YES
+                                                 userInfo:nil];
                             }];
                             [ws.navigationController pushViewController:vc animated:YES];
                         }

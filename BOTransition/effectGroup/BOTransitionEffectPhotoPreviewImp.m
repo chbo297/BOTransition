@@ -24,8 +24,9 @@
     return _fadeImp;
 }
 
-- (CGFloat)bo_transitioningDistanceCoefficient:(UISwipeGestureRecognizerDirection)direction {
-    return 0.84;
+- (NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
+     distanceCoefficientForGes:(BOTransitionPanGesture *)gesture {
+    return @(0.84);
 }
 
 - (void)bo_transitioning:(BOTransitioning *)transitioning
@@ -238,7 +239,7 @@
                 }
             }];
             
-            [photoele addToStep:BOTransitionStepCompleted
+            [photoele addToStep:BOTransitionStepFinished
                           block:^(BOTransitioning * _Nonnull blockTrans,
                                   BOTransitionStep step,
                                   BOTransitionElement * _Nonnull transitionElement,

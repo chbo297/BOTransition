@@ -95,7 +95,7 @@
                     break;
             }
             
-            boardelement.transitionView = transitioning.moveVC.view;
+            boardelement.transitionView = transitioning.moveTransBoard;
             boardelement.frameAllow = YES;
             boardelement.frameShouldPin = NO;
             boardelement.frameOrigin = movedrt;
@@ -135,11 +135,11 @@
                                        NSDictionary * _Nullable subInfo) {
                     UIView *blockcontainer = blockTrans.transitionContext.containerView;
                     transitionElement.transitionView.frame = blockcontainer.bounds;
-                    [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveVC.view];
+                    [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveTransBoard];
                 }];
                 
                 if (BOTransitionActMoveOut == transitioning.transitionAct) {
-                    [bgelement addToStep:BOTransitionStepCompleted
+                    [bgelement addToStep:BOTransitionStepFinished
                                    block:^(BOTransitioning * _Nonnull blockTrans,
                                            BOTransitionStep step,
                                            BOTransitionElement * _Nonnull transitionElement,
