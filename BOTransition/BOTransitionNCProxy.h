@@ -10,6 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @class BOTransitioning;
+@protocol BOTransitionEffectControl;
 
 //内部使用
 @interface BOTransitionNCHandler : NSObject <BOTransitionEffectControl>
