@@ -28,14 +28,14 @@ typedef NS_ENUM(NSUInteger, BOTransitionStep) {
     BOTransitionStepAfterInstallElements,
     BOTransitionStepInitialAnimatableProperties,
     
-    BOTransitionStepTransitionWillBegin,
+    BOTransitionStepWillBegin,
     BOTransitionStepTransitioning,
     BOTransitionStepFinalAnimatableProperties,
     
-    BOTransitionStepTransitionWillFinish,
+    BOTransitionStepWillFinish,
     BOTransitionStepFinished,
     
-    BOTransitionStepTransitionWillCancel,
+    BOTransitionStepWillCancel,
     BOTransitionStepCancelled,
     
     BOTransitionStepInteractiveEnd,

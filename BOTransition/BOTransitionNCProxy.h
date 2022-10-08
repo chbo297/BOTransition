@@ -12,11 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 @class BOTransitioning;
 @protocol BOTransitionEffectControl;
 
-//内部使用
-@interface BOTransitionNCHandler : NSObject <BOTransitionEffectControl>
-
-@end
-
 @interface BOTransitionNCProxy : NSProxy <UINavigationControllerDelegate, UIGestureRecognizerDelegate>
 
 //转场执行者
@@ -38,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL autoSetNavigationBarHidden;
 
 //内部使用
-@property (nonatomic, readonly) BOTransitionNCHandler *transitionNCHandler;
+@property (nonatomic, readonly) id<BOTransitionEffectControl> transitionEffectControl;
 
 @end
 

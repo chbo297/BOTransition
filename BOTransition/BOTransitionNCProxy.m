@@ -132,7 +132,7 @@
 /*
  处理转场代理
  */
-@interface BOTransitionNCHandler () <UINavigationControllerDelegate>
+@interface BOTransitionNCHandler : NSObject <UINavigationControllerDelegate, BOTransitionEffectControl>
 
 @property (nonatomic, weak) BOTransitionNCProxy *ncProxy;
 @property (nonatomic, weak) UINavigationController *navigationController;
@@ -249,65 +249,65 @@
         return;
     }
     
-    if (!self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
-        return;
-    }
-    
     //添加更新navigationBar状态的transition effect element
-    UIViewController *startvc = nil;
-    UIViewController *desvc = nil;
-    if (BOTransitionActMoveIn == transitioning.transitionAct) {
-        startvc = transitioning.baseVC;
-        desvc = transitioning.moveVC;
-    } else if (BOTransitionActMoveOut == transitioning.transitionAct) {
-        startvc = transitioning.moveVC;
-        desvc = transitioning.baseVC;
-    }
-    
-    if (!desvc || !startvc) {
-        return;
-    }
-    
-    BOOL startshouldHidden = startvc.navigationItem.bo_navigationBarHidden;
-    BOOL desshouldHidden = desvc.navigationItem.bo_navigationBarHidden;
-    if (startshouldHidden == desshouldHidden
-        && startshouldHidden == transitioning.navigationController.navigationBarHidden) {
-        return;
-    }
-    
     BOTransitionElement *ele = [BOTransitionElement new];
-    //即将开始时更新到目标vc的状态
-    [ele addToStep:BOTransitionStepTransitionWillBegin
-             block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-        if (desshouldHidden != transitioning.navigationController.navigationBarHidden) {
-            [transitioning.navigationController setNavigationBarHidden:desshouldHidden animated:YES];
-        }
-        
-    }];
     
-    //即将结束时确保更新到了目标vc的状态
-    [ele addToStep:BOTransitionStepTransitionWillFinish
-             block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-        if (desshouldHidden != transitioning.navigationController.navigationBarHidden) {
-            [transitioning.navigationController setNavigationBarHidden:desshouldHidden animated:YES];
-        }
-    }];
+    /*
+     若需要管理NavigationBar的Hidden，则在开始、结束、取消都check状态
+     即使不需要管理，也要确保在取消时，恢复NavigationBar的内容
+     */
+    if (self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
+        //即将开始时更新到目标vc的状态
+        [ele addToStep:BOTransitionStepWillBegin
+                 block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+            UIViewController *desvc = transitioning.desVC;
+            if (desvc) {
+                BOOL shouldhidden = desvc.navigationItem.bo_navigationBarHidden;
+                if (shouldhidden != transitioning.navigationController.navigationBarHidden) {
+                    [transitioning.navigationController setNavigationBarHidden:shouldhidden animated:YES];
+                }
+            }
+        }];
+        
+        //即将结束时确保更新到了目标vc的状态
+        [ele addToStep:BOTransitionStepWillFinish
+                 block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+            UIViewController *desvc = transitioning.desVC;
+            if (desvc) {
+                BOOL shouldhidden = desvc.navigationItem.bo_navigationBarHidden;
+                if (shouldhidden != transitioning.navigationController.navigationBarHidden) {
+                    [transitioning.navigationController setNavigationBarHidden:shouldhidden animated:YES];
+                }
+            }
+        }];
+    }
     
     //即将取消时恢复到初始目标的状态
-    [ele addToStep:BOTransitionStepTransitionWillCancel
+    [ele addToStep:BOTransitionStepWillCancel
              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-        if (startshouldHidden != transitioning.navigationController.navigationBarHidden) {
-            [transitioning.navigationController setNavigationBarHidden:startshouldHidden animated:YES];
+        UIViewController *startvc = transitioning.startVC;
+        if (!startvc) {
+            return;
         }
-        
-        if (!startshouldHidden) {
-            UIViewController *stvc = ((transitioning.transitionAct == BOTransitionActMoveIn) ?
-                                      transitioning.baseVC : transitioning.moveVC);
-            if (stvc.navigationItem) {
-                [transitioning.navigationController.navigationBar pushNavigationItem:stvc.navigationItem
-                                                                            animated:YES];
+        if (self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
+            BOOL shouldhidden = startvc.navigationItem.bo_navigationBarHidden;
+            if (shouldhidden != transitioning.navigationController.navigationBarHidden) {
+                [transitioning.navigationController setNavigationBarHidden:shouldhidden animated:YES];
             }
         }
+        
+//        if (!transitioning.navigationController.navigationBarHidden) {
+//            //取消时恢复bar的内容
+//            UINavigationItem *startitem = startvc.navigationItem;
+//            UINavigationBar *nbar = transitioning.navigationController.navigationBar;
+//            if (startitem
+//                && nbar) {
+//                if (![nbar.items containsObject:startitem]) {
+//                    //有问题，bar的内容没有恢复，系统有bug
+//                }
+//                
+//            }
+//        }
     }];
     
     [elements addObject:ele];
@@ -344,6 +344,10 @@
 
 - (BOTransitioning *)transitioning {
     return self.transitionNCHandler.transitioning;
+}
+
+- (id<BOTransitionEffectControl>)transitionEffectControl {
+    return self.transitionNCHandler;
 }
 
 /*

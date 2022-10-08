@@ -531,6 +531,28 @@ static CGFloat sf_default_transition_dur = 0.22f;
     return _transitionGes;
 }
 
+- (UIViewController *)startVC {
+    switch (self.transitionAct) {
+        case BOTransitionActMoveIn:
+            return self.baseVC;
+        case BOTransitionActMoveOut:
+            return self.moveVC;
+        default:
+            return nil;
+    }
+}
+
+- (UIViewController *)desVC {
+    switch (self.transitionAct) {
+        case BOTransitionActMoveIn:
+            return self.moveVC;
+        case BOTransitionActMoveOut:
+            return self.baseVC;
+        default:
+            return nil;
+    }
+}
+
 - (void)setMoveVC:(UIViewController *)moveVC {
     _moveVC = moveVC;
     _moveVCConfig = _moveVC.bo_transitionConfig;
@@ -581,7 +603,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     //Navigation是，对应时机告知transitionNCHandler
     if (BOTransitionTypeNavigation == self.transitionType) {
-        BOTransitionNCHandler *nchandler = self.navigationController.bo_transProxy.transitionNCHandler;
+        id<BOTransitionEffectControl> nchandler = self.navigationController.bo_transProxy.transitionEffectControl;
         if (nil != nchandler) {
             [controlar addObject:nchandler];
         }
@@ -1943,7 +1965,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                  subInfo:@{@"finish": @(canfinish)}];
             
             if (canfinish) {
-                [self makePrepareAndExecStep:BOTransitionStepTransitionWillFinish
+                [self makePrepareAndExecStep:BOTransitionStepWillFinish
                                     elements:self.transitionElementAr
                               transitionInfo:transitioninfo
                                      subInfo:nil];
@@ -1983,7 +2005,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     [self makeTransitionComplete:YES isInteractive:YES];
                 }];
             } else {
-                [self makePrepareAndExecStep:BOTransitionStepTransitionWillCancel
+                [self makePrepareAndExecStep:BOTransitionStepWillCancel
                                     elements:self.transitionElementAr
                               transitionInfo:transitioninfo
                                      subInfo:nil];

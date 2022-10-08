@@ -44,6 +44,13 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 //present/push动作的入场VC以及 dismiss/pop动作的离场VC
 @property (nonatomic, readonly) UIViewController *moveVC;
 
+/*
+ act=moveIn时，start=baseVC，des=moveVC
+ act=moveOut时，start=moveVC，des=baseVC
+ */
+@property (nonatomic, readonly) UIViewController *startVC;
+@property (nonatomic, readonly) UIViewController *desVC;
+
 //用来转场的容器
 @property (nonatomic, readonly) UIView *baseTransBoard;
 @property (nonatomic, readonly) UIView *moveTransBoard;
