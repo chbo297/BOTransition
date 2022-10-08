@@ -105,6 +105,7 @@
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
         && otherGestureRecognizer != gestureRecognizer) {
         
+        //有对应策略时执行策略
         if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
@@ -117,6 +118,9 @@
                 return YES;
             }
         }
+        
+        //没有其它策略时，系统的interactivePopGestureRecognizer需要把其它手势取消掉
+        return YES;
     }
     
     return NO;
