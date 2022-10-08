@@ -579,6 +579,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
 - (void)loadEffectControlAr:(BOOL)interactive {
     NSMutableArray<id<BOTransitionEffectControl>> *controlar = [NSMutableArray new];
     
+    //Navigation是，对应时机告知transitionNCHandler
+    if (BOTransitionTypeNavigation == self.transitionType) {
+        BOTransitionNCHandler *nchandler = self.navigationController.bo_transProxy.transitionNCHandler;
+        if (nil != nchandler) {
+            [controlar addObject:nchandler];
+        }
+    }
+    
     NSDictionary *effectconfig;
     
     if (interactive) {
@@ -658,6 +666,30 @@ static CGFloat sf_default_transition_dur = 0.22f;
     } else {
         self.effectControlAr = nil;
     }
+}
+
+- (void)makePrepareAndExecStep:(BOTransitionStep)step
+                      elements:(nullable NSMutableArray<BOTransitionElement *> *)elements
+                transitionInfo:(BOTransitionInfo)transitioninfo
+                       subInfo:(nullable NSDictionary *)subInfo {
+    
+    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
+                                                       NSUInteger idx,
+                                                       BOOL * _Nonnull stop) {
+        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+            [obj bo_transitioning:self
+                   prepareForStep:step
+                   transitionInfo:transitioninfo
+                         elements:elements];
+        }
+    }];
+    
+    [elements enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [obj execTransitioning:self
+                          step:step
+                transitionInfo:transitioninfo
+                       subInfo:subInfo];
+    }];
 }
 
 - (UIView *)timeRuler {
@@ -1024,59 +1056,18 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     BOTransitionInfo transitioninfo = {0, NO, CGPointZero, CGPointZero};
     NSMutableArray<BOTransitionElement *> *elementar = @[].mutableCopy;
-    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                       NSUInteger idx,
-                                                       BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-            [obj bo_transitioning:self
-                   prepareForStep:BOTransitionStepInstallElements
-                   transitionInfo:transitioninfo
-                         elements:elementar];
-        }
-    }];
-    
-    [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj execTransitioning:self
-                          step:BOTransitionStepInstallElements
-                transitionInfo:transitioninfo
-                       subInfo:nil];
-    }];
-    
-    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                       NSUInteger idx,
-                                                       BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-            [obj bo_transitioning:self
-                   prepareForStep:BOTransitionStepAfterInstallElements
-                   transitionInfo:transitioninfo
-                         elements:elementar];
-        }
-    }];
-    
-    [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj execTransitioning:self
-                          step:BOTransitionStepAfterInstallElements
-                transitionInfo:transitioninfo
-                       subInfo:nil];
-    }];
-    
-    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                       NSUInteger idx,
-                                                       BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-            [obj bo_transitioning:self
-                   prepareForStep:BOTransitionStepInitialAnimatableProperties
-                   transitionInfo:transitioninfo
-                         elements:elementar];
-        }
-    }];
-    
-    [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj execTransitioning:self
-                          step:BOTransitionStepInitialAnimatableProperties
-                transitionInfo:transitioninfo
-                       subInfo:nil];
-    }];
+    [self makePrepareAndExecStep:BOTransitionStepInstallElements
+                        elements:elementar
+                  transitionInfo:transitioninfo
+                         subInfo:nil];
+    [self makePrepareAndExecStep:BOTransitionStepAfterInstallElements
+                        elements:elementar
+                  transitionInfo:transitioninfo
+                         subInfo:nil];
+    [self makePrepareAndExecStep:BOTransitionStepInitialAnimatableProperties
+                        elements:elementar
+                  transitionInfo:transitioninfo
+                         subInfo:nil];
     
     transitioninfo.percentComplete = 1;
     
@@ -1086,83 +1077,36 @@ static CGFloat sf_default_transition_dur = 0.22f;
         [self execAnimateDuration:sf_default_transition_dur
                percentStartAndEnd:CGPointMake(0, 1)
                     modifyUIBlock:^{
-            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                               NSUInteger idx,
-                                                               BOOL * _Nonnull stop) {
-                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                    [obj bo_transitioning:self
-                           prepareForStep:BOTransitionStepTransitioning
-                           transitionInfo:transitioninfo
-                                 elements:elementar];
-                }
-            }];
-            
-            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                               NSUInteger idx,
-                                                               BOOL * _Nonnull stop) {
-                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                    [obj bo_transitioning:self
-                           prepareForStep:BOTransitionStepFinalAnimatableProperties
-                           transitionInfo:transitioninfo
-                                 elements:elementar];
-                }
-            }];
-            
-            [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [obj execTransitioning:self
-                                  step:BOTransitionStepFinalAnimatableProperties
-                        transitionInfo:transitioninfo
-                               subInfo:nil];
-            }];
+            [self makePrepareAndExecStep:BOTransitionStepTransitioning
+                                elements:elementar
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
+            [self makePrepareAndExecStep:BOTransitionStepFinalAnimatableProperties
+                                elements:elementar
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
         }
                        completion:^(BOOL finished) {
-            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                               NSUInteger idx,
-                                                               BOOL * _Nonnull stop) {
-                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                    [obj bo_transitioning:self
-                           prepareForStep:BOTransitionStepFinished
-                           transitionInfo:transitioninfo
-                                 elements:elementar];
-                }
-            }];
-            
-            [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [obj execTransitioning:self
-                                  step:BOTransitionStepFinished
-                        transitionInfo:transitioninfo
-                               subInfo:nil];
-            }];
+            [self makePrepareAndExecStep:BOTransitionStepFinished
+                                elements:elementar
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
             
             [self finalViewHierarchy];
             
             [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
         }];
     } else {
-        
         //系统似乎不支持直接结束，需要有一个动画过程或者下个runloop才能调用结束。否则会周期错乱。
         [self execAnimateDuration:0
                percentStartAndEnd:CGPointMake(0, 1)
                     modifyUIBlock:nil
                        completion:^(BOOL finished) {
             //无动画时，直接完成变为结束状态，然后调用makeTransitionComplete告诉系统完成了转场。
-            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                               NSUInteger idx,
-                                                               BOOL * _Nonnull stop) {
-                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                    [obj bo_transitioning:self
-                           prepareForStep:BOTransitionStepFinished
-                           transitionInfo:transitioninfo
-                                 elements:elementar];
-                }
-            }];
-            
-            [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [obj execTransitioning:self
-                                  step:BOTransitionStepFinished
-                        transitionInfo:transitioninfo
-                               subInfo:nil];
-            }];
+            [self makePrepareAndExecStep:BOTransitionStepFinished
+                                elements:elementar
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
             [self finalViewHierarchy];
             
             [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
@@ -1282,59 +1226,18 @@ static CGFloat sf_default_transition_dur = 0.22f;
     BOTransitionInfo transitioninfo = {percentComplete, YES, beganloc, curloc};
     
     NSMutableArray<BOTransitionElement *> *elementar = @[].mutableCopy;
-    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                       NSUInteger idx,
-                                                       BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-            [obj bo_transitioning:self
-                   prepareForStep:BOTransitionStepInstallElements
-                   transitionInfo:transitioninfo
-                         elements:elementar];
-        }
-    }];
-    
-    [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj execTransitioning:self
-                          step:BOTransitionStepInstallElements
-                transitionInfo:transitioninfo
-                       subInfo:nil];
-    }];
-    
-    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                       NSUInteger idx,
-                                                       BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-            [obj bo_transitioning:self
-                   prepareForStep:BOTransitionStepAfterInstallElements
-                   transitionInfo:transitioninfo
-                         elements:elementar];
-        }
-    }];
-    
-    [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj execTransitioning:self
-                          step:BOTransitionStepAfterInstallElements
-                transitionInfo:transitioninfo
-                       subInfo:nil];
-    }];
-    
-    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                       NSUInteger idx,
-                                                       BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-            [obj bo_transitioning:self
-                   prepareForStep:BOTransitionStepInitialAnimatableProperties
-                   transitionInfo:(BOTransitionInfo){0, NO, CGPointZero, CGPointZero}
-                         elements:elementar];
-        }
-    }];
-    
-    [elementar enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [obj execTransitioning:self
-                          step:BOTransitionStepInitialAnimatableProperties
-                transitionInfo:transitioninfo
-                       subInfo:nil];
-    }];
+    [self makePrepareAndExecStep:BOTransitionStepInstallElements
+                        elements:elementar
+                  transitionInfo:transitioninfo
+                         subInfo:nil];
+    [self makePrepareAndExecStep:BOTransitionStepAfterInstallElements
+                        elements:elementar
+                  transitionInfo:transitioninfo
+                         subInfo:nil];
+    [self makePrepareAndExecStep:BOTransitionStepInitialAnimatableProperties
+                        elements:elementar
+                  transitionInfo:transitioninfo
+                         subInfo:nil];
     
     [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
                                                        NSUInteger idx,
@@ -2034,25 +1937,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 }
             }
             
-            [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                               NSUInteger idx,
-                                                               BOOL * _Nonnull stop) {
-                if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                    [obj bo_transitioning:self
-                           prepareForStep:BOTransitionStepInteractiveEnd
-                           transitionInfo:transitioninfo
-                                 elements:self.transitionElementAr];
-                }
-            }];
-            
-            [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [obj execTransitioning:self
-                                  step:BOTransitionStepInteractiveEnd
-                        transitionInfo:transitioninfo
-                               subInfo:@{@"finish": @(canfinish)}];
-            }];
+            [self makePrepareAndExecStep:BOTransitionStepInteractiveEnd
+                                elements:self.transitionElementAr
+                          transitionInfo:transitioninfo
+                                 subInfo:@{@"finish": @(canfinish)}];
             
             if (canfinish) {
+                [self makePrepareAndExecStep:BOTransitionStepTransitionWillFinish
+                                    elements:self.transitionElementAr
+                              transitionInfo:transitioninfo
+                                     subInfo:nil];
+                
                 CGFloat maxdis = [self obtainMaxFrameChangeCenterDistance:YES];
                 CGFloat mindur = maxdis / 2400.f;
                 if (maxdis > 8) {
@@ -2064,23 +1959,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 [self execAnimateDuration:dur
                        percentStartAndEnd:CGPointMake(percentComplete, 1)
                             modifyUIBlock:^{
-                    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                                       NSUInteger idx,
-                                                                       BOOL * _Nonnull stop) {
-                        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                            [obj bo_transitioning:self
-                                   prepareForStep:BOTransitionStepFinalAnimatableProperties
-                                   transitionInfo:transitioninfo
-                                         elements:self.transitionElementAr];
-                        }
-                    }];
-                    
-                    [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                        [obj execTransitioning:self
-                                          step:BOTransitionStepFinalAnimatableProperties
-                                transitionInfo:transitioninfo
-                                       subInfo:@{@"ani": @(YES)}];
-                    }];
+                    [self makePrepareAndExecStep:BOTransitionStepFinalAnimatableProperties
+                                        elements:self.transitionElementAr
+                                  transitionInfo:transitioninfo
+                                         subInfo:@{@"ani": @(YES)}];
                 }
                                completion:^(BOOL finished) {
                     if (!self.shouldRunAniCompletionBlock) {
@@ -2090,24 +1972,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     
                     [ges clearSaveContext];
                     
-                    //没有被touchesEvent接管才继续执行
-                    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                                       NSUInteger idx,
-                                                                       BOOL * _Nonnull stop) {
-                        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                            [obj bo_transitioning:self
-                                   prepareForStep:BOTransitionStepFinished
-                                   transitionInfo:transitioninfo
-                                         elements:self.transitionElementAr];
-                        }
-                    }];
-                    
-                    [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                        [obj execTransitioning:self
-                                          step:BOTransitionStepFinished
-                                transitionInfo:transitioninfo
-                                       subInfo:nil];
-                    }];
+                    [self makePrepareAndExecStep:BOTransitionStepFinished
+                                        elements:self.transitionElementAr
+                                  transitionInfo:transitioninfo
+                                         subInfo:nil];
                     
                     [self.transitionContext updateInteractiveTransition:transitioninfo.percentComplete];
                     [self finalViewHierarchy];
@@ -2115,6 +1983,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     [self makeTransitionComplete:YES isInteractive:YES];
                 }];
             } else {
+                [self makePrepareAndExecStep:BOTransitionStepTransitionWillCancel
+                                    elements:self.transitionElementAr
+                              transitionInfo:transitioninfo
+                                     subInfo:nil];
+                
                 /*
                  若起点和当前点相聚较远,或当前有进度，执行取消动画
                  若非如此，那便是拖拽到了起点附近或重合，此时不需执行动画，直接恢复状态即可
@@ -2152,23 +2025,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 [self execAnimateDuration:durval.floatValue
                        percentStartAndEnd:CGPointMake(percentComplete, 0)
                             modifyUIBlock:^{
-                    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                                       NSUInteger idx,
-                                                                       BOOL * _Nonnull stop) {
-                        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                            [obj bo_transitioning:self
-                                   prepareForStep:BOTransitionStepInitialAnimatableProperties
-                                   transitionInfo:transitioninfo
-                                         elements:self.transitionElementAr];
-                        }
-                    }];
-                    
-                    [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                        [obj execTransitioning:self
-                                          step:BOTransitionStepInitialAnimatableProperties
-                                transitionInfo:transitioninfo
-                                       subInfo:@{@"ani": @(YES)}];
-                    }];
+                    [self makePrepareAndExecStep:BOTransitionStepInitialAnimatableProperties
+                                        elements:self.transitionElementAr
+                                  transitionInfo:transitioninfo
+                                         subInfo:@{@"ani": @(YES)}];
                 }
                                completion:^(BOOL finished) {
                     if (!self.shouldRunAniCompletionBlock) {
@@ -2177,23 +2037,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     self.shouldRunAniCompletionBlock = NO;
                     [ges clearSaveContext];
                     
-                    [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
-                                                                       NSUInteger idx,
-                                                                       BOOL * _Nonnull stop) {
-                        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
-                            [obj bo_transitioning:self
-                                   prepareForStep:BOTransitionStepCancelled
-                                   transitionInfo:transitioninfo
-                                         elements:self.transitionElementAr];
-                        }
-                    }];
-                    
-                    [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                        [obj execTransitioning:self
-                                          step:BOTransitionStepCancelled
-                                transitionInfo:transitioninfo
-                                       subInfo:nil];
-                    }];
+                    [self makePrepareAndExecStep:BOTransitionStepCancelled
+                                        elements:self.transitionElementAr
+                                  transitionInfo:transitioninfo
+                                         subInfo:nil];
                     
                     [self.transitionContext updateInteractiveTransition:transitioninfo.percentComplete];
                     [self revertInitialViewHierarchy];

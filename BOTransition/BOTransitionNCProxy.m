@@ -132,7 +132,7 @@
 /*
  处理转场代理
  */
-@interface BOTransitionNCHandler : NSObject <UINavigationControllerDelegate>
+@interface BOTransitionNCHandler () <UINavigationControllerDelegate>
 
 @property (nonatomic, weak) BOTransitionNCProxy *ncProxy;
 @property (nonatomic, weak) UINavigationController *navigationController;
@@ -223,12 +223,94 @@
 - (void)navigationController:(UINavigationController *)navigationController
       willShowViewController:(UIViewController *)viewController
                     animated:(BOOL)animated {
+    if (self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
+        //更新navigationBar状态
+        BOOL shouldHidden = viewController.navigationItem.bo_navigationBarHidden;
+        if (shouldHidden != navigationController.navigationBarHidden) {
+            [navigationController setNavigationBarHidden:shouldHidden animated:YES];
+        }
+    }
+    
+    
     if (self.ncProxy.navigationControllerDelegate
         && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:willShowViewController:animated:)]) {
         [self.ncProxy.navigationControllerDelegate navigationController:navigationController
                                                  willShowViewController:viewController
                                                                animated:animated];
     }
+}
+
+#pragma mark - BOTransitionEffectControl
+- (void)bo_transitioning:(BOTransitioning *)transitioning
+          prepareForStep:(BOTransitionStep)step
+          transitionInfo:(BOTransitionInfo)transitionInfo
+                elements:(NSMutableArray<BOTransitionElement *> *)elements {
+    if (BOTransitionStepInstallElements != step) {
+        return;
+    }
+    
+    if (!self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
+        return;
+    }
+    
+    //添加更新navigationBar状态的transition effect element
+    UIViewController *startvc = nil;
+    UIViewController *desvc = nil;
+    if (BOTransitionActMoveIn == transitioning.transitionAct) {
+        startvc = transitioning.baseVC;
+        desvc = transitioning.moveVC;
+    } else if (BOTransitionActMoveOut == transitioning.transitionAct) {
+        startvc = transitioning.moveVC;
+        desvc = transitioning.baseVC;
+    }
+    
+    if (!desvc || !startvc) {
+        return;
+    }
+    
+    BOOL startshouldHidden = startvc.navigationItem.bo_navigationBarHidden;
+    BOOL desshouldHidden = desvc.navigationItem.bo_navigationBarHidden;
+    if (startshouldHidden == desshouldHidden
+        && startshouldHidden == transitioning.navigationController.navigationBarHidden) {
+        return;
+    }
+    
+    BOTransitionElement *ele = [BOTransitionElement new];
+    //即将开始时更新到目标vc的状态
+    [ele addToStep:BOTransitionStepTransitionWillBegin
+             block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+        if (desshouldHidden != transitioning.navigationController.navigationBarHidden) {
+            [transitioning.navigationController setNavigationBarHidden:desshouldHidden animated:YES];
+        }
+        
+    }];
+    
+    //即将结束时确保更新到了目标vc的状态
+    [ele addToStep:BOTransitionStepTransitionWillFinish
+             block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+        if (desshouldHidden != transitioning.navigationController.navigationBarHidden) {
+            [transitioning.navigationController setNavigationBarHidden:desshouldHidden animated:YES];
+        }
+    }];
+    
+    //即将取消时恢复到初始目标的状态
+    [ele addToStep:BOTransitionStepTransitionWillCancel
+             block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+        if (startshouldHidden != transitioning.navigationController.navigationBarHidden) {
+            [transitioning.navigationController setNavigationBarHidden:startshouldHidden animated:YES];
+        }
+        
+        if (!startshouldHidden) {
+            UIViewController *stvc = ((transitioning.transitionAct == BOTransitionActMoveIn) ?
+                                      transitioning.baseVC : transitioning.moveVC);
+            if (stvc.navigationItem) {
+                [transitioning.navigationController.navigationBar pushNavigationItem:stvc.navigationItem
+                                                                            animated:YES];
+            }
+        }
+    }];
+    
+    [elements addObject:ele];
 }
 
 @end
@@ -529,6 +611,34 @@
             
             completion(YES, userInfo);
         }
+    }
+}
+
+@end
+
+@implementation UINavigationItem (BOTransition)
+
+- (BOOL)bo_navigationBarHidden {
+    NSNumber *value = objc_getAssociatedObject(self, @selector(bo_navigationBarHidden));
+    if (nil != value) {
+        return value.boolValue;
+    } else {
+        return NO;
+    }
+}
+
+- (void)setBo_navigationBarHidden:(BOOL)bo_navigationBarHidden {
+    if (bo_navigationBarHidden) {
+        NSNumber *value = [[NSNumber alloc] initWithBool:bo_navigationBarHidden];
+        objc_setAssociatedObject(self,
+                                 @selector(bo_navigationBarHidden),
+                                 value,
+                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    } else {
+        objc_setAssociatedObject(self,
+                                 @selector(bo_navigationBarHidden),
+                                 nil,
+                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
 }
 

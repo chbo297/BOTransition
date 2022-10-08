@@ -10,6 +10,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @class BOTransitioning;
+
+//内部使用
+@interface BOTransitionNCHandler : NSObject <BOTransitionEffectControl>
+
+@end
+
 @interface BOTransitionNCProxy : NSProxy <UINavigationControllerDelegate, UIGestureRecognizerDelegate>
 
 //转场执行者
@@ -23,6 +29,15 @@ NS_ASSUME_NONNULL_BEGIN
  navigationController:interactionControllerForAnimationController:
  */
 @property(nullable, nonatomic, weak) id<UINavigationControllerDelegate> navigationControllerDelegate;
+
+/*
+ default: NO
+ 当设置YES时，会自定在展示页面时根据对应页面的UINavigationItem.bo_navigationBarHidden的值设置NavigationBar的Hidden
+ */
+@property (nonatomic, assign) BOOL autoSetNavigationBarHidden;
+
+//内部使用
+@property (nonatomic, readonly) BOTransitionNCHandler *transitionNCHandler;
 
 @end
 
@@ -54,6 +69,16 @@ NS_ASSUME_NONNULL_BEGIN
                   animated:(BOOL)animated
                   userInfo:(nullable NSDictionary *)userInfo
                 completion:(void (^ _Nullable)(BOOL finish, NSDictionary * _Nullable info))completion;
+
+@end
+
+@interface UINavigationItem (BOTransition)
+
+/*
+ BOTransitionNCProxy的autoSetNavigationBarHidden为YES才有效
+ 该值设置为YES时，展示对应页面，会自动隐藏NavigationBar，否则会展示
+ */
+@property (nonatomic) BOOL bo_navigationBarHidden;
 
 @end
 
