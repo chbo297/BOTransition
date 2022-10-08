@@ -728,6 +728,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
         _commonBg = [UIView new];
         _commonBg.backgroundColor = [UIColor colorWithWhite:0 alpha:0.27];
         _commonBg.userInteractionEnabled = NO;
+        _commonBg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     }
     return _commonBg;
 }
@@ -881,6 +882,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     if (!container) {
         return;
+    }
+    
+    if (@available(iOS 16.0, *)) {
+        //iOS16系统有问题，有时转来转去containersize没变化，这里补充保障一下，使其和父view同大小
+        if (container.superview
+            && CGRectEqualToRect(container.frame, container.superview.bounds)
+            && UIViewAutoresizingNone == container.autoresizingMask) {
+            container.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        }
     }
     
     //先确保base和move的view都放入图层中

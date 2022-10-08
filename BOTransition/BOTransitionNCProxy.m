@@ -307,9 +307,9 @@
 //            if (startitem
 //                && nbar) {
 //                if (![nbar.items containsObject:startitem]) {
-//                    //有问题，bar的内容没有恢复，系统有bug
+//                    //有问题，bar的内容没有恢复，系统有bug。这里如果手动push一下原内容理论上可以修复，但系统做了个exception不让外部执行，后续再想办法吧
 //                }
-//                
+//
 //            }
 //        }
     }];
