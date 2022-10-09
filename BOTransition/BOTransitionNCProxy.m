@@ -369,14 +369,25 @@
 }
 
 - (BOOL)respondsToSelector:(SEL)aSelector {
+    //先从自己的方法列表中找找
+    int i = 0;
+    unsigned int mcount = 0;
+    Method *mlist = class_copyMethodList(self.class, &mcount);
+    for (i = 0; i < mcount; i++) {
+        SEL selval = method_getName(mlist[i]);
+        if (aSelector == selval) {
+            return YES;
+        }
+    }
+    
+    //自己没实现，再问下transitionNCHandler和navigationControllerDelegate
     if ([_transitionNCHandler respondsToSelector:aSelector]) {
         return YES;
     } else if (_navigationControllerDelegate &&
                [_navigationControllerDelegate respondsToSelector:aSelector])  {
         return YES;
-    } else if (aSelector == @selector(transitionNCHandler)) {
-        return YES;
     } else {
+        //都不响应则返回NO
         return NO;
     }
 }
