@@ -102,21 +102,19 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                             BOTransitionElement *transitionItem,
                             BOTransitionInfo transitionInfo,
                             NSDictionary * _Nullable subInfo))block {
-    if (block) {
-        NSNumber *thekey = @(step);
-        NSMutableArray<void (^)(BOTransitioning *transitioning,
-                                BOTransitionStep,
-                                BOTransitionElement * _Nonnull,
-                                BOTransitionInfo,
-                                NSDictionary * _Nullable)> *blockar =\
-        [self.blockDic objectForKey:thekey];
-        
-        if (!blockar) {
-            blockar = [NSMutableArray new];
-            [self.blockDic setObject:blockar forKey:thekey];
-        }
-        [blockar addObject:block];
+    NSNumber *key = @(step);
+    NSMutableArray<void (^)(BOTransitioning *transitioning,
+                            BOTransitionStep,
+                            BOTransitionElement * _Nonnull,
+                            BOTransitionInfo,
+                            NSDictionary * _Nullable)> *blockar =\
+    [self.blockDic objectForKey:key];
+    
+    if (!blockar) {
+        blockar = [NSMutableArray new];
+        [self.blockDic setObject:blockar forKey:key];
     }
+    [blockar addObject:block];
 }
 
 - (void)execTransitioning:(BOTransitioning *)transitioning
@@ -128,8 +126,15 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                             BOTransitionStep,
                             BOTransitionElement * _Nonnull,
                             BOTransitionInfo,
-                            NSDictionary * _Nullable)> *blockar =\
-    [self.blockDic objectForKey:@(step)];
+                            NSDictionary * _Nullable)> *blockar = @[].mutableCopy;
+    
+    [self.blockDic enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSMutableArray<void (^)(BOTransitioning *, BOTransitionStep, BOTransitionElement *, BOTransitionInfo, NSDictionary * _Nullable)> * _Nonnull obj, BOOL * _Nonnull stop) {
+        NSUInteger stepval = key.unsignedIntegerValue;
+        if ((step & stepval)
+            && obj.count > 0) {
+            [blockar addObjectsFromArray:obj];
+        }
+    }];
     
     [blockar enumerateObjectsUsingBlock:^(void (^ _Nonnull obj)(BOTransitioning *,
                                                                 BOTransitionStep,
@@ -160,11 +165,7 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                     self.fromViewAutoHidden) {
                     BOOL originfromhidden = self.fromView.hidden;
                     self.fromView.hidden = YES;
-                    [self addToStep:BOTransitionStepCancelled
-                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                        ws.fromView.hidden = originfromhidden;
-                    }];
-                    [self addToStep:BOTransitionStepFinished
+                    [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
                               block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
                         ws.fromView.hidden = originfromhidden;
                     }];
@@ -174,11 +175,7 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                     self.toViewAutoHidden) {
                     BOOL origintohidden = self.toView.hidden;
                     self.toView.hidden = YES;
-                    [self addToStep:BOTransitionStepCancelled
-                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                        ws.toView.hidden = origintohidden;
-                    }];
-                    [self addToStep:BOTransitionStepFinished
+                    [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
                               block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
                         ws.toView.hidden = origintohidden;
                     }];

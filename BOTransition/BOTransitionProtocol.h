@@ -23,22 +23,22 @@ typedef NS_ENUM(NSUInteger, BOTransitionAct) {
 };
 
 typedef NS_ENUM(NSUInteger, BOTransitionStep) {
-    BOTransitionStepNone = 0,
-    BOTransitionStepInstallElements,
-    BOTransitionStepAfterInstallElements,
-    BOTransitionStepInitialAnimatableProperties,
+    BOTransitionStepNone                            = 0 << 0,
+    BOTransitionStepInstallElements                 = 1 << 0,
+    BOTransitionStepAfterInstallElements            = 1 << 1,
+    BOTransitionStepInitialAnimatableProperties     = 1 << 2,
     
-    BOTransitionStepWillBegin,
-    BOTransitionStepTransitioning,
-    BOTransitionStepFinalAnimatableProperties,
+    BOTransitionStepWillBegin                       = 1 << 3,
+    BOTransitionStepTransitioning                   = 1 << 4,
+    BOTransitionStepFinalAnimatableProperties       = 1 << 5,
     
-    BOTransitionStepWillFinish,
-    BOTransitionStepFinished,
+    BOTransitionStepWillFinish                      = 1 << 6,
+    BOTransitionStepFinished                        = 1 << 7,
     
-    BOTransitionStepWillCancel,
-    BOTransitionStepCancelled,
+    BOTransitionStepWillCancel                      = 1 << 8,
+    BOTransitionStepCancelled                       = 1 << 9,
     
-    BOTransitionStepInteractiveEnd,
+    BOTransitionStepInteractiveEnd                  = 1 << 10,
 };
 
 typedef struct BOTransitionInfo {

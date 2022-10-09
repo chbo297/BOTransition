@@ -27,10 +27,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nullable, nonatomic, weak) id<UINavigationControllerDelegate> navigationControllerDelegate;
 
 /*
- default: NO
- 当设置YES时，会自定在展示页面时根据对应页面的UINavigationItem.bo_navigationBarHidden的值设置NavigationBar的Hidden
+ BOTransitionNCProxy.defaultNavigationBarHiddenAndAutoSet: NSNumber<BOOL>
+ default: nil
+ 有值时，会在切页时自动设置NavigationBar的hidden状态
+ 根据目标页面的UINavigationItem.bo_navigationBarHidden的值，若bo_navigationBarHidden为nil，则将NavigationBarHidden设定为defaultNavigationBarHiddenAndAutoSet的值
+ 若bo_navigationBarHidden有值，则设定对应的值
+ 
+ 比如当默认全局NavigationBar隐藏时，把defaultNavigationBarHiddenAndAutoSet设置为@(YES)
+ 只有一些页面需要额外展示时，把对应页面的UINavigationItem.bo_navigationBarHidden设置为@(NO)
+ 可以实现所有没额外设置的页面默认都不展示，只有设置了@(NO)才展示navigationBar
+ 反正可以让全局都展示，只有对应页面不展示
  */
-@property (nonatomic, assign) BOOL autoSetNavigationBarHidden;
+@property (nonatomic, strong) NSNumber *defaultNavigationBarHiddenAndAutoSet;
 
 //内部使用
 @property (nonatomic, readonly) id<BOTransitionEffectControl> transitionEffectControl;
@@ -71,10 +79,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface UINavigationItem (BOTransition)
 
 /*
- BOTransitionNCProxy的autoSetNavigationBarHidden为YES才有效
- 该值设置为YES时，展示对应页面，会自动隐藏NavigationBar，否则会展示
+ 见 BOTransitionNCProxy.defaultNavigationBarHiddenAndAutoSet
  */
-@property (nonatomic) BOOL bo_navigationBarHidden;
+@property (nonatomic) NSNumber *bo_navigationBarHidden;
 
 @end
 

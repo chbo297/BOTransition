@@ -202,14 +202,6 @@
                 UIView *blockcontainer = blockTrans.transitionContext.containerView;
                 [blockcontainer addSubview:transitionElement.transitionView];
             }];
-            [photoele addToStep:BOTransitionStepCancelled
-                          block:^(BOTransitioning * _Nonnull blockTrans,
-                                  BOTransitionStep step,
-                                  BOTransitionElement * _Nonnull transitionElement,
-                                  BOTransitionInfo transitionInfo,
-                                  NSDictionary * _Nullable subInfo) {
-                [transitionElement.transitionView removeFromSuperview];
-            }];
             
             [photoele addToStep:BOTransitionStepInteractiveEnd
                           block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable bksubInfo) {
@@ -239,7 +231,7 @@
                 }
             }];
             
-            [photoele addToStep:BOTransitionStepFinished
+            [photoele addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
                           block:^(BOTransitioning * _Nonnull blockTrans,
                                   BOTransitionStep step,
                                   BOTransitionElement * _Nonnull transitionElement,

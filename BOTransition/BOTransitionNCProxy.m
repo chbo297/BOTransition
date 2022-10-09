@@ -227,20 +227,32 @@
 - (void)navigationController:(UINavigationController *)navigationController
       willShowViewController:(UIViewController *)viewController
                     animated:(BOOL)animated {
-    if (self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
-        //更新navigationBar状态
-        BOOL shouldHidden = viewController.navigationItem.bo_navigationBarHidden;
-        if (shouldHidden != navigationController.navigationBarHidden) {
-            [navigationController setNavigationBarHidden:shouldHidden animated:YES];
-        }
-    }
-    
+    [self checkNavigationBarHiddenForVC:viewController];
     
     if (self.ncProxy.navigationControllerDelegate
         && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:willShowViewController:animated:)]) {
         [self.ncProxy.navigationControllerDelegate navigationController:navigationController
                                                  willShowViewController:viewController
                                                                animated:animated];
+    }
+}
+
+- (void)checkNavigationBarHiddenForVC:(UIViewController *)vc {
+    if (!vc) {
+        return;
+    }
+    
+    NSNumber *autoSetnbh = self.navigationController.bo_transProxy.defaultNavigationBarHiddenAndAutoSet;
+    if (nil != autoSetnbh) {
+        //更新navigationBar状态
+        BOOL shouldhidden = autoSetnbh.boolValue;
+        NSNumber *vcnbh = vc.navigationItem.bo_navigationBarHidden;
+        if (nil != vcnbh) {
+            shouldhidden = vcnbh.boolValue;
+        }
+        if (shouldhidden != self.navigationController.navigationBarHidden) {
+            [self.navigationController setNavigationBarHidden:shouldhidden animated:YES];
+        }
     }
 }
 
@@ -253,68 +265,44 @@
         return;
     }
     
-    //添加更新navigationBar状态的transition effect element
-    BOTransitionElement *ele = [BOTransitionElement new];
-    
     /*
      若需要管理NavigationBar的Hidden，则在开始、结束、取消都check状态
-     即使不需要管理，也要确保在取消时，恢复NavigationBar的内容
+     目前有个系统bug，在自定义转场取消时，NavigationBar内容没恢复
      */
-    if (self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
-        //即将开始时更新到目标vc的状态
-        [ele addToStep:BOTransitionStepWillBegin
+    if (nil != self.navigationController.bo_transProxy.defaultNavigationBarHiddenAndAutoSet) {
+        //添加更新navigationBar状态的transition effect element
+        BOTransitionElement *ele = [BOTransitionElement new];
+        __weak typeof(self) ws = self;
+        [ele addToStep:BOTransitionStepWillBegin | BOTransitionStepWillFinish | BOTransitionStepWillCancel
                  block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-            UIViewController *desvc = transitioning.desVC;
-            if (desvc) {
-                BOOL shouldhidden = desvc.navigationItem.bo_navigationBarHidden;
-                if (shouldhidden != transitioning.navigationController.navigationBarHidden) {
-                    [transitioning.navigationController setNavigationBarHidden:shouldhidden animated:YES];
-                }
+            switch (step) {
+                case BOTransitionStepWillBegin:
+                case BOTransitionStepWillFinish:
+                    //即将开始和即将结束时确保更新到了目标vc的状态
+                    [ws checkNavigationBarHiddenForVC:transitioning.desVC];
+                    break;
+                case BOTransitionStepWillCancel:
+                    [ws checkNavigationBarHiddenForVC:transitioning.startVC];
+                    break;
+                default:
+                    break;
             }
         }];
-        
-        //即将结束时确保更新到了目标vc的状态
-        [ele addToStep:BOTransitionStepWillFinish
-                 block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-            UIViewController *desvc = transitioning.desVC;
-            if (desvc) {
-                BOOL shouldhidden = desvc.navigationItem.bo_navigationBarHidden;
-                if (shouldhidden != transitioning.navigationController.navigationBarHidden) {
-                    [transitioning.navigationController setNavigationBarHidden:shouldhidden animated:YES];
-                }
-            }
-        }];
+        [elements addObject:ele];
     }
     
-    //即将取消时恢复到初始目标的状态
-    [ele addToStep:BOTransitionStepWillCancel
-             block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-        UIViewController *startvc = transitioning.startVC;
-        if (!startvc) {
-            return;
-        }
-        if (self.navigationController.bo_transProxy.autoSetNavigationBarHidden) {
-            BOOL shouldhidden = startvc.navigationItem.bo_navigationBarHidden;
-            if (shouldhidden != transitioning.navigationController.navigationBarHidden) {
-                [transitioning.navigationController setNavigationBarHidden:shouldhidden animated:YES];
-            }
-        }
-        
-//        if (!transitioning.navigationController.navigationBarHidden) {
-//            //取消时恢复bar的内容
-//            UINavigationItem *startitem = startvc.navigationItem;
-//            UINavigationBar *nbar = transitioning.navigationController.navigationBar;
-//            if (startitem
-//                && nbar) {
-//                if (![nbar.items containsObject:startitem]) {
-//                    //有问题，bar的内容没有恢复，系统有bug。这里如果手动push一下原内容理论上可以修复，但系统做了个exception不让外部执行，后续再想办法吧
-//                }
-//
+//    if (!transitioning.navigationController.navigationBarHidden) {
+//        //取消时恢复bar的内容
+//        UINavigationItem *startitem = startvc.navigationItem;
+//        UINavigationBar *nbar = transitioning.navigationController.navigationBar;
+//        if (startitem
+//            && nbar) {
+//            if (![nbar.items containsObject:startitem]) {
+//                //有问题，bar的内容没有恢复，系统有bug。这里如果手动push一下原内容理论上可以修复，但系统做了个exception不让外部执行，后续再想办法吧
 //            }
+//
 //        }
-    }];
-    
-    [elements addObject:ele];
+//    }
 }
 
 @end
@@ -637,28 +625,15 @@
 
 @implementation UINavigationItem (BOTransition)
 
-- (BOOL)bo_navigationBarHidden {
-    NSNumber *value = objc_getAssociatedObject(self, @selector(bo_navigationBarHidden));
-    if (nil != value) {
-        return value.boolValue;
-    } else {
-        return NO;
-    }
+- (NSNumber *)bo_navigationBarHidden {
+    return objc_getAssociatedObject(self, @selector(bo_navigationBarHidden));
 }
 
-- (void)setBo_navigationBarHidden:(BOOL)bo_navigationBarHidden {
-    if (bo_navigationBarHidden) {
-        NSNumber *value = [[NSNumber alloc] initWithBool:bo_navigationBarHidden];
-        objc_setAssociatedObject(self,
-                                 @selector(bo_navigationBarHidden),
-                                 value,
-                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    } else {
-        objc_setAssociatedObject(self,
-                                 @selector(bo_navigationBarHidden),
-                                 nil,
-                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
+- (void)setBo_navigationBarHidden:(NSNumber *)bo_navigationBarHidden {
+    objc_setAssociatedObject(self,
+                             @selector(bo_navigationBarHidden),
+                             bo_navigationBarHidden,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 @end

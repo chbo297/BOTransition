@@ -205,15 +205,7 @@
                         transitionElement.transitionView.frame = startviewrt;
                         [blockcontainer addSubview:transitionElement.transitionView];
                     }];
-                    [itemelement addToStep:BOTransitionStepCancelled
-                                     block:^(BOTransitioning * _Nonnull blockTrans,
-                                             BOTransitionStep step,
-                                             BOTransitionElement * _Nonnull transitionElement,
-                                             BOTransitionInfo transitionInfo,
-                                             NSDictionary * _Nullable subInfo) {
-                        [transitionElement.transitionView removeFromSuperview];
-                    }];
-                    [itemelement addToStep:BOTransitionStepFinished
+                    [itemelement addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
                                      block:^(BOTransitioning * _Nonnull blockTrans,
                                              BOTransitionStep step,
                                              BOTransitionElement * _Nonnull transitionElement,
@@ -336,15 +328,7 @@
                 }
             }];
             
-            [self addToStep:BOTransitionStepCancelled
-                      block:^(BOTransitioning * _Nonnull blockTrans,
-                              BOTransitionStep step,
-                              BOTransitionElement * _Nonnull te,
-                              BOTransitionInfo transitionInfo,
-                              NSDictionary * _Nullable subInfo) {
-                [te.transitionView removeFromSuperview];
-            }];
-            [self addToStep:BOTransitionStepFinished
+            [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
                       block:^(BOTransitioning * _Nonnull blockTrans,
                               BOTransitionStep step,
                               BOTransitionElement * _Nonnull te,
