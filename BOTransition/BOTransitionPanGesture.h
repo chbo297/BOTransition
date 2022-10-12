@@ -34,6 +34,8 @@ typedef struct BOTransitionPanGestureBrief {
  YES: 开始手势
  NO: 不可以开始并且取消本次手势响应
  
+ specialDirection: 指定并修改trigger的mainDirection
+ 
  @{
  @"type": @"needsRecoverWhenTouchDown",
  @"otherSVResponse": @{info: @(CGPoint), gesAr: NSHashTable<UIGestureRecognizer>}见下述
@@ -54,6 +56,7 @@ typedef struct BOTransitionPanGestureBrief {
  gesAr: NSHashTable<UIGestureRecognizer>
  */
 - (nullable NSNumber *)boTransitionGesShouldAndWillBegin:(BOTransitionPanGesture *)ges
+                                    specialMainDirection:(UISwipeGestureRecognizerDirection *)mainDirection
                                                  subInfo:(nullable NSDictionary *)subInfo;
 
 - (void)boTransitionGesStateDidChange:(BOTransitionPanGesture *)ges;

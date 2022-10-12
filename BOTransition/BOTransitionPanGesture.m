@@ -333,10 +333,17 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 if (_needsRecoverWhenTouchDown) {
                     NSNumber *shouldbegin;
                     if (self.transitionGesDelegate &&
-                        [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:subInfo:)]) {
+                        [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:specialMainDirection:subInfo:)]) {
+                        UISwipeGestureRecognizerDirection anDir = _lastGesBrief.triggerDirectionInfo.mainDirection;
                         shouldbegin =\
                         [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self
+                                                                 specialMainDirection:&anDir
                                                                               subInfo:@{@"type": @"needsRecoverWhenTouchDown"}];
+                        if (anDir != _lastGesBrief.triggerDirectionInfo.mainDirection) {
+                            //recover的时候应该不需要修改，虽然估计用不到，暂保留吧
+                            _lastGesBrief.triggerDirectionInfo.subDirection = _lastGesBrief.triggerDirectionInfo.mainDirection;
+                            _lastGesBrief.triggerDirectionInfo.mainDirection = anDir;
+                        }
                     }
                     
                     if (nil != shouldbegin &&
@@ -423,10 +430,20 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     NSDictionary *mainresdic = [self currPanSVAcceptDirection:drinfo.mainDirection];
     
     if (self.transitionGesDelegate &&
-        [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:subInfo:)]) {
-        shouldbegin = [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self subInfo:@{
+        [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:specialMainDirection:subInfo:)]) {
+        UISwipeGestureRecognizerDirection anDir = drinfo.mainDirection;
+        shouldbegin = [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self
+                                                               specialMainDirection:&anDir
+                                                                            subInfo:@{
             @"otherSVResponse": mainresdic ? : @{}
         }];
+        
+        if (anDir != drinfo.mainDirection) {
+            //delegate指定了新的mainDirection
+            drinfo.subDirection = drinfo.mainDirection;
+            drinfo.mainDirection = anDir;
+            _triggerDirectionInfo = drinfo;
+        }
     }
     
     if (nil != shouldbegin) {
@@ -1189,21 +1206,13 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }
         
         CGFloat marginres = 27;
-        switch (ges.triggerDirectionInfo.mainDirection) {
-            case UISwipeGestureRecognizerDirectionLeft:
-                if (ptmaybegan.x
-                    >=
-                    CGRectGetMaxX(ges.view.bounds) - marginres) {
-                    ismargin = YES;
-                }
-                break;
-            case UISwipeGestureRecognizerDirectionRight:
-                if (ptmaybegan.x <= CGRectGetMinX(ges.view.bounds) + marginres) {
-                    ismargin = YES;
-                }
-                break;
-            default:
-                break;
+        CGPoint gesvel = ges.triggerDirectionInfo.velocity;
+        //向右且起点在左侧 或 向左起点在右边 判定为边缘手势
+        if ((gesvel.x > 0
+            && ptmaybegan.x <= CGRectGetMinX(ges.view.bounds) + marginres)
+            || (gesvel.x < 0
+                && ptmaybegan.x >= CGRectGetMaxX(ges.view.bounds) - marginres)) {
+            ismargin = YES;
         }
     }
     
