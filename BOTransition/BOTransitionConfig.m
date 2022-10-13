@@ -271,7 +271,8 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
         [mudic addEntriesFromDictionary:userInfo];
     }
     
-    [_gesInfoAr addObject:mudic];
+    //后加的优先判定：放在数组头部
+    [_gesInfoAr insertObject:mudic atIndex:0];
 }
 
 - (void)removeGesInfoWithMoveOut:(BOOL)moveOut {
