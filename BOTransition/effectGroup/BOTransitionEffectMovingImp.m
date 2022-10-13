@@ -42,7 +42,12 @@
             NSDictionary *configinfo = self.configInfo ? : [self defaultConfigInfo];
             
             NSNumber *directionval = configinfo[@"direction"];
-            UIRectEdge direction = directionval ? directionval.unsignedIntegerValue : UIRectEdgeRight;
+            UIRectEdge direction;
+            if (nil != directionval) {
+                direction = directionval.unsignedIntegerValue;
+            } else {
+                direction = UIRectEdgeRight;
+            }
             CGRect outrt = movedrt;
             NSNumber *moveOutAdaptionGesval = configinfo[@"moveOutAdaptionGes"];
             if (transitionInfo.interactive

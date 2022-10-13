@@ -40,22 +40,22 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 + (instancetype)new NS_UNAVAILABLE;
 
 //present/push动作发生之前前已经在展示的基准VC
-@property (nonatomic, readonly) UIViewController *baseVC;
+@property (nonatomic, readonly, nullable) UIViewController *baseVC;
 //present/push动作的入场VC以及 dismiss/pop动作的离场VC
-@property (nonatomic, readonly) UIViewController *moveVC;
+@property (nonatomic, readonly, nullable) UIViewController *moveVC;
 
 /*
  act=moveIn时，start=baseVC，des=moveVC
  act=moveOut时，start=moveVC，des=baseVC
  */
-@property (nonatomic, readonly) UIViewController *startVC;
-@property (nonatomic, readonly) UIViewController *desVC;
+@property (nonatomic, readonly, nullable) UIViewController *startVC;
+@property (nonatomic, readonly, nullable) UIViewController *desVC;
 
 //用来转场的容器
-@property (nonatomic, readonly) UIView *baseTransBoard;
-@property (nonatomic, readonly) UIView *moveTransBoard;
+@property (nonatomic, readonly, nullable) UIView *baseTransBoard;
+@property (nonatomic, readonly, nullable) UIView *moveTransBoard;
 
-@property (nonatomic, readonly) UIView *commonBg;
+@property (nonatomic, readonly, nullable) UIView *commonBg;
 @property (nonatomic, readonly) UIView *checkAndInitCommonBg;
 
 @property (nonatomic, weak) BOTransitionConfig *moveVCConfig;
@@ -64,7 +64,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
 @property (nonatomic, readonly) BOOL triggerInteractiveTransitioning;
 
-@property (nonatomic, readonly) id<UIViewControllerContextTransitioning> transitionContext;
+@property (nonatomic, readonly, nullable) id<UIViewControllerContextTransitioning> transitionContext;
 
 //外部控制 每个周期前必须被设置为正确的类型
 @property (nonatomic, assign) BOTransitionAct transitionAct;
