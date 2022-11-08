@@ -328,8 +328,6 @@
     _popGestureHandler = [BOTransitionNCPopGestureHandler new];
     _popGestureHandler.navigationController = navigationController;
     
-    navigationController.delegate = self;
-    
     return self;
 }
 
@@ -438,17 +436,16 @@
 - (void)bo_setTransProxy:(BOOL)use {
     BOTransitionNCProxy *ncproxy = objc_getAssociatedObject(self, @selector(bo_transProxy));
     if (use) {
-        if (ncproxy) {
-            //已经有了，确保一下delegate
-            if (ncproxy != self.delegate) {
-                self.delegate = ncproxy;
-            }
-            return;
-        } else {
-            //还没有，新建并保存，initWithNC内部会设置delegate
+        if (!ncproxy) {
+            //还没有，新建并保存
             ncproxy = [[BOTransitionNCProxy alloc] initWithNC:self];
             objc_setAssociatedObject(self, @selector(bo_transProxy),
                                      ncproxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+        
+        //确保一下delegate
+        if (ncproxy != self.delegate) {
+            self.delegate = ncproxy;
         }
     } else {
         if (ncproxy) {
