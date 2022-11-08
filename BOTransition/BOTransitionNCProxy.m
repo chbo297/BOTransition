@@ -321,15 +321,14 @@
 @implementation BOTransitionNCProxy
 
 - (instancetype)initWithNC:(UINavigationController *)navigationController {
-    
     _transitionNCHandler = [BOTransitionNCHandler new];
     _transitionNCHandler.ncProxy = self;
     _transitionNCHandler.navigationController = navigationController;
     
-    navigationController.delegate = self;
-    
     _popGestureHandler = [BOTransitionNCPopGestureHandler new];
     _popGestureHandler.navigationController = navigationController;
+    
+    navigationController.delegate = self;
     
     return self;
 }
@@ -440,10 +439,13 @@
     BOTransitionNCProxy *ncproxy = objc_getAssociatedObject(self, @selector(bo_transProxy));
     if (use) {
         if (ncproxy) {
-            //已经有了，什么也不做
+            //已经有了，确保一下delegate
+            if (ncproxy != self.delegate) {
+                self.delegate = ncproxy;
+            }
             return;
         } else {
-            //还没有，新建并保存
+            //还没有，新建并保存，initWithNC内部会设置delegate
             ncproxy = [[BOTransitionNCProxy alloc] initWithNC:self];
             objc_setAssociatedObject(self, @selector(bo_transProxy),
                                      ncproxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
