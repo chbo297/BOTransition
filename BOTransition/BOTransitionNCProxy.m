@@ -443,7 +443,7 @@
                                      ncproxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
         
-        //确保一下delegate
+        //delegate配置
         if (ncproxy != self.delegate) {
             self.delegate = ncproxy;
         }
