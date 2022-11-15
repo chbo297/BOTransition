@@ -117,6 +117,7 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
  margin: @(YES/NO) nil=NO //是否必须在边缘开始, YES时会优先其他scrollView进行相应
  allowBeganWithSVBounces: @(YES/NO)
  act: @(1/2) 1moveout(把当前vc关闭)  2movein（从当前vc弹出一个新vc）
+ effectConfig: EffectConfig dictionary
  */
 @property (nonatomic, readonly, nullable) NSMutableArray<NSDictionary *> *gesInfoAr;
 
