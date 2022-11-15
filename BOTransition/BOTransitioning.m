@@ -1512,15 +1512,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
             BOTransitionGesBeganInfo gesBeganInfo = ges.gesBeganInfo;
             //手势横方向和竖直的夹角最小大概27度也判定有效 tan(27度)~=0.5
             CGFloat defminrate = 0.5;
+            //距离边缘距离小于27
+            CGFloat defmarginspace = 27;
             BOOL directjudegsuc = NO;
             if (UISwipeGestureRecognizerDirectionRight == regdirection) {
-                //向右的权重超过0.5，起始点距离屏幕左侧边缘小于27
+                //向右的权重超过指定权重，起始点距离屏幕左侧边缘小于指定距离
                 directjudegsuc = (gesBeganInfo.directionWeight.right > defminrate
-                                  && gesBeganInfo.marginSpace.left < 27);
+                                  && gesBeganInfo.marginSpace.left < defmarginspace);
             } else if (UISwipeGestureRecognizerDirectionLeft == regdirection) {
-                //向左的权重超过0.5，起始点距离屏幕右侧边缘小于27
+                //向左的权重超过指定权重，起始点距离屏幕右侧边缘小于指定距离
                 directjudegsuc = (gesBeganInfo.directionWeight.left > defminrate
-                                  && gesBeganInfo.marginSpace.right < 27);
+                                  && gesBeganInfo.marginSpace.right < defmarginspace);
             }
             
             if (directjudegsuc) {
