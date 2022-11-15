@@ -409,6 +409,88 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     _needsRecoverWhenTouchDown = NO;
 }
 
+- (BOTransitionGesBeganInfo)calculateBeganInfo {
+    CGRect boardbounds = self.view.bounds;
+    BOTransitionGesBeganInfo beganinfo = (BOTransitionGesBeganInfo){UIEdgeInsetsZero, UIEdgeInsetsZero, CGPointZero, boardbounds};
+    if (self.touchInfoAr.count >= 2) {
+        CGPoint pt1 = self.touchInfoAr.firstObject.CGRectValue.origin;
+        beganinfo.location = pt1;
+        
+        beganinfo.marginSpace = UIEdgeInsetsMake(pt1.y - CGRectGetMinY(boardbounds),
+                                                 pt1.x - CGRectGetMinX(boardbounds),
+                                                 CGRectGetMinY(boardbounds) - pt1.y,
+                                                 CGRectGetMaxX(boardbounds) - pt1.x);
+        
+        CGPoint gesvel = self.initialDirectionInfo.velocity;
+        CGFloat fabs_x = fabs(gesvel.x);
+        CGFloat fabs_y = fabs(gesvel.y);
+        
+        CGFloat upweight;
+        CGFloat leftweight;
+        CGFloat downweight;
+        CGFloat rightweight;
+        
+        if (0 == fabs_x) {
+            //横向无速度
+            leftweight = 0;
+            rightweight = 0;
+            
+            if (0 == fabs_y) {
+                //竖向无速度
+                upweight = 0;
+                downweight = 0;
+            } else {
+                //竖向有速度
+                if (gesvel.y > 0) {
+                    upweight = -99;
+                    downweight = 99;
+                } else {
+                    upweight = 99;
+                    downweight = -99;
+                }
+            }
+        } else {
+            //横向有速度
+            if (0 == fabs_y) {
+                //竖向无速度
+                upweight = 0;
+                downweight = 0;
+                
+                if (gesvel.x > 0) {
+                    leftweight = -99;
+                    rightweight = 99;
+                } else {
+                    leftweight = 99;
+                    rightweight = -99;
+                }
+            } else {
+                //竖向有速度
+                CGFloat hweight = fabs_x / fabs_y;
+                if (gesvel.x > 0) {
+                    leftweight = -hweight;
+                    rightweight = hweight;
+                } else {
+                    leftweight = hweight;
+                    rightweight = -hweight;
+                }
+                
+                CGFloat vweight = fabs_y / fabs_x;
+                if (gesvel.y > 0) {
+                    upweight = -vweight;
+                    downweight = vweight;
+                } else {
+                    upweight = vweight;
+                    downweight = -vweight;
+                }
+            }
+        }
+        
+        beganinfo.directionWeight = UIEdgeInsetsMake(upweight, leftweight, downweight, rightweight);
+    }
+    
+    return beganinfo;
+}
+
 - (NSNumber *)tryBeginTransitionGesAndMakeInfo {
     BOTransitionGesSliceInfo drinfo = [self generateSliceInfo];
     if (0 == drinfo.mainDirection) {
@@ -420,6 +502,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (isInitial) {
         _initialDirectionInfo = drinfo;
         _delayTrigger = NO;
+        
+        _gesBeganInfo = [self calculateBeganInfo];
     } else {
         _delayTrigger = YES;
     }
@@ -1184,39 +1268,6 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 
 - (void)insertBeganPt:(CGPoint)beganPt {
     [_touchInfoAr insertObject:@((CGRect){beganPt, CGSizeZero}) atIndex:0];
-}
-
-- (BOOL)calculateIfMarginTrigger {
-    /*
-     边缘手势判定，需要满足：
-     1.从屏幕边缘滑入
-     2.没有被其它scrollView提前响应过
-     3.方向是左边或右边
-     */
-    BOTransitionPanGesture *ges = self;
-    BOOL ismargin = NO;
-    if (!ges.delayTrigger
-        && UIGestureRecognizerStatePossible == self.transitionGesState) {
-        CGPoint pt1 = ges.touchInfoAr.firstObject.CGRectValue.origin;
-        CGPoint ptmaybegan = pt1;
-        if (ges.touchInfoAr.count >= 2) {
-            CGPoint pt2 = ges.touchInfoAr[1].CGRectValue.origin;
-            ptmaybegan.x = [BOTransitionUtility lerpV0:pt1.x v1:pt2.x t:-1];
-            ptmaybegan.y = [BOTransitionUtility lerpV0:pt1.y v1:pt2.y t:-1];
-        }
-        
-        CGFloat marginres = 27;
-        CGPoint gesvel = ges.triggerDirectionInfo.velocity;
-        //向右且起点在左侧 或 向左起点在右边 判定为边缘手势
-        if ((gesvel.x > 0
-            && ptmaybegan.x <= CGRectGetMinX(ges.view.bounds) + marginres)
-            || (gesvel.x < 0
-                && ptmaybegan.x >= CGRectGetMaxX(ges.view.bounds) - marginres)) {
-            ismargin = YES;
-        }
-    }
-    
-    return ismargin;
 }
 
 + (BOOL)tryMakeGesFail:(UIGestureRecognizer *)gesShouldFail

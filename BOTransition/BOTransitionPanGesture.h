@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef struct BOTransitionGesSliceInfo {
+typedef struct {
     UISwipeGestureRecognizerDirection mainDirection;
     UISwipeGestureRecognizerDirection subDirection;
     
@@ -18,10 +18,23 @@ typedef struct BOTransitionGesSliceInfo {
     CGPoint location;
 } BOTransitionGesSliceInfo;
 
-typedef struct BOTransitionPanGestureBrief {
+typedef struct {
     NSArray<NSValue *> *lastTouchInfoAr;
     BOTransitionGesSliceInfo triggerDirectionInfo;
 } BOTransitionPanGestureBrief;
+
+typedef struct {
+    //每个方向的权重
+    UIEdgeInsets directionWeight;
+    
+    //初始点距离各方向的距离
+    UIEdgeInsets marginSpace;
+    
+    //起始点
+    CGPoint location;
+    //容器bounds
+    CGRect boardRect;
+} BOTransitionGesBeganInfo;
 
 @class BOTransitionPanGesture;
 
@@ -104,8 +117,10 @@ typedef struct BOTransitionPanGestureBrief {
  */
 @property (nonatomic, readonly) NSMutableArray<NSValue *> *touchInfoAr;
 
-//判断当前是否从变化划入触发的
-- (BOOL)calculateIfMarginTrigger;
+/*
+ 手势的起始信息
+ */
+@property (nonatomic, readonly) BOTransitionGesBeganInfo gesBeganInfo;
 
 /*
  @(UISwipeGestureRecognizerDirection): @{info: @(CGPoint), gesAr: NSHashTable<UIGestureRecognizer>}

@@ -41,7 +41,7 @@ typedef NS_ENUM(NSUInteger, BOTransitionStep) {
     BOTransitionStepInteractiveEnd                  = 1 << 10,
 };
 
-typedef struct BOTransitionInfo {
+typedef struct {
     CGFloat percentComplete;
     BOOL interactive;
     CGPoint panBeganLoc;

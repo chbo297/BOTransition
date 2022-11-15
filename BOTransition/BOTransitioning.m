@@ -1508,53 +1508,33 @@ static CGFloat sf_default_transition_dur = 0.22f;
         }
         
         NSNumber *gesvalid = nil;
-        
         if (seriousMargin) {
-            BOOL ismargin = [ges calculateIfMarginTrigger];
-            if (ismargin) {
-                //手势横方向和竖直的夹角最小大概27度也判定有效 tan(27度)~=0.5
-                CGFloat defminrate = 0.5;
-                CGPoint gesvel = ges.triggerDirectionInfo.velocity;
-                BOOL directjudegsuc = NO;
-                if (UISwipeGestureRecognizerDirectionRight == regdirection) {
-                    //先判断速度向右
-                    if (gesvel.x > 0) {
-                        CGFloat vy = fabs(gesvel.y);
-                        if (vy > 0) {
-                            //横竖速度比率大于最小值，判定成功
-                            directjudegsuc = ((fabs(gesvel.x) / vy) >= defminrate);
-                        } else {
-                            //竖向没速度，判定成功
-                            directjudegsuc = YES;
-                        }
-                    }
-                } else if (UISwipeGestureRecognizerDirectionLeft == regdirection) {
-                    //先判断速度向左
-                    if (gesvel.x < 0) {
-                        CGFloat vy = fabs(gesvel.y);
-                        if (vy > 0) {
-                            //横竖速度比率大于最小值，判定成功
-                            directjudegsuc = ((fabs(gesvel.x) / vy) >= defminrate);
-                        } else {
-                            //竖向没速度，判定成功
-                            directjudegsuc = YES;
-                        }
-                    }
+            BOTransitionGesBeganInfo gesBeganInfo = ges.gesBeganInfo;
+            //手势横方向和竖直的夹角最小大概27度也判定有效 tan(27度)~=0.5
+            CGFloat defminrate = 0.5;
+            BOOL directjudegsuc = NO;
+            if (UISwipeGestureRecognizerDirectionRight == regdirection) {
+                //向右的权重超过0.5，起始点距离屏幕左侧边缘小于27
+                directjudegsuc = (gesBeganInfo.directionWeight.right > defminrate
+                                  && gesBeganInfo.marginSpace.left < 27);
+            } else if (UISwipeGestureRecognizerDirectionLeft == regdirection) {
+                //向左的权重超过0.5，起始点距离屏幕右侧边缘小于27
+                directjudegsuc = (gesBeganInfo.directionWeight.left > defminrate
+                                  && gesBeganInfo.marginSpace.right < 27);
+            }
+            
+            if (directjudegsuc) {
+                //若默认的主方向与希望的方向不同，进行修改
+                if (mainDirection
+                    && *mainDirection != regdirection) {
+                    *mainDirection = regdirection;
                 }
-                
-                if (directjudegsuc) {
-                    //若默认的主方向与希望的方向不同，进行修改
-                    if (mainDirection
-                        && *mainDirection != regdirection) {
-                        *mainDirection = regdirection;
-                    }
-                    gesvalid = @(YES);
-                    //allowRecover默认YES，当手势返回原点后，转场会取消，再移动手势会重新尝试触发，有些可以和页面内手势同时响应的场景可以用到
-                    //严格的边缘手势就不用了，没有必要，严格的边缘手势并不与页面内的其它手势共存
-                    [ges.userInfo setObject:@(NO) forKey:@"allowRecover"];
-                } else {
-                    gesvalid = @(NO);
-                }
+                gesvalid = @(YES);
+                //allowRecover默认YES，当手势返回原点后，转场会取消，再移动手势会重新尝试触发，有些可以和页面内手势同时响应的场景可以用到
+                //严格的边缘手势就不用了，没有必要，严格的边缘手势并不与页面内的其它手势共存
+                [ges.userInfo setObject:@(NO) forKey:@"allowRecover"];
+            } else {
+                gesvalid = @(NO);
             }
         } else {
             NSDictionary *otherSVResponsedic = subInfo[@"otherSVResponse"];
