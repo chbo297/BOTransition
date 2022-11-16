@@ -951,7 +951,6 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (void)makeGestureStateCanceledOrFailed {
-    
     self.state = UIGestureRecognizerStateFailed;
     
     switch (self.transitionGesState) {
@@ -965,6 +964,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         default:
             break;
     }
+    //主动reset一下，清空内容，防止后续的touchmove还继续触发尝试启动手势
+    [self innerReset];
 }
 
 /*
