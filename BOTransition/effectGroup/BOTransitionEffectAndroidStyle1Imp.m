@@ -22,7 +22,7 @@
 
 @property (nonatomic, assign) NSTimeInterval ani_speed;
 
-@property (nonatomic, copy) void (^completionBlock)(void) ;
+@property (nonatomic, copy) void (^completionBlock)(void);
 
 @end
 
