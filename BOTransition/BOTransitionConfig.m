@@ -23,6 +23,8 @@ BOTransitionEffect const BOTransitionEffectMovingBottom = @"MovingBottom";
 
 BOTransitionEffect const BOTransitionEffectFade = @"Fade";
 
+BOTransitionEffect const BOTransitionEffectAndroidStyle1 = @"AndroidStyle1";
+
 @interface BOTransitionConfig ()
 
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *gesInfoAr;
@@ -206,6 +208,16 @@ BOTransitionEffect const BOTransitionEffectFade = @"Fade";
                                      userInfo:nil];
                 },
                 @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
+        },
+        
+        BOTransitionEffectAndroidStyle1: @{
+                @"style": @"AndroidStyle1",
+                @"configBlock": ^(BOTransitionConfig *config) {
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionRight
+                                seriousMargin:YES
+                                     userInfo:nil];
+                },
         },
     };
     

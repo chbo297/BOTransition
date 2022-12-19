@@ -25,6 +25,7 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectPhotoPreviewPinGes;
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectMovingRight;
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectMovingBottom;
 FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectFade;
+FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectAndroidStyle1;
 
 @interface BOTransitionConfig : NSObject
 

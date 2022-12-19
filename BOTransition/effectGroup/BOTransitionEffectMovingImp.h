@@ -28,6 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property (nonatomic, strong, nullable) NSDictionary *configInfo;
 
++ (void)installEffect:(BOTransitioning *)transitioning
+             elements:(NSMutableArray<BOTransitionElement *> *)elements
+               config:(nullable NSDictionary *)config;
+
 @end
 
 NS_ASSUME_NONNULL_END

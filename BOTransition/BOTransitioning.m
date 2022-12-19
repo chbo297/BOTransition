@@ -160,6 +160,31 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
         
         __weak typeof(self) ws = self;
         switch (step) {
+            case BOTransitionStepInstallElements : {
+                if (self.autoAddAndRemoveTransitionView > 0
+                    && self.transitionView) {
+                    UIView *trancontainer = transitioning.transitionContext.containerView;
+                    self.transitionView.frame = trancontainer.bounds;
+                    if (self.autoAddAndRemoveTransitionView <= 10) {
+                        if (transitioning.baseTransBoard
+                            && transitioning.baseTransBoard.superview == trancontainer) {
+                            [trancontainer insertSubview:self.transitionView belowSubview:transitioning.baseTransBoard];
+                        } else {
+                            [trancontainer insertSubview:self.transitionView atIndex:0];
+                        }
+                    } else if (self.autoAddAndRemoveTransitionView <= 20) {
+                        if (transitioning.moveTransBoard
+                            && transitioning.moveTransBoard.superview == trancontainer) {
+                            [trancontainer insertSubview:self.transitionView belowSubview:transitioning.moveTransBoard];
+                        } else {
+                            [trancontainer addSubview:self.transitionView];
+                        }
+                    } else if (self.autoAddAndRemoveTransitionView <= 30) {
+                        [trancontainer addSubview:self.transitionView];
+                    }
+                }
+            }
+                break;
             case BOTransitionStepAfterInstallElements: {
                 if (self.fromView &&
                     self.fromViewAutoHidden) {
@@ -341,6 +366,13 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                 }
                 if (self.alphaAllow) {
                     thetrView.alpha = self.alphaOrigin;
+                }
+                
+                if (self.autoAddAndRemoveTransitionView > 0
+                    && self.transitionView) {
+                    if (self.transitionView.superview == transitioning.transitionContext.containerView) {
+                        [self.transitionView removeFromSuperview];
+                    }
                 }
             }
                 break;

@@ -105,6 +105,16 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, assign) BOTransitionElementType elementType;
 
 @property (nonatomic, strong, nullable) UIView *transitionView;
+/*
+ 在开始和结束时，自动添加、移除transitionView，
+ default：0
+ 目前默认会在container中铺满
+ 0: 不执行添加和移除操作
+ <=10: 执行，层级在basevc下边
+ <=20: 执行，层级在basevc和movevc中间
+ <=30: 执行，层级在movevc上面
+ */
+@property (nonatomic, assign) NSInteger autoAddAndRemoveTransitionView;
 
 
 @property (nonatomic, weak) UIView *fromView;
@@ -182,7 +192,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
  入参：转场的进度百分比0~1
  返回 应用于该转场元素进行frame、alpha等属性变化的百分比
  */
-@property (nonatomic, copy) CGFloat (^innerPercentWithTransitionPercent)(CGFloat percent);
+@property (nonatomic, copy, nullable) CGFloat (^innerPercentWithTransitionPercent)(CGFloat percent);
 
 - (CGFloat)interruptAnimation:(BOTransitionInfo)transitionInfo;
 /*
