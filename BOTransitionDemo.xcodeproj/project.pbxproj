@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		22D2928DEE6CA28A3143984C /* Pods_BOTransitionDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2E931393390B12145FA0993B /* Pods_BOTransitionDemo.framework */; };
+		5F0DED08293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F0DED07293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m */; };
 		950C911B25B1487700561B29 /* BOTransitionPanGesture.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910325B1487600561B29 /* BOTransitionPanGesture.m */; };
 		950C911C25B1487700561B29 /* BOTransitionConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910525B1487600561B29 /* BOTransitionConfig.m */; };
 		950C911D25B1487700561B29 /* BOTransitionNCProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910625B1487600561B29 /* BOTransitionNCProxy.m */; };
@@ -41,6 +42,8 @@
 /* Begin PBXFileReference section */
 		2A55D62AAB28BBDD5CE1D3A2 /* Pods-BOTransitionDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BOTransitionDemo.debug.xcconfig"; path = "Target Support Files/Pods-BOTransitionDemo/Pods-BOTransitionDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		2E931393390B12145FA0993B /* Pods_BOTransitionDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_BOTransitionDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F0DED06293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectAndroidStyle1Imp.h; sourceTree = "<group>"; };
+		5F0DED07293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectAndroidStyle1Imp.m; sourceTree = "<group>"; };
 		8C7D7768807021FCA4935E77 /* Pods-BOTransitionDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BOTransitionDemo.release.xcconfig"; path = "Target Support Files/Pods-BOTransitionDemo/Pods-BOTransitionDemo.release.xcconfig"; sourceTree = "<group>"; };
 		950C910225B1487600561B29 /* BOTransitionUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionUtility.h; sourceTree = "<group>"; };
 		950C910325B1487600561B29 /* BOTransitionPanGesture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPanGesture.m; sourceTree = "<group>"; };
@@ -165,6 +168,8 @@
 				950C910F25B1487600561B29 /* BOTransitionEffectFadeImp.m */,
 				950C911125B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.h */,
 				950C910C25B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.m */,
+				5F0DED06293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.h */,
+				5F0DED07293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m */,
 			);
 			path = effectGroup;
 			sourceTree = "<group>";
@@ -372,6 +377,7 @@
 				95E0D94125A1713E0095C763 /* PhotoVC.m in Sources */,
 				95E0D8D225A06A5F0095C763 /* main.m in Sources */,
 				95E0D94025A1713E0095C763 /* PopCardVC.m in Sources */,
+				5F0DED08293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m in Sources */,
 				950C912025B1487700561B29 /* BOTransitionEffectMovingImp.m in Sources */,
 				950C911C25B1487700561B29 /* BOTransitionConfig.m in Sources */,
 				95E0D94925A172DB0095C763 /* DemoNavigationController.m in Sources */,

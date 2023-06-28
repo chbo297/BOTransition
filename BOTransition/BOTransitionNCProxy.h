@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
  比如当默认全局NavigationBar隐藏时，把defaultNavigationBarHiddenAndAutoSet设置为@(YES)
  只有一些页面需要额外展示时，把对应页面的UINavigationItem.bo_navigationBarHidden设置为@(NO)
  可以实现所有没额外设置的页面默认都不展示，只有设置了@(NO)才展示navigationBar
- 反正可以让全局都展示，只有对应页面不展示
+ 反之可以让全局都展示，只有对应页面不展示
  */
 @property (nonatomic, strong) NSNumber *defaultNavigationBarHiddenAndAutoSet;
 
