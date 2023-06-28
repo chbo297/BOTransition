@@ -365,6 +365,10 @@
         }
     }
     
+    if (mlist) {
+        free(mlist);
+    }
+    
     //自己没实现，再问下transitionNCHandler和navigationControllerDelegate
     if ([_transitionNCHandler respondsToSelector:aSelector]) {
         return YES;

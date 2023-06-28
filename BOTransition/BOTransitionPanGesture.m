@@ -1315,6 +1315,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }
     }
     
+    //对应present的情况
+    if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
+        return 2;
+    }
+    
     return 0;
 }
 

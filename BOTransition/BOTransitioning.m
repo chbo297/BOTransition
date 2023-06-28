@@ -2179,7 +2179,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                  baseGes:(UIGestureRecognizer *)ges
       otherTransitionGes:(UIGestureRecognizer *)otherGes  {
     if (ges == otherGes
-        || ges.class == otherGes.class) {
+        || ges.view == otherGes.view) {
         return 0;
     }
     
