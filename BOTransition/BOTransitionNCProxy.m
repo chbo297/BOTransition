@@ -51,6 +51,11 @@
             return NO;
         }
         
+        //已经在自定义转场中，不再触发系统的
+        if (nc.bo_transProxy.transitioning.triggerInteractiveTransitioning) {
+            return NO;
+        }
+        
         UIViewController *topvc = nc.viewControllers.lastObject;
         BOTransitionConfig *transitconfig = topvc.bo_transitionConfig;
         if (transitconfig && !transitconfig.moveOutUseOrigin) {
