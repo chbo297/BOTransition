@@ -197,17 +197,29 @@ BOTransitionEffect const BOTransitionEffectAndroidStyle1 = @"AndroidStyle1";
         BOTransitionEffectPhotoPreviewPinGes: @{
                 @"style": @"PhotoPreview",
                 @"config": @{
-                        @"pinGes": @(YES),
-                        @"disablePinGesForDirection": @(UISwipeGestureRecognizerDirectionRight),
+                        @"freePinGes": @(YES),
+//                        @"disablePinGesForDirection": @(UISwipeGestureRecognizerDirectionRight),
                 },
                 
                 @"configBlock": ^(BOTransitionConfig *config) {
                     [config addGesInfoMoveOut:YES
                                     direction:UISwipeGestureRecognizerDirectionRight
-                                seriousMargin:YES
+                                seriousMargin:NO
                                      userInfo:nil];
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionLeft
+                                seriousMargin:NO
+                                     userInfo:nil];
+                     [config addGesInfoMoveOut:YES
+                                     direction:UISwipeGestureRecognizerDirectionUp
+                                 seriousMargin:NO
+                                      userInfo:nil];
+                     [config addGesInfoMoveOut:YES
+                                     direction:UISwipeGestureRecognizerDirectionDown
+                                 seriousMargin:NO
+                                      userInfo:nil];
                 },
-                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
+//                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
         
         BOTransitionEffectAndroidStyle1: @{

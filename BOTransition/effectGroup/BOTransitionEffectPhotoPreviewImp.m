@@ -24,6 +24,21 @@
     return _fadeImp;
 }
 
+- (NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning gesture:(BOTransitionPanGesture *)gesture {
+    NSNumber *pinGesnum = self.configInfo[@"freePinGes"];
+    if (nil == pinGesnum || !pinGesnum.boolValue) {
+        return nil;
+    }
+    
+    CGPoint bgpt = gesture.gesBeganInfo.location;
+    CGPoint currpt = gesture.touchInfoAr.lastObject.CGRectValue.origin;
+    CGFloat dist = pow(pow((currpt.x - bgpt.x), 2.0) + pow((currpt.y - bgpt.y), 2.0), 0.5);
+    CGFloat totallen = (gesture.view.bounds.size.height / 2.0) * 1.4;
+    CGFloat percent = dist / totallen;
+    
+    return @(percent);
+}
+
 - (NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
      distanceCoefficientForGes:(BOTransitionPanGesture *)gesture {
     return @(0.84);

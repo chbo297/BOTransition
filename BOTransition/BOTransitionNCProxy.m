@@ -227,7 +227,7 @@
 - (void)navigationController:(UINavigationController *)navigationController
       willShowViewController:(UIViewController *)viewController
                     animated:(BOOL)animated {
-    [self checkNavigationBarHiddenForVC:viewController];
+    [self checkEnvironmentForVC:viewController];
     
     if (self.ncProxy.navigationControllerDelegate
         && [self.ncProxy.navigationControllerDelegate respondsToSelector:@selector(navigationController:willShowViewController:animated:)]) {
@@ -237,11 +237,15 @@
     }
 }
 
-- (void)checkNavigationBarHiddenForVC:(UIViewController *)vc {
+/*
+ vc即将展示，配置相关环境  如该vc是否需要控制navigationBar的展示状态、屏幕的旋转等
+ */
+- (void)checkEnvironmentForVC:(UIViewController *)vc {
     if (!vc) {
         return;
     }
     
+    //navigationBar
     NSNumber *autoSetnbh = self.navigationController.bo_transProxy.defaultNavigationBarHiddenAndAutoSet;
     if (nil != autoSetnbh) {
         //更新navigationBar状态
@@ -279,10 +283,10 @@
                 case BOTransitionStepWillBegin:
                 case BOTransitionStepWillFinish:
                     //即将开始和即将结束时确保更新到了目标vc的状态
-                    [ws checkNavigationBarHiddenForVC:transitioning.desVC];
+                    [ws checkEnvironmentForVC:transitioning.desVC];
                     break;
                 case BOTransitionStepWillCancel:
-                    [ws checkNavigationBarHiddenForVC:transitioning.startVC];
+                    [ws checkEnvironmentForVC:transitioning.startVC];
                     break;
                 default:
                     break;
