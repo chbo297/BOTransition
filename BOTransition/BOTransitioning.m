@@ -1989,31 +1989,36 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     break;
             }
             
+            if (nil == intentcomplete) {
+                //没有速度倾向时，用当前的距离完成度来判断
+                if (percentComplete >= 0.5) {
+                    intentcomplete = @(YES);
+                } else {
+                    intentcomplete = @(NO);
+                }
+            }
+            
             __block BOOL canfinish = YES;
-            __block BOOL hasspecialcanfinish = NO;
+            __block NSNumber *specialcanfinish = nil;
             [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
                                                                NSUInteger idx,
                                                                BOOL * _Nonnull stop) {
                 if ([obj respondsToSelector:@selector(bo_transitioningShouldFinish:percentComplete:intentComplete:gesture:)]) {
-                    NSNumber *finishnum = [obj bo_transitioningShouldFinish:self
-                                                            percentComplete:percentComplete
-                                                             intentComplete:intentcomplete
-                                                                    gesture:self.transitionGes];
-                    if (nil != finishnum) {
-                        canfinish = finishnum.boolValue;
-                        hasspecialcanfinish = YES;
+                    specialcanfinish = [obj bo_transitioningShouldFinish:self
+                                                         percentComplete:percentComplete
+                                                          intentComplete:intentcomplete
+                                                                 gesture:self.transitionGes];
+                    if (nil != specialcanfinish) {
                         *stop = YES;
                     }
                 }
             }];
             
-            if (!hasspecialcanfinish) {
-                //代理没有进行指定，使用默认运算
-                if (nil == intentcomplete) {
-                    canfinish = (percentComplete >= 0.5);
-                } else {
-                    canfinish = intentcomplete.boolValue;
-                }
+            //有指定用指定的，没有则用默认的
+            if (nil != specialcanfinish) {
+                canfinish = specialcanfinish.boolValue;
+            } else {
+                canfinish = intentcomplete.boolValue;
             }
             
             [self makePrepareAndExecStep:BOTransitionStepInteractiveEnd
