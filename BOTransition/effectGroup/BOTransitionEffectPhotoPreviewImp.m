@@ -112,7 +112,8 @@
                 UIImageView *fromimgv = (id)photoele.fromView;
                 fromMode = fromimgv.contentMode;
                 
-                if (tryUseOriginImage) {
+                if (tryUseOriginImage
+                    && nil != fromimgv.image) {
                     UIImageView *tiv = [UIImageView new];
                     tiv.image = fromimgv.image;
                     tiv.contentMode = fromMode;
