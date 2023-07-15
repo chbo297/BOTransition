@@ -212,8 +212,13 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                     if (transitionInfo.interactive) {
                         CGPoint beganPt = transitionInfo.panBeganLoc;
                         CGRect thevrt = self.frameFrom;
-                        self.framePinAnchor = CGPointMake((beganPt.x - CGRectGetMidX(thevrt)) / CGRectGetWidth(thevrt),
-                                                          (beganPt.y - CGRectGetMidY(thevrt)) / CGRectGetHeight(thevrt));
+                        //防止thevrt为0导致除0
+                        if (CGRectIsEmpty(thevrt)) {
+                            self.framePinAnchor = CGPointZero;
+                        } else {
+                            self.framePinAnchor = CGPointMake((beganPt.x - CGRectGetMidX(thevrt)) / CGRectGetWidth(thevrt),
+                                                              (beganPt.y - CGRectGetMidY(thevrt)) / CGRectGetHeight(thevrt));
+                        }
                     }
                     
                     if (self.frameAnimationWithTransform) {
