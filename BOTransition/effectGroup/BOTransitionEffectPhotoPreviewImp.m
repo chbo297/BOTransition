@@ -87,7 +87,9 @@
                 }
             }
             
+            //fromView需得在屏幕上才层计算位置执行转场
             if (!photoele.fromView
+                || nil != photoele.fromView.window
                 || (!photoele.toView
                     && !photoele.toFrameCoordinateInVC)) {
                 //没有转场View，取消吧
@@ -127,6 +129,10 @@
                 tranview = [photoele.fromView snapshotViewAfterScreenUpdates:NO];
             }
             
+            if (!tranview) {
+                //没截图成功，取消吧
+                return;
+            }
             
             CGRect fromrt = [photoele.fromView convertRect:photoele.fromView.bounds
                                                     toView:container];
