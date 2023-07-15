@@ -89,7 +89,7 @@
             
             //fromView需得在屏幕上才层计算位置执行转场
             if (!photoele.fromView
-                || nil != photoele.fromView.window
+                || nil == photoele.fromView.window
                 || (!photoele.toView
                     && !photoele.toFrameCoordinateInVC)) {
                 //没有转场View，取消吧
