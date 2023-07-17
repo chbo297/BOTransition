@@ -10,6 +10,7 @@
 #import "UIViewController+BOTransition.h"
 #import "BOTransitionNCProxy.h"
 #import "BOTransitionUtility.h"
+#import <objc/runtime.h>
 
 @interface BOTransitionElement ()
 
@@ -493,6 +494,12 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
 @end
 
 
+@interface UIViewController (BOTransitioningContext_inner)
+
+@property (nonatomic, readwrite, nullable) BOTransitioning *bo_currentTransitioning;
+
+@end
+
 const NSNotificationName BOTransitionVCViewDidMoveToContainer =\
 @"BOTransitionVCViewDidMoveToContainer";
 
@@ -587,8 +594,25 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
 }
 
+- (void)setBaseVC:(UIViewController *)baseVC {
+    
+    if (_baseVC) {
+        _baseVC.bo_currentTransitioning = nil;
+    }
+    _baseVC = baseVC;
+    if (_baseVC) {
+        _baseVC.bo_currentTransitioning = self;
+    }
+}
+
 - (void)setMoveVC:(UIViewController *)moveVC {
+    if (_moveVC) {
+        _moveVC.bo_currentTransitioning = nil;
+    }
     _moveVC = moveVC;
+    if (_moveVC) {
+        _moveVC.bo_currentTransitioning = self;
+    }
     _moveVCConfig = _moveVC.bo_transitionConfig;
 }
 
@@ -765,6 +789,12 @@ static CGFloat sf_default_transition_dur = 0.22f;
         _commonBg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     }
     return _commonBg;
+}
+
+- (void)forceCancelTransition {
+    if (self.triggerInteractiveTransitioning) {
+        [self.transitionGes makeGesStateCanceledWithCanRetryBegan:NO];
+    }
 }
 
 #pragma mark - AnimatedTransitioning
@@ -1112,10 +1142,15 @@ static CGFloat sf_default_transition_dur = 0.22f;
         return;
     }
     
-    [self makeAnimateTransition:transitionContext];
+    [self makeAnimateTransition:transitionContext complete:YES];
 }
 
-- (void)makeAnimateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
+/*
+ 执行动画，将转场结束：
+ finish： YES Finish   NO Cancel
+ */
+- (void)makeAnimateTransition:(id<UIViewControllerContextTransitioning>)transitionContext
+                     complete:(BOOL)isFinish {
     [self initialViewHierarchy];
     
     [self loadEffectControlAr:NO];
@@ -1135,51 +1170,93 @@ static CGFloat sf_default_transition_dur = 0.22f;
                   transitionInfo:transitioninfo
                          subInfo:nil];
     
-    transitioninfo.percentComplete = 1;
-    
     BOOL needsani = elementar.count > 0;
+    
+    if (isFinish) {
+        transitioninfo.percentComplete = 1;
+    } else {
+        //如果是直接结束的，就先不要动画了
+        transitioninfo.percentComplete = 0;
+        needsani = NO;
+    }
+    
     if (needsani) {
         //有动画时，依次执行对应的生命周期
+        //虽然上面已经判断了isFinish时needsani，但这里独立判定，使上面的isFinish也可以改为支持ani
         [self execAnimateDuration:sf_default_transition_dur
                percentStartAndEnd:CGPointMake(0, 1)
                     modifyUIBlock:^{
-            [self makePrepareAndExecStep:BOTransitionStepTransitioning
-                                elements:elementar
-                          transitionInfo:transitioninfo
-                                 subInfo:nil];
-            [self makePrepareAndExecStep:BOTransitionStepFinalAnimatableProperties
-                                elements:elementar
-                          transitionInfo:transitioninfo
-                                 subInfo:nil];
+            if (isFinish) {
+                [self makePrepareAndExecStep:BOTransitionStepTransitioning
+                                    elements:elementar
+                              transitionInfo:transitioninfo
+                                     subInfo:nil];
+                
+                [self makePrepareAndExecStep:BOTransitionStepFinalAnimatableProperties
+                                    elements:elementar
+                              transitionInfo:transitioninfo
+                                     subInfo:nil];
+            }
         }
                        completion:^(BOOL finished) {
-            [self makePrepareAndExecStep:BOTransitionStepFinished
+            BOTransitionStep willstep = (isFinish ?
+                                         BOTransitionStepWillFinish
+                                         : BOTransitionStepWillCancel);
+            [self makePrepareAndExecStep:willstep
                                 elements:elementar
                           transitionInfo:transitioninfo
                                  subInfo:nil];
             
-            [self finalViewHierarchy];
+            BOTransitionStep tostep = (isFinish ?
+                                       BOTransitionStepFinished
+                                       : BOTransitionStepCancelled);
+            [self makePrepareAndExecStep:tostep
+                                elements:elementar
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
             
-            [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
+            if (isFinish) {
+                [self finalViewHierarchy];
+            } else {
+                [self revertInitialViewHierarchy];
+            }
+            
+            [self makeTransitionComplete:isFinish isInteractive:self.startWithInteractive];
         }];
     } else {
         //系统似乎不支持直接结束，需要有一个动画过程或者下个runloop才能调用结束。否则会周期错乱。
         [self execAnimateDuration:0
                percentStartAndEnd:CGPointMake(0, 1)
-                    modifyUIBlock:nil
-                       completion:^(BOOL finished) {
+                    modifyUIBlock:^{}
+                       completion:^(BOOL aniFinished) {
             //无动画时，直接完成变为结束状态，然后调用makeTransitionComplete告诉系统完成了转场。
-            [self makePrepareAndExecStep:BOTransitionStepFinished
+            BOTransitionStep willstep = (isFinish ?
+                                         BOTransitionStepWillFinish
+                                         : BOTransitionStepWillCancel);
+            [self makePrepareAndExecStep:willstep
                                 elements:elementar
                           transitionInfo:transitioninfo
                                  subInfo:nil];
-            [self finalViewHierarchy];
             
-            [self makeTransitionComplete:YES isInteractive:self.startWithInteractive];
+            BOTransitionStep tostep = (isFinish ?
+                                       BOTransitionStepFinished
+                                       : BOTransitionStepCancelled);
+            [self makePrepareAndExecStep:tostep
+                                elements:elementar
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
+            
+            if (isFinish) {
+                [self finalViewHierarchy];
+            } else {
+                [self revertInitialViewHierarchy];
+            }
+            
+            [self makeTransitionComplete:isFinish isInteractive:self.startWithInteractive];
         }];
     }
     
-    [self transitionAnimationDidEmit:YES];
+    [self transitionAnimationDidEmit:isFinish];
 }
 
 - (void)makeTransitionComplete:(BOOL)isFinish isInteractive:(BOOL)interactive {
@@ -1263,18 +1340,25 @@ static CGFloat sf_default_transition_dur = 0.22f;
 }
 
 - (void)startInteractiveTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
+    //初始化失败
     if (![self setupTransitionContext:transitionContext interactive:YES]) {
         [self makeTransitionComplete:NO isInteractive:YES];
         return;
-    } else if (!self.triggerInteractiveTransitioning
-               || (UIGestureRecognizerStateBegan != self.transitionGes.transitionGesState
-                   && UIGestureRecognizerStateChanged != self.transitionGes.transitionGesState)) {
-        //        [self makeTransitionComplete:NO isInteractive:YES];
-        [self makeAnimateTransition:transitionContext];
-        return;
     }
     
-    [self makeInteractiveTransition:transitionContext];
+    if (self.triggerInteractiveTransitioning) {
+        //从手势交互触发
+        if (UIGestureRecognizerStateBegan == self.transitionGes.transitionGesState
+            || UIGestureRecognizerStateChanged == self.transitionGes.transitionGesState) {
+            [self makeInteractiveTransition:transitionContext];
+        } else {
+            //状态不对，手势可能已经取消了
+            [self makeAnimateTransition:transitionContext complete:NO];
+        }
+    } else {
+        //非从手势交互触发，正常不会走到这里，但可能其它什么特殊的方式非自己的手势触发可能会
+        [self makeAnimateTransition:transitionContext complete:YES];
+    }
 }
 
 - (void)makeInteractiveTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
@@ -1609,25 +1693,33 @@ static CGFloat sf_default_transition_dur = 0.22f;
                         && initialisVertical == triggerisVertical) {
                         
                         __block BOOL othersvconfict = NO;
-                        [ges.otherSVRespondedDirectionRecord enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key,
-                                                                                                 NSDictionary * _Nonnull gesinfo,
-                                                                                                 BOOL * _Nonnull stop) {
-                            CGPoint svrespt = CGPointZero;
-                            NSValue *svresval = gesinfo[@"info"];
-                            if (nil != svresval) {
-                                svrespt = svresval.CGPointValue;
-                            }
-                            
-                            //如果有一个明确开始过的手势，竖直、左右维度和标识方向不符，则认为意图已经被转移，无效本次手势
-                            if (svrespt.x > 0
-                                && 2 == svrespt.y) {
-                                BOOL theobjisver = ((key.unsignedIntegerValue & verd) > 0);
-                                if (theobjisver != triggerisVertical) {
-                                    othersvconfict = YES;
-                                    *stop = YES;
+                        BOOL allowOtherSVDirectionCoexist = NO;
+                        NSNumber *allowOtherSVDirectionCoexistnum = [gesinfo objectForKey:@"allowOtherSVDirectionCoexist"];
+                        if (nil != allowOtherSVDirectionCoexistnum) {
+                            allowBeganWithSVBounces = allowOtherSVDirectionCoexistnum.boolValue;
+                        }
+                        
+                        if (!allowOtherSVDirectionCoexist) {
+                            [ges.otherSVRespondedDirectionRecord enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key,
+                                                                                                     NSDictionary * _Nonnull gesinfo,
+                                                                                                     BOOL * _Nonnull stop) {
+                                CGPoint svrespt = CGPointZero;
+                                NSValue *svresval = gesinfo[@"info"];
+                                if (nil != svresval) {
+                                    svrespt = svresval.CGPointValue;
                                 }
-                            }
-                        }];
+                                
+                                //如果有一个明确开始过的手势，竖直、左右维度和标识方向不符，则认为意图已经被转移，无效本次手势
+                                if (svrespt.x == 0
+                                    && 2 == svrespt.y) {
+                                    BOOL theobjisver = ((key.unsignedIntegerValue & verd) > 0);
+                                    if (theobjisver != triggerisVertical) {
+                                        othersvconfict = YES;
+                                        *stop = YES;
+                                    }
+                                }
+                            }];
+                        }
                         
                         if (othersvconfict) {
                             //响应过了其它sv的其它方向，本手势不进行转场了，显式cancel
@@ -1941,7 +2033,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 
                 if (allowrecover) {
                     //需要取消了
-                    [ges makeGesStateCanceledButCanRetryBegan];
+                    [ges makeGesStateCanceledWithCanRetryBegan:YES];
                 }
             }
         }
@@ -2003,7 +2095,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 }
             }
             
-            __block BOOL canfinish = YES;
             __block NSNumber *specialcanfinish = nil;
             [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
                                                                NSUInteger idx,
@@ -2019,6 +2110,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 }
             }];
             
+            BOOL canfinish = YES;
             //有指定用指定的，没有则用默认的
             if (nil != specialcanfinish) {
                 canfinish = specialcanfinish.boolValue;
@@ -2297,6 +2389,33 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     return prior;
+}
+
+@end
+
+@implementation UIViewController (BOTransitioningContext)
+
+@dynamic bo_currentTransitioning;
+
+@end
+
+@implementation UIViewController (BOTransitioningContext_inner)
+
+- (BOTransitioning *)bo_currentTransitioning {
+    NSValue *value = objc_getAssociatedObject(self, @selector(bo_currentTransitioning));
+    BOTransitioning *theTransitioning = value.nonretainedObjectValue;
+    if (theTransitioning
+        && [theTransitioning isKindOfClass:[BOTransitioning class]]) {
+        return theTransitioning;
+    } else {
+        return nil;
+    }
+}
+
+- (void)setBo_currentTransitioning:(BOTransitioning *)bo_currentTransitioning {
+    NSValue *value = [NSValue valueWithNonretainedObject:bo_currentTransitioning];
+    objc_setAssociatedObject(self, @selector(bo_currentTransitioning),
+                             value, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 @end

@@ -117,6 +117,7 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectAndroidStyle1;
  direction: UISwipeGestureRecognizerDirection(NSUInteger) //触发的方向
  margin: @(YES/NO) nil=NO //是否必须在边缘开始, YES时会优先其他scrollView进行相应
  allowBeganWithSVBounces: @(YES/NO)
+ allowOtherSVDirectionCoexist: @(YES/NO) 是否允许其它scrollView的的非同一个方向（竖直、水平）的已触发手势共存，默认NO（已经触发其他非同一方向手势时，该转场手势不再被触发）
  act: @(1/2) 1moveout(把当前vc关闭)  2movein（从当前vc弹出一个新vc）
  effectConfig: EffectConfig dictionary
  */

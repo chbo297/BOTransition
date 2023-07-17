@@ -150,7 +150,7 @@ typedef struct {
 - (void)saveCurrGesContextAndSetNeedsRecoverWhenTouchDown;
 - (void)clearSaveContext;
 
-- (void)makeGesStateCanceledButCanRetryBegan;
+- (void)makeGesStateCanceledWithCanRetryBegan:(BOOL)canRetryBegan;
 
 //若当前有初始点，可以修改，没有时没效果
 - (void)insertBeganPt:(CGPoint)beganPt;

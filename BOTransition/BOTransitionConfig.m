@@ -205,19 +205,31 @@ BOTransitionEffect const BOTransitionEffectAndroidStyle1 = @"AndroidStyle1";
                     [config addGesInfoMoveOut:YES
                                     direction:UISwipeGestureRecognizerDirectionRight
                                 seriousMargin:NO
-                                     userInfo:nil];
+                                     userInfo:@{
+                        @"allowBeganWithSVBounces": @(YES),
+                        @"allowOtherSVDirectionCoexist": @(YES)
+                    }];
                     [config addGesInfoMoveOut:YES
                                     direction:UISwipeGestureRecognizerDirectionLeft
                                 seriousMargin:NO
-                                     userInfo:nil];
+                                     userInfo:@{
+                        @"allowBeganWithSVBounces": @(YES),
+                        @"allowOtherSVDirectionCoexist": @(YES)
+                    }];
                      [config addGesInfoMoveOut:YES
                                      direction:UISwipeGestureRecognizerDirectionUp
                                  seriousMargin:NO
-                                      userInfo:nil];
+                                      userInfo:@{
+                        @"allowBeganWithSVBounces": @(YES),
+                        @"allowOtherSVDirectionCoexist": @(YES)
+                    }];
                      [config addGesInfoMoveOut:YES
                                      direction:UISwipeGestureRecognizerDirectionDown
                                  seriousMargin:NO
-                                      userInfo:nil];
+                                      userInfo:@{
+                        @"allowBeganWithSVBounces": @(YES),
+                        @"allowOtherSVDirectionCoexist": @(YES)
+                    }];
                 },
 //                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },

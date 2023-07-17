@@ -44,6 +44,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 
 //同时只接收和响应第一个touch的began、move、end、cancel
 @property (nonatomic, strong) UITouch *currTouch;
+@property (nonatomic, strong) NSMutableArray<UITouch *> *multiTouches;
 
 @end
 
@@ -130,6 +131,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 - (void)innerReset {
     _currTouch = nil;
     _touchInfoAr = nil;
+    [_multiTouches removeAllObjects];
     
     switch (_originState) {
         case UIGestureRecognizerStateBegan:
@@ -157,24 +159,30 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     [_userInfo removeAllObjects];
 }
 
-- (void)makeGesStateCanceledButCanRetryBegan {
-    switch (_transitionGesState) {
-        case UIGestureRecognizerStateBegan:
-        case UIGestureRecognizerStateChanged:
-            self.transitionGesState = UIGestureRecognizerStateCancelled;
-            break;
-        default:
-            break;
+- (void)makeGesStateCanceledWithCanRetryBegan:(BOOL)canRetryBegan; {
+    if (canRetryBegan) {
+        switch (_transitionGesState) {
+            case UIGestureRecognizerStateBegan:
+            case UIGestureRecognizerStateChanged:
+                self.transitionGesState = UIGestureRecognizerStateCancelled;
+                break;
+            default:
+                break;
+        }
+        
+        _transitionGesState = UIGestureRecognizerStatePossible;
+        
+        [_touchInfoAr removeAllObjects];
+        
+        [_currPanScrollVSavOffsetAr removeAllObjects];
+        [_otherSVRespondedDirectionRecord removeAllObjects];
+        _delayTrigger = NO;
+        _beganWithSVBounces = NO;
+    } else {
+        [self touchesDidChange:[NSSet setWithObject:_currTouch] event:nil state:UIGestureRecognizerStateCancelled];
+        _currTouch = nil;
+        [_multiTouches removeAllObjects];
     }
-    
-    _transitionGesState = UIGestureRecognizerStatePossible;
-    
-    [_touchInfoAr removeAllObjects];
-    
-    [_currPanScrollVSavOffsetAr removeAllObjects];
-    [_otherSVRespondedDirectionRecord removeAllObjects];
-    _delayTrigger = NO;
-    _beganWithSVBounces = NO;
 }
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer {
@@ -185,12 +193,22 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     return NO;
 }
 
+- (NSMutableArray<UITouch *> *)multiTouches {
+    if (!_multiTouches) {
+        _multiTouches = @[].mutableCopy;
+    }
+    return _multiTouches;
+}
+
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [super touchesBegan:touches withEvent:event];
     if (!_currTouch) {
         _currTouch = [touches anyObject];
         [self touchesDidChange:[NSSet setWithObject:_currTouch]
                          event:event state:UIGestureRecognizerStateBegan];
+    } else {
+        UITouch *anTouch = [touches anyObject];
+        [self.multiTouches addObject:anTouch];
     }
 }
 

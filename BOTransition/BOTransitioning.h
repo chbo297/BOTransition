@@ -72,6 +72,9 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, weak) UINavigationController *navigationController;
 @property (nonatomic, weak) UITabBarController *tabBarController;
 
+//页面有特殊需要，强制取消当前的转场（只能取消手势型转场）
+- (void)forceCancelTransition;
+
 /*
  return:
  1 保留ges
@@ -201,6 +204,13 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 - (void)interruptAnimationAndResetPorperty:(BOTransitioning *)transitioning
                             transitionInfo:(BOTransitionInfo)transitionInfo
                                    subInfo:(nullable NSDictionary *)subInfo;
+
+@end
+
+
+@interface UIViewController (BOTransitioningContext)
+
+@property (nonatomic, readonly, nullable) BOTransitioning *bo_currentTransitioning;
 
 @end
 
