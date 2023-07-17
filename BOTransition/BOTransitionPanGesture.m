@@ -1049,6 +1049,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         return nil;
     }
     
+    CGFloat one_pxiel = 1.f / self.view.window.screen.scale;
     __block CGPoint totalmes = CGPointZero;
     __block UIGestureRecognizer *theges = nil;
     [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -1077,9 +1078,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         CGSize boundsz = obj.bounds.size;
         switch (gesDirection) {
             case UISwipeGestureRecognizerDirectionUp:
-                if (contentsz.height + insets.top + insets.bottom > boundsz.height) {
+                if (contentsz.height + insets.top + insets.bottom > boundsz.height + one_pxiel) {
                     //上下能正常滚动
-                    if ((offset.y + boundsz.height) < (contentsz.height + insets.bottom)) {
+                    if ((offset.y + boundsz.height + one_pxiel) < (contentsz.height + insets.bottom)) {
                         //能正常响应
                         gesmes.x = 2;
                     } else {
@@ -1094,7 +1095,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //上下不能正常滚动
                     if (obj.bounces && obj.alwaysBounceVertical) {
                         //可bounces
-                        if (offset.y < -insets.top) {
+                        if (offset.y + one_pxiel < -insets.top) {
                             //在头部bounces中，向上滑是正常恢复的方向，判定为正常滑动
                             gesmes.x = 2;
                         } else {
@@ -1107,9 +1108,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 }
                 break;
             case UISwipeGestureRecognizerDirectionDown:
-                if (contentsz.height + insets.top + insets.bottom > boundsz.height) {
+                if (contentsz.height + insets.top + insets.bottom > boundsz.height + one_pxiel) {
                     //上下能正常滚动
-                    if (offset.y > -insets.top) {
+                    if (offset.y > -insets.top + one_pxiel) {
                         //能正常响应
                         gesmes.x = 2;
                     } else {
@@ -1124,7 +1125,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //上下不能正常滚动
                     if (obj.bounces && obj.alwaysBounceVertical) {
                         //可bounces
-                        if (offset.y > -insets.top) {
+                        if (offset.y > -insets.top + one_pxiel) {
                             //在底部bounces中，向下滑是正常恢复的方向，判定为正常滑动
                             gesmes.x = 2;
                         } else {
@@ -1137,9 +1138,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 }
                 break;
             case UISwipeGestureRecognizerDirectionLeft:
-                if (contentsz.width + insets.left + insets.right > boundsz.width) {
+                if (contentsz.width + insets.left + insets.right > boundsz.width + one_pxiel) {
                     //左右能正常滚动
-                    if ((offset.x + boundsz.width) < (contentsz.width + insets.right)) {
+                    if ((offset.x + boundsz.width) < (contentsz.width + insets.right - one_pxiel)) {
                         //能正常响应
                         gesmes.x = 2;
                     } else {
@@ -1154,7 +1155,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //左右不能正常滚动
                     if (obj.bounces && obj.alwaysBounceHorizontal) {
                         //可bounces
-                        if (offset.x < -insets.left) {
+                        if (offset.x + one_pxiel < -insets.left) {
                             //在左侧bounces中，向左滑是正常恢复的方向，判定为正常滑动
                             gesmes.x = 2;
                         } else {
@@ -1167,9 +1168,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                 }
                 break;
             case UISwipeGestureRecognizerDirectionRight:
-                if (contentsz.width + insets.left + insets.right > boundsz.width) {
+                if (contentsz.width + insets.left + insets.right > boundsz.width + one_pxiel) {
                     //左右能正常滚动
-                    if (offset.x > -insets.left) {
+                    if (offset.x > -insets.left + one_pxiel) {
                         //能正常响应
                         gesmes.x = 2;
                     } else {
@@ -1184,8 +1185,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     //左右不能正常滚动
                     if (obj.bounces && obj.alwaysBounceHorizontal) {
                         //可bounces
-                        if (offset.x > -insets.left) {
-                            //在底部bounces中，向下滑是正常恢复的方向，判定为正常滑动
+                        if (offset.x > -insets.left + one_pxiel) {
+                            //在左部bounces中，向右滑是正常恢复的方向，判定为正常滑动
                             gesmes.x = 2;
                         } else {
                             //正常状态或头部bounces状态，向下滑是bounces行为
