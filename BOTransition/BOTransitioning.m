@@ -873,7 +873,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     CGRect vcrt = [_transitionContext finalFrameForViewController:vc];
     if (!CGRectIsEmpty(vcrt)
-        && CGRectEqualToRect(retview.frame, vcrt)) {
+        && !CGRectEqualToRect(retview.frame, vcrt)) {
         //容器使用finalFrame
         retview.frame = vcrt;
     }
@@ -882,7 +882,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
         //若有容器，内部的origin为0即可
         vcrt.origin = CGPointZero;
         if (!CGRectIsEmpty(vcrt)
-            && CGRectEqualToRect(vc.view.frame, vcrt)) {
+            && !CGRectEqualToRect(vc.view.frame, vcrt)) {
             vc.view.frame = vcrt;
         }
     }
