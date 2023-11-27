@@ -406,27 +406,24 @@
 @implementation UINavigationController (BOTransition)
 
 + (void)load {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        /*
-         添加一个方法bo_trans_setViewControllers复制
-         setViewControllers
-         的实现
-         */
-        [BOTransitionUtility copyOriginMeth:@selector(setViewControllers:animated:)
-                                     newSel:@selector(bo_trans_setViewControllers:animated:)
-                                      class:self];
-        [BOTransitionUtility copyOriginMeth:@selector(popToViewController:animated:)
-                                     newSel:@selector(bo_trans_popToViewController:animated:)
-                                      class:self];
-        [BOTransitionUtility copyOriginMeth:@selector(pushViewController:animated:)
-                                     newSel:@selector(bo_trans_pushViewController:animated:)
-                                      class:self];
-        [BOTransitionUtility swizzleMethodTargetCls:self
-                                        originalSel:@selector(viewDidLayoutSubviews)
-                                             srcCls:self
-                                             srcSel:@selector(bo_trans_viewDidLayoutSubviews)];
-    });
+    /*
+     添加一个方法bo_trans_setViewControllers复制
+     setViewControllers
+     的实现
+     */
+    [BOTransitionUtility copyOriginMeth:@selector(setViewControllers:animated:)
+                                 newSel:@selector(bo_trans_setViewControllers:animated:)
+                                  class:self];
+    [BOTransitionUtility copyOriginMeth:@selector(popToViewController:animated:)
+                                 newSel:@selector(bo_trans_popToViewController:animated:)
+                                  class:self];
+    [BOTransitionUtility copyOriginMeth:@selector(pushViewController:animated:)
+                                 newSel:@selector(bo_trans_pushViewController:animated:)
+                                  class:self];
+    [BOTransitionUtility swizzleMethodTargetCls:self
+                                    originalSel:@selector(viewDidLayoutSubviews)
+                                         srcCls:self
+                                         srcSel:@selector(bo_trans_viewDidLayoutSubviews)];
 }
 
 - (void)bo_trans_viewDidLayoutSubviews {
