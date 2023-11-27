@@ -10,6 +10,7 @@
 #import "UIViewController+BOTransition.h"
 #import "BOTransitionNCProxy.h"
 #import "BOTransitionUtility.h"
+#import "BOTransitionNCProxy_privacy.h"
 #import <objc/runtime.h>
 
 @interface BOTransitionElement ()
@@ -659,7 +660,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
 - (void)loadEffectControlAr:(BOOL)interactive {
     NSMutableArray<id<BOTransitionEffectControl>> *controlar = [NSMutableArray new];
     
-    //Navigation是，对应时机告知transitionNCHandler
+    //Navigation时，对应时机告知transitionNCHandler
     if (BOTransitionTypeNavigation == self.transitionType) {
         id<BOTransitionEffectControl> nchandler = self.navigationController.bo_transProxy.transitionEffectControl;
         if (nil != nchandler) {

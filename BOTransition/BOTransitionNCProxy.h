@@ -40,8 +40,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property (nonatomic, strong) NSNumber *defaultNavigationBarHiddenAndAutoSet;
 
-//内部使用
-@property (nonatomic, readonly) id<BOTransitionEffectControl> transitionEffectControl;
 
 @end
 
