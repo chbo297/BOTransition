@@ -501,28 +501,42 @@
     //0set 1push 2pop
     NSInteger pushact = 0;
     if (viewControllers.count > 0
-        && originvcar.count > 0
-        && viewControllers.count != originvcar.count) {
-        NSInteger mincount = MIN((NSInteger)viewControllers.count, (NSInteger)originvcar.count);
-        if (mincount > 0) {
-            BOOL isequal = YES;
-            for (NSInteger idx = 0; idx < mincount; idx++) {
-                if (viewControllers[idx] != originvcar[idx]) {
-                    isequal = NO;
-                    break;
+        && originvcar.count > 0) {
+        if (viewControllers.count != originvcar.count) {
+            NSInteger mincount = MIN((NSInteger)viewControllers.count, (NSInteger)originvcar.count);
+            if (mincount > 0) {
+                BOOL isequal = YES;
+                for (NSInteger idx = 0; idx < mincount; idx++) {
+                    if (viewControllers[idx] != originvcar[idx]) {
+                        isequal = NO;
+                        break;
+                    }
+                }
+                
+                if (isequal) {
+                    if (viewControllers.count > originvcar.count) {
+                        if (viewControllers.count == originvcar.count + 1) {
+                            pushact = 1;
+                        }
+                    } else {
+                        pushact = 2;
+                    }
                 }
             }
-            
-            if (isequal) {
-                if (viewControllers.count > originvcar.count) {
-                    if (viewControllers.count == originvcar.count + 1) {
-                        pushact = 1;
-                    }
-                } else {
-                    pushact = 2;
-                }
+        } else {
+            UIViewController *showlast = viewControllers.lastObject;
+            UIViewController *orilast = originvcar.lastObject;
+            if (showlast != orilast
+                && [originvcar containsObject:showlast]) {
+                //判定可能是将一个vc从底部提上来，直接调setVC系统有bug会把顶部那个VC直接移除,这里介入排布一下
+                NSMutableArray *muar = originvcar.mutableCopy;
+                [muar removeObject:showlast];
+                //先从底部移除
+                [self bo_trans_setViewControllers:muar animated:NO];
+                //后边继续正常set
             }
         }
+        
     }
     
     switch (pushact) {
