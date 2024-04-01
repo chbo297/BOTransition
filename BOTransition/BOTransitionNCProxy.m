@@ -533,7 +533,6 @@
                 [muar removeObject:showlast];
                 //先从底部移除
                 [self bo_trans_setViewControllers:muar animated:NO];
-                //后边继续正常set
             }
         }
         

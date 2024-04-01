@@ -1697,7 +1697,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                         BOOL allowOtherSVDirectionCoexist = NO;
                         NSNumber *allowOtherSVDirectionCoexistnum = [gesinfo objectForKey:@"allowOtherSVDirectionCoexist"];
                         if (nil != allowOtherSVDirectionCoexistnum) {
-                            allowBeganWithSVBounces = allowOtherSVDirectionCoexistnum.boolValue;
+                            allowOtherSVDirectionCoexist = allowOtherSVDirectionCoexistnum.boolValue;
                         }
                         
                         if (!allowOtherSVDirectionCoexist) {
