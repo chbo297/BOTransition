@@ -2151,7 +2151,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                      subInfo:nil];
                 
                 CGFloat maxdis = [self obtainMaxFrameChangeCenterDistance:YES];
-                CGFloat mindur = maxdis / 2400.f;
+                CGFloat mindur = MIN(0.3, maxdis / 2400.f);
                 if (maxdis > 8) {
                     mindur = MAX(mindur, 0.12);
                 }
@@ -2215,7 +2215,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 
                 if (nil == durval) {
                     CGFloat maxdis = [self obtainMaxFrameChangeCenterDistance:NO];
-                    CGFloat mindur = maxdis / 2400.f;
+                    CGFloat mindur = MIN(0.3, maxdis / 2400.f);
                     if (maxdis > 8) {
                         mindur = MAX(mindur, 0.12);
                     }
