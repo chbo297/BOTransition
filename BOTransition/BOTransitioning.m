@@ -786,10 +786,30 @@ static CGFloat sf_default_transition_dur = 0.22f;
     if (!_commonBg) {
         _commonBg = [UIView new];
         _commonBg.backgroundColor = [UIColor colorWithWhite:0 alpha:0.27];
-        _commonBg.userInteractionEnabled = NO;
         _commonBg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        UITapGestureRecognizer *bgtap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onBgTapGes:)];
+        [_commonBg addGestureRecognizer:bgtap];
     }
     return _commonBg;
+}
+
+- (void)onBgTapGes:(UITapGestureRecognizer *)bgTap {
+    NSMutableArray<id<BOTransitionEffectControl>> *usecontrolar = @[].mutableCopy;
+    if (self.moveVC) {
+        [usecontrolar addObject:(id)self.moveVC];
+    }
+    if (self.baseVC) {
+        [usecontrolar addObject:(id)self.baseVC];
+    }
+    [usecontrolar enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
+                                               NSUInteger idx,
+                                               BOOL * _Nonnull stop) {
+        if ([obj respondsToSelector:@selector(bo_transitioning:didTapCommonBg:subInfo:)]) {
+            [obj bo_transitioning:self
+                   didTapCommonBg:self.commonBg
+                          subInfo:nil];
+        }
+    }];
 }
 
 - (void)forceCancelTransition {

@@ -179,7 +179,11 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         _delayTrigger = NO;
         _beganWithSVBounces = NO;
     } else {
-        [self touchesDidChange:[NSSet setWithObject:_currTouch] event:nil state:UIGestureRecognizerStateCancelled];
+        NSMutableSet<UITouch *> *touchset = [NSMutableSet new];
+        if (_currTouch) {
+            [touchset addObject:_currTouch];
+        }
+        [self touchesDidChange:touchset event:nil state:UIGestureRecognizerStateCancelled];
         _currTouch = nil;
         [_multiTouches removeAllObjects];
     }

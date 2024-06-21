@@ -96,6 +96,13 @@ NS_ASSUME_NONNULL_BEGIN
                                      intentComplete:(NSNumber *)intentComplete
                                             gesture:(BOTransitionPanGesture *)gesture;
 
+/*
+ 通用背景蒙层被点击
+ */
+- (nullable NSDictionary *)bo_transitioning:(BOTransitioning *)transitioning
+                             didTapCommonBg:(UIView *)bgView
+                                    subInfo:(nullable NSDictionary *)subInfo;
+
 @end
 
 @protocol BOTransitionConfigDelegate <BOTransitionEffectControl>
