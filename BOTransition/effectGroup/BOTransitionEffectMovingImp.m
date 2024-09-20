@@ -156,25 +156,14 @@
             [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveTransBoard];
         }];
         
-        if (BOTransitionActMoveOut == transitioning.transitionAct) {
-            [bgelement addToStep:BOTransitionStepFinished
-                           block:^(BOTransitioning * _Nonnull blockTrans,
-                                   BOTransitionStep step,
-                                   BOTransitionElement * _Nonnull transitionElement,
-                                   BOTransitionInfo transitionInfo,
-                                   NSDictionary * _Nullable subInfo) {
-                [transitionElement.transitionView removeFromSuperview];
-            }];
-        } else {
-            [bgelement addToStep:BOTransitionStepCancelled
-                           block:^(BOTransitioning * _Nonnull blockTrans,
-                                   BOTransitionStep step,
-                                   BOTransitionElement * _Nonnull transitionElement,
-                                   BOTransitionInfo transitionInfo,
-                                   NSDictionary * _Nullable subInfo) {
-                [transitionElement.transitionView removeFromSuperview];
-            }];
-        }
+        [bgelement addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
+                       block:^(BOTransitioning * _Nonnull blockTrans,
+                               BOTransitionStep step,
+                               BOTransitionElement * _Nonnull transitionElement,
+                               BOTransitionInfo transitionInfo,
+                               NSDictionary * _Nullable subInfo) {
+            [transitionElement.transitionView removeFromSuperview];
+        }];
         
         [elements addObject:bgelement];
     }
