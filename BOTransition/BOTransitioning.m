@@ -549,6 +549,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 @property (nonatomic, assign) BOOL startWithInteractive;
 
+@property (nonatomic, strong) NSString *effectStyle;
+
 @end
 
 @implementation BOTransitioning
@@ -699,6 +701,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     if (effectconfig.count > 0) {
         NSString *effectstyle = effectconfig[@"style"];
         if (effectstyle.length > 0) {
+            _effectStyle = effectstyle;
             NSString *impclass = [NSString stringWithFormat:@"BOTransitionEffect%@Imp", effectstyle];
             Class impcls = NSClassFromString(impclass);
             if (impcls) {
@@ -746,6 +749,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
         self.effectControlAr = controlar;
     } else {
         self.effectControlAr = nil;
+        _effectStyle = nil;
     }
 }
 
@@ -1204,7 +1208,18 @@ static CGFloat sf_default_transition_dur = 0.22f;
     if (needsani) {
         //有动画时，依次执行对应的生命周期
         //虽然上面已经判断了isFinish时needsani，但这里独立判定，使上面的isFinish也可以改为支持ani
+        
+        //获取首个指定的即可，当前只支持所有动效ele使用同一种参数，后续需要再扩展
+        NSNumber *anioptnum = nil;
+        for (BOTransitionElement *ieleitem in elementar) {
+            if (nil != ieleitem.aniCurveOpt) {
+                anioptnum = ieleitem.aniCurveOpt;
+                break;
+            }
+        }
+        
         [self execAnimateDuration:sf_default_transition_dur
+                         curveOpt:anioptnum
                percentStartAndEnd:CGPointMake(0, 1)
                     modifyUIBlock:^{
             if (isFinish) {
@@ -1247,6 +1262,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     } else {
         //系统似乎不支持直接结束，需要有一个动画过程或者下个runloop才能调用结束。否则会周期错乱。
         [self execAnimateDuration:0
+                         curveOpt:nil
                percentStartAndEnd:CGPointMake(0, 1)
                     modifyUIBlock:^{}
                        completion:^(BOOL aniFinished) {
@@ -1282,6 +1298,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 - (void)makeTransitionComplete:(BOOL)isFinish isInteractive:(BOOL)interactive {
     _effectControlAr = nil;
+    _effectStyle = nil;
     [_transitionElementAr removeAllObjects];
     _transitionElementAr = nil;
     _triggerInteractiveTransitioning = NO;
@@ -1332,6 +1349,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 - (void)animationEnded:(BOOL)transitionCompleted {
     _effectControlAr = nil;
+    _effectStyle = nil;
     [_transitionElementAr removeAllObjects];
     _transitionElementAr = nil;
     _triggerInteractiveTransitioning = NO;
@@ -1444,6 +1462,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
  percentStartAndEnd：记录该动画是把转场进度从x播放到y
  */
 - (void)execAnimateDuration:(NSTimeInterval)duration
+                   curveOpt:(NSNumber *)curveOpt
          percentStartAndEnd:(CGPoint)percentStartAndEnd
               modifyUIBlock:(void (^)(void))modifyUIBlock
                  completion:(void (^ __nullable)(BOOL finished))completion {
@@ -1452,16 +1471,22 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     if (_innerAnimatingVal) {
-        NSLog(@"error:%s ~~~execAnimateDuration上次动画还没结束", __func__);
+        NSLog(@"error:%s exec Animate Duration上次动画还没结束", __func__);
     }
     _innerAnimatingVal = @(percentStartAndEnd);
     
     self.timeRuler.alpha = 0;
+    
+    UIViewAnimationOptions usecurveopt = UIViewAnimationOptionCurveLinear;
+    if (nil != curveOpt) {
+        usecurveopt = curveOpt.unsignedIntegerValue;
+    }
+    
     //暂不开启手势中断动画功能
     [UIView animateWithDuration:duration
                           delay:0
                         options:(UIViewAnimationOptionAllowAnimatedContent
-                                 | UIViewAnimationOptionCurveLinear)
+                                 | usecurveopt)
                      animations:^{
         self.timeRuler.alpha = 1;
         if (modifyUIBlock) {
@@ -1544,51 +1569,63 @@ static CGFloat sf_default_transition_dur = 0.22f;
     if (hasmakepercent) {
         percentComplete = specialpercent;
     } else {
-        __block CGFloat distanceCoe = 1;
-        __block BOOL hasmakecoe = NO;
+        __block NSNumber *controlCoe = nil;
+        __block NSValue *controlsizeval = nil;
         [self.effectControlAr enumerateObjectsWithOptions:NSEnumerationReverse
                                                usingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ([obj respondsToSelector:@selector(bo_transitioning:distanceCoefficientForGes:)]) {
-                NSNumber *distanceCoenum =\
-                [obj bo_transitioning:self distanceCoefficientForGes:ges];
-                if (nil != distanceCoenum) {
-                    distanceCoe = distanceCoenum.floatValue;
-                    hasmakecoe = YES;
-                    *stop = YES;
+            //倒序，后面的优先级最高，有值就停止了
+            if (nil == controlsizeval) {
+                if ([obj respondsToSelector:@selector(bo_transitioning:controlCalculateSize:)]) {
+                    NSValue *anVal =\
+                    [obj bo_transitioning:self controlCalculateSize:ges];
+                    if (nil != anVal) {
+                        controlsizeval = anVal;
+                    }
+                }
+            }
+            
+            if (nil == controlCoe) {
+                if ([obj respondsToSelector:@selector(bo_transitioning:distanceCoefficientForGes:)]) {
+                    NSNumber *distanceCoenum =\
+                    [obj bo_transitioning:self distanceCoefficientForGes:ges];
+                    if (nil != distanceCoenum) {
+                        controlCoe = distanceCoenum;
+                    }
                 }
             }
         }];
         
-        CGSize containersz = container.bounds.size;
+        CGSize controlContainersz = container.bounds.size;
+        if (nil != controlsizeval) {
+            CGSize spsize = controlsizeval.CGSizeValue;
+            //有一边有值即认为有效
+            if (spsize.width > 0
+                || spsize.height > 0) {
+                controlContainersz = spsize;
+            }
+        }
+        
+        CGFloat distanceCoe = 1;
+        if (nil != controlCoe) {
+            CGFloat spcoe = controlCoe.floatValue;
+            if (spcoe > 0
+                && spcoe <= 1) {
+                distanceCoe = spcoe;
+            }
+        }
         
         switch (ges.triggerDirectionInfo.mainDirection) {
             case UISwipeGestureRecognizerDirectionUp:
-                if (!hasmakecoe) {
-                    distanceCoe = 1;
-                    hasmakecoe = YES;
-                }
-                percentComplete = (began.y - curr.y) / (containersz.height * distanceCoe);
+                percentComplete = (began.y - curr.y) / (controlContainersz.height * distanceCoe);
                 break;
             case UISwipeGestureRecognizerDirectionLeft:
-                if (!hasmakecoe) {
-                    distanceCoe = 1;
-                    hasmakecoe = YES;
-                }
-                percentComplete = (began.x - curr.x) / (containersz.width * distanceCoe);
+                percentComplete = (began.x - curr.x) / (controlContainersz.width * distanceCoe);
                 break;
             case UISwipeGestureRecognizerDirectionDown:
-                if (!hasmakecoe) {
-                    distanceCoe = 1;
-                    hasmakecoe = YES;
-                }
-                percentComplete = (curr.y - began.y) / (containersz.height * distanceCoe);
+                percentComplete = (curr.y - began.y) / (controlContainersz.height * distanceCoe);
                 break;
             case UISwipeGestureRecognizerDirectionRight:
-                if (!hasmakecoe) {
-                    distanceCoe = 1;
-                    hasmakecoe = YES;
-                }
-                percentComplete = (curr.x - began.x) / (containersz.width * distanceCoe);
+                percentComplete = (curr.x - began.x) / (controlContainersz.width * distanceCoe);
                 break;
             default:
                 break;
@@ -2158,7 +2195,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 CGFloat dur = MAX(mindur, (1.f - percentComplete) * sf_default_transition_dur);
                 transitioninfo.percentComplete = 1;
                 self.shouldRunAniCompletionBlock = YES;
+                
+                NSNumber *anioptnum = nil;
+                for (BOTransitionElement *ieleitem in self.transitionElementAr) {
+                    if (nil != ieleitem.aniCurveOpt) {
+                        anioptnum = ieleitem.aniCurveOpt;
+                        break;
+                    }
+                }
+                
                 [self execAnimateDuration:dur
+                                 curveOpt:anioptnum
                        percentStartAndEnd:CGPointMake(percentComplete, 1)
                             modifyUIBlock:^{
                     [self makePrepareAndExecStep:BOTransitionStepFinalAnimatableProperties
@@ -2224,7 +2271,17 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 
                 transitioninfo.percentComplete = 0;
                 self.shouldRunAniCompletionBlock = YES;
+                
+                NSNumber *anioptnum = nil;
+                for (BOTransitionElement *ieleitem in self.transitionElementAr) {
+                    if (nil != ieleitem.aniCurveOpt) {
+                        anioptnum = ieleitem.aniCurveOpt;
+                        break;
+                    }
+                }
+                
                 [self execAnimateDuration:durval.floatValue
+                                 curveOpt:anioptnum
                        percentStartAndEnd:CGPointMake(percentComplete, 0)
                             modifyUIBlock:^{
                     [self makePrepareAndExecStep:BOTransitionStepInitialAnimatableProperties

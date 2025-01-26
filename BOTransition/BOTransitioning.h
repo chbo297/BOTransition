@@ -58,6 +58,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, readonly, nullable) UIView *commonBg;
 @property (nonatomic, readonly) UIView *checkAndInitCommonBg;
 
+@property (nonatomic, readonly) NSString *effectStyle;
 @property (nonatomic, weak) BOTransitionConfig *moveVCConfig;
 
 @property (nonatomic, readonly, nonnull) BOTransitionPanGesture *transitionGes;
@@ -122,7 +123,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
 @property (nonatomic, weak) UIView *fromView;
 @property (nonatomic, weak) UIView *toView;
-@property (nonatomic, strong) NSValue *toFrameCoordinateInVC;
+@property (nonatomic, strong, nullable) NSValue *toFrameCoordinateInVC;
 
 /*
  YES：
@@ -173,8 +174,13 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, assign) CGFloat frameCalPow;
 @property (nonatomic, assign) BOOL frameAnimationWithTransform;
 @property (nonatomic, assign) UIRectEdge frameBarrierInContainer;
-@property (nonatomic, strong) NSValue *frameLastBeforeAni;
+@property (nonatomic, strong, nullable) NSValue *frameLastBeforeAni;
 
+/*
+ UIViewAnimationOptions
+ 不设置默认UIViewAnimationOptionCurveLinear
+ */
+@property (nonatomic, strong, nullable) NSNumber *aniCurveOpt;
 
 //是否进行alpha转变
 @property (nonatomic, assign) BOOL alphaAllow;
@@ -189,7 +195,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 /*
  .. 暂无定义，预留字段，给可打断动画使用的，但动画打断的体验不大好先不开启
  */
-@property (nonatomic, strong) NSNumber *alphaLastBeforeAni;
+@property (nonatomic, strong, nullable) NSNumber *alphaLastBeforeAni;
 
 /*
  入参：转场的进度百分比0~1

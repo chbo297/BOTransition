@@ -74,10 +74,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*
  不实现的默认情况下，竖滑整个container高代表全程，横滑整个container的宽代表全程
+ 0-1.0 用作比例
  return @(CGFloat)
  */
 - (nullable NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
               distanceCoefficientForGes:(BOTransitionPanGesture *)gesture;
+
+/*
+ 不实现的默认情况下，竖滑整个container高代表全程，横滑整个container的宽代表全程
+ 这里可以返回参考的size
+ */
+- (nullable NSValue *)bo_transitioning:(BOTransitioning *)transitioning
+                  controlCalculateSize:(BOTransitionPanGesture *)gesture;
 
 /*
  根据当前的ges计算转场的进度，若实现，可以介入和指定percent。不实现或返回nil时使用内置默认行为
@@ -130,6 +138,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*
  当该手势触发时，是否需要退场该viewController
+ 不实现该方法默认是@(YES)，想要不干涉需要返回@(YES)
  nil: 不触发退场，但不排除该手势继续滑动，一会儿当触发了某个方向时会继续尝试触发
  YES: 触发交互式退场
  NO: 不可以开始并且取消本次手势响应

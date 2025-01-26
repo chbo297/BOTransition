@@ -117,12 +117,14 @@
     boardelement.frameAllow = YES;
     boardelement.frameShouldPin = NO;
     boardelement.frameOrigin = movedrt;
+    
     if (BOTransitionActMoveIn == transitioning.transitionAct) {
         boardelement.frameFrom = outrt;
         boardelement.frameTo = movedrt;
     } else {
         boardelement.frameFrom = movedrt;
         boardelement.frameTo = outrt;
+        boardelement.aniCurveOpt = @(UIViewAnimationCurveEaseOut);
     }
     
     [elements addObject:boardelement];
@@ -155,15 +157,21 @@
             transitionElement.transitionView.frame = blockcontainer.bounds;
             [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveTransBoard];
         }];
+        if (BOTransitionTypeModalPresentation == transitioning.transitionType
+            && BOTransitionActMoveIn == transitioning.transitionAct) {
+            //present出来的时候，不用移除
+        } else {
+            [bgelement addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
+                           block:^(BOTransitioning * _Nonnull blockTrans,
+                                   BOTransitionStep step,
+                                   BOTransitionElement * _Nonnull transitionElement,
+                                   BOTransitionInfo transitionInfo,
+                                   NSDictionary * _Nullable subInfo) {
+                [transitionElement.transitionView removeFromSuperview];
+            }];
+        }
         
-        [bgelement addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
-                       block:^(BOTransitioning * _Nonnull blockTrans,
-                               BOTransitionStep step,
-                               BOTransitionElement * _Nonnull transitionElement,
-                               BOTransitionInfo transitionInfo,
-                               NSDictionary * _Nullable subInfo) {
-            [transitionElement.transitionView removeFromSuperview];
-        }];
+        
         
         [elements addObject:bgelement];
     }
