@@ -89,7 +89,7 @@
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
         && otherGestureRecognizer != gestureRecognizer) {
         
-        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
                           transitionType:BOTransitionTypeNavigation
@@ -111,7 +111,7 @@
         && otherGestureRecognizer != gestureRecognizer) {
         
         //有对应策略时执行策略
-        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
                           transitionType:BOTransitionTypeNavigation

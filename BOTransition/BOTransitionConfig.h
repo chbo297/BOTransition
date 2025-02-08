@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol BOTransitionEffectControl;
 @protocol BOTransitionConfigDelegate;
+@class BOTransitionGesture;
 
 typedef NSString *BOTransitionEffect NS_EXTENSIBLE_STRING_ENUM;
 
@@ -62,9 +63,12 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectAndroidStyle1;
 //留作扩展
 @property (nonatomic, strong, nullable) NSDictionary *userInfo;
 
+//快捷设置一个转场动画的起始视图
 @property (nonatomic, weak) UIView *startViewFromBaseVC;
 
+//快捷设置
 @property (nonatomic, strong, nullable) BOTransitionEffect transitionEffect;
+@property (nonatomic, strong, nullable) NSDictionary *transitionEffectConfig;
 
 /*
  {
@@ -114,18 +118,34 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectAndroidStyle1;
 
 /*
  附着在本config所属的vc上的手势转场，一个NSDictionary代表一个手势方向和对应的事件（比如弹出页面，或者弹出页面）
- direction: UISwipeGestureRecognizerDirection(NSUInteger) //触发的方向
- margin: @(YES/NO) nil=NO //是否必须在边缘开始, YES时会优先其他scrollView进行相应
- allowBeganWithSVBounces: @(YES/NO)
- allowOtherSVDirectionCoexist: @(YES/NO) 是否允许其它scrollView的的非同一个方向（竖直、水平）的已触发手势共存，默认NO（已经触发其他非同一方向手势时，该转场手势不再被触发）
  act: @(1/2) 1moveout(把当前vc关闭)  2movein（从当前vc弹出一个新vc）
+ 
+ gesType: pan / pinch
+ direction: UISwipeGestureRecognizerDirection(NSUInteger) //pan时有效,触发的方向
+ margin: @(YES/NO) nil=NO //pan时有效,是否必须在边缘开始, YES时会优先其他scrollView进行相应
+ 
+ serious: @"1", //默认0  1时，严格手势，需要没有触发过同方向线上的其它scrollview才能触发转场，且开始方向和触发方向相同
+ allowOtherSVDirectionCoexist: @(YES/NO), serious时默认NO，否则默认YES，是否允许同方向线上其它scrollview触发后再触发转场
+ allowBeganWithSVBounces: @(YES/NO)
+ allowOtherSVDirectionCoexist: @(YES/NO) 是否允许其它scrollView的非同一个方向（竖直、水平）的已触发手势共存，默认NO（已经触发其他非同一方向手势时，该转场手势不再被触发）
+ 
+ //type=pinch时有效
+ pinchVal: @(CGFloat)  1 放大，-1缩小
+ 
  effectConfig: EffectConfig dictionary
+ 
+ //传递这个时，请确保里面一定
+ transExec: ^(BOTransitionGesture *ges){}
  */
 @property (nonatomic, readonly, nullable) NSMutableArray<NSDictionary *> *gesInfoAr;
 
 - (void)addGesInfoMoveOut:(BOOL)moveOut
                 direction:(UISwipeGestureRecognizerDirection)direction
             seriousMargin:(BOOL)seriousMargin
+                 userInfo:(nullable NSDictionary *)userInfo;
+
+- (void)addGesInfoMoveOut:(BOOL)moveOut
+                 pinchVal:(CGFloat)pinchVal
                  userInfo:(nullable NSDictionary *)userInfo;
 
 //移除指定手势

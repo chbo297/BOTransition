@@ -1,5 +1,5 @@
 //
-//  BOTransitionPanGesture.h
+//  BOTransitionGesture.h
 //  BOTransition
 //
 //  Created by bo on 2020/11/13.
@@ -19,9 +19,9 @@ typedef struct {
 } BOTransitionGesSliceInfo;
 
 typedef struct {
-    NSArray<NSValue *> *lastTouchInfoAr;
+    NSArray<NSValue *> *lastPanInfoAr;
     BOTransitionGesSliceInfo triggerDirectionInfo;
-} BOTransitionPanGestureBrief;
+} BOTransitionGestureBrief;
 
 typedef struct {
     //每个方向的权重
@@ -36,16 +36,35 @@ typedef struct {
     CGRect boardRect;
 } BOTransitionGesBeganInfo;
 
-@class BOTransitionPanGesture;
+@interface BOTransitionGesturePinchInfo : NSObject
+
+@property (nonatomic, assign) CGPoint pt1;
+@property (nonatomic, assign) CGPoint pt2;
+
+@property (nonatomic, assign) CGPoint centerPt;
+@property (nonatomic, assign) CGFloat space;
+
+@property (nonatomic, assign) CGFloat ts;
+@property (nonatomic, assign) CGFloat tsSinceFirst;
+
+@end
+
+@class BOTransitionGesture;
 
 @protocol BOTransitionGestureDelegate <NSObject>
 
 @optional
 
 /*
+ return:
+ {
+ shouldBegin:
  nil: 不开始，但不排除该手势继续滑动，一会儿当触发了某个方向时会继续尝试触发
- YES: 开始手势
+ YES: 可以开始手势   (后续会计算手势冲突策略，成功后才会真的开始)
  NO: 不可以开始并且取消本次手势响应
+ 
+ gesType: pinch / pan   不传默认pan
+ }
  
  specialDirection: 指定并修改trigger的mainDirection
  
@@ -68,11 +87,11 @@ typedef struct {
   
  gesAr: NSHashTable<UIGestureRecognizer>
  */
-- (nullable NSNumber *)boTransitionGesShouldAndWillBegin:(BOTransitionPanGesture *)ges
-                                    specialMainDirection:(UISwipeGestureRecognizerDirection *)mainDirection
-                                                 subInfo:(nullable NSDictionary *)subInfo;
+- (nullable NSDictionary *)boTransitionGesShouldAndWillBegin:(BOTransitionGesture *)ges
+                                        specialMainDirection:(UISwipeGestureRecognizerDirection *)mainDirection
+                                                     subInfo:(nullable NSDictionary *)subInfo;
 
-- (void)boTransitionGesStateDidChange:(BOTransitionPanGesture *)ges;
+- (void)boTransitionGesStateDidChange:(BOTransitionGesture *)ges;
 
 /*
  0: 默认（ges内置会共存），不做处理
@@ -81,7 +100,7 @@ typedef struct {
  3: 不判断，保留原有优先级
  4: ges优先并强制fail掉other
  */
-- (NSInteger)boTransitionGRStrategyForGes:(BOTransitionPanGesture *)ges
+- (NSInteger)boTransitionGRStrategyForGes:(BOTransitionGesture *)ges
                                  otherGes:(UIGestureRecognizer *)otherGes;
 
 /*
@@ -89,7 +108,6 @@ typedef struct {
  0 默认行为（内置会根据一些策略fail掉其中一个），不做处理
  1 保留ges
  2 保留otherges
- 
  */
 - (NSInteger)checkTransitionGes:(UIGestureRecognizer *)tGes
              otherTransitionGes:(UIGestureRecognizer *)otherTGes
@@ -97,8 +115,10 @@ typedef struct {
 
 @end
 
-//借用了系统的UIPanGestureRecognizer
-@interface BOTransitionPanGesture : UIGestureRecognizer
+//转场手势识别
+@interface BOTransitionGesture : UIGestureRecognizer
+
+@property (class, nonatomic, readonly) CGFloat gesConflictTime;
 
 //首次产生滑动方向时的信息
 @property (nonatomic, readonly) BOTransitionGesSliceInfo initialDirectionInfo;
@@ -115,7 +135,16 @@ typedef struct {
  CGRect
  x, y, 时间戳, 0
  */
-@property (nonatomic, readonly) NSMutableArray<NSValue *> *touchInfoAr;
+@property (nonatomic, readonly) NSArray<NSValue *> *panInfoAr;
+@property (nonatomic, readonly) NSArray<NSValue *> *touchInfoAr API_DEPRECATED_WITH_REPLACEMENT("panInfoAr", ios(2.0, 3.0));
+
+@property (nonatomic, readonly) NSArray<BOTransitionGesturePinchInfo *> *pinchInfoAr;
+- (CGFloat)obtainPinchVelocity;
+
+/*
+ gesType: pinch / pan   默认pan
+ */
+@property (nonatomic, readonly) NSString *gesType;
 
 /*
  手势的起始信息
@@ -138,7 +167,7 @@ typedef struct {
  gesAr: NSHashTable<UIGestureRecognizer>
  */
 @property (nonatomic, readonly, nonnull) NSDictionary<NSNumber *, NSDictionary *> *otherSVRespondedDirectionRecord;
-@property (nonatomic, readonly) BOOL delayTrigger;
+@property (nonatomic, readonly) BOOL isDelayTrigger;
 @property (nonatomic, readonly) BOOL beganWithSVBounces;
 
 @property (nonatomic, readonly) UIGestureRecognizerState transitionGesState;
@@ -167,10 +196,16 @@ typedef struct {
 /*
  0 不是
  1 navigationController 系统pop
- 2 BOTransitionPanGesture
+ 2 BOTransitionGesture
  */
 + (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges;
 
 @end
+
+/*
+ BOTransitionPanGesture已弃用，换成BOTransitionGesture了
+ */
+API_DEPRECATED_WITH_REPLACEMENT("BOTransitionGesture", ios(2.0, 3.0))
+typedef BOTransitionGesture BOTransitionPanGesture;
 
 NS_ASSUME_NONNULL_END

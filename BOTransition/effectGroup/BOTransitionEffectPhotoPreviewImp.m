@@ -20,18 +20,21 @@
 - (BOTransitionEffectFadeImp *)fadeImp {
     if (!_fadeImp) {
         _fadeImp = [BOTransitionEffectFadeImp new];
+        _fadeImp.configInfo = @{
+            @"alphaCalPow": @(1.4)
+        };
     }
     return _fadeImp;
 }
 
-- (NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning gesture:(BOTransitionPanGesture *)gesture {
+- (NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning gesture:(BOTransitionGesture *)gesture {
     NSNumber *pinGesnum = self.configInfo[@"freePinGes"];
     if (nil == pinGesnum || !pinGesnum.boolValue) {
         return nil;
     }
     
     CGPoint bgpt = gesture.gesBeganInfo.location;
-    CGPoint currpt = gesture.touchInfoAr.lastObject.CGRectValue.origin;
+    CGPoint currpt = gesture.panInfoAr.lastObject.CGRectValue.origin;
     CGFloat dist = pow(pow((currpt.x - bgpt.x), 2.0) + pow((currpt.y - bgpt.y), 2.0), 0.5);
     CGFloat totallen = (gesture.view.bounds.size.height / 2.0) * 1.4;
     CGFloat percent = dist / totallen;
@@ -40,8 +43,8 @@
 }
 
 - (NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
-     distanceCoefficientForGes:(BOTransitionPanGesture *)gesture {
-    return @(0.84);
+     distanceCoefficientForGes:(BOTransitionGesture *)gesture {
+    return @(0.6);
 }
 
 - (void)bo_transitioning:(BOTransitioning *)transitioning
@@ -62,8 +65,91 @@
     
     switch (step) {
         case BOTransitionStepInstallElements: {
-            BOTransitionElement *element = [BOTransitionElement elementWithType:BOTransitionElementTypePhotoMirror];
-            [elements addObject:element];
+            BOTransitionElement *photoele = [BOTransitionElement elementWithType:BOTransitionElementTypePhotoMirror];
+            
+            id<BOTransitionEffectControl> basevcdelegate = transitioning.moveVC.bo_transitionConfig.baseVCDelegate;
+            if (!basevcdelegate) {
+                basevcdelegate = (id)transitioning.baseVC;
+            }
+            id<BOTransitionEffectControl> movevcdelegate = transitioning.moveVC.bo_transitionConfig.configDelegate;
+            if (!movevcdelegate) {
+                movevcdelegate = (id)transitioning.moveVC;
+            }
+            
+            if (BOTransitionActMoveIn == transitioning.transitionAct) {
+                UIView *from_view = transitioning.moveVCConfig.startViewFromBaseVC;
+                NSArray<NSDictionary *> *currfromar = nil;
+                if (from_view) {
+                    currfromar = @[
+                        @{
+                            @"view": from_view
+                        }
+                    ];
+                }
+                
+                if (basevcdelegate
+                    && [basevcdelegate respondsToSelector:@selector(bo_transitioningGetTransViewAr:fromViewAr:subInfo:)]) {
+                    currfromar = [basevcdelegate bo_transitioningGetTransViewAr:transitioning
+                                                                     fromViewAr:currfromar
+                                                                        subInfo:nil];
+                }
+                
+                NSArray<NSDictionary *> *currtoar = nil;
+                if (movevcdelegate
+                    && [movevcdelegate respondsToSelector:@selector(bo_transitioningGetTransViewAr:fromViewAr:subInfo:)]) {
+                    currtoar = [movevcdelegate bo_transitioningGetTransViewAr:transitioning
+                                                                   fromViewAr:currfromar
+                                                                      subInfo:nil];
+                }
+                
+                if (currfromar.count > 0) {
+                    photoele.fromView = [currfromar[0] objectForKey:@"view"];
+                }
+                
+                if (currtoar.count > 0) {
+                    NSDictionary *configdic = currtoar[0];
+                    photoele.toView = [configdic objectForKey:@"view"];
+                    photoele.toFrameCoordinateInVC = [configdic objectForKey:@"frame"];
+                    photoele.toFrameContentMode = [configdic objectForKey:@"contentMode"];
+                }
+            } else {
+                NSArray<NSDictionary *> *currfromar = nil;
+                if (movevcdelegate
+                    && [movevcdelegate respondsToSelector:@selector(bo_transitioningGetTransViewAr:fromViewAr:subInfo:)]) {
+                    currfromar = [movevcdelegate bo_transitioningGetTransViewAr:transitioning
+                                                                     fromViewAr:nil
+                                                                        subInfo:nil];
+                }
+                
+                NSArray<NSDictionary *> *currtoar = nil;
+                UIView *to_view = transitioning.moveVCConfig.startViewFromBaseVC;
+                if (to_view) {
+                    currtoar = @[
+                        @{
+                            @"view": to_view
+                        }
+                    ];
+                }
+                if (basevcdelegate
+                    && [basevcdelegate respondsToSelector:@selector(bo_transitioningGetTransViewAr:fromViewAr:subInfo:)]) {
+                    currtoar = [basevcdelegate bo_transitioningGetTransViewAr:transitioning
+                                                                   fromViewAr:currfromar
+                                                                      subInfo:nil];
+                }
+                
+                if (currfromar.count > 0) {
+                    photoele.fromView = [currfromar[0] objectForKey:@"view"];
+                }
+                
+                if (currtoar.count > 0) {
+                    NSDictionary *configdic = currtoar[0];
+                    photoele.toView = [configdic objectForKey:@"view"];
+                    photoele.toFrameCoordinateInVC = [configdic objectForKey:@"frame"];
+                    photoele.toFrameContentMode = [configdic objectForKey:@"contentMode"];
+                }
+            }
+            
+            [elements addObject:photoele];
         }
             break;
         case BOTransitionStepAfterInstallElements: {
@@ -76,16 +162,6 @@
             
             UIViewContentMode fromMode = UIViewContentModeScaleAspectFit;
             UIViewContentMode toMode = UIViewContentModeScaleAspectFit;
-            
-            if (BOTransitionActMoveIn == transitioning.transitionAct) {
-                if (!photoele.fromView) {
-                    photoele.fromView = transitioning.moveVCConfig.startViewFromBaseVC;
-                }
-            } else {
-                if (!photoele.toView) {
-                    photoele.toView = transitioning.moveVCConfig.startViewFromBaseVC;
-                }
-            }
             
             //fromView需得在屏幕上才层计算位置执行转场
             if (!photoele.fromView
@@ -101,6 +177,8 @@
                 && [photoele.toView isKindOfClass:[UIImageView class]]) {
                 UIImageView *toimgv = (id)photoele.toView;
                 toMode = toimgv.contentMode;
+            } else if (nil != photoele.toFrameContentMode) {
+                toMode = photoele.toFrameContentMode.integerValue;
             }
             
             UIView *tranview;
@@ -207,6 +285,7 @@
             }
             
             photoele.frameShouldPin = pinGes;
+            photoele.frameCalPow = 0.5;
             tranview.frame = fromrt;
             photoele.transitionView = tranview;
             photoele.frameAllow = YES;
@@ -214,7 +293,7 @@
             photoele.frameFrom = fromrt;
             photoele.frameTo = utort;
             photoele.frameAnimationWithTransform = NO;
-            
+            photoele.framePinch = YES;
             [photoele addToStep:BOTransitionStepAfterInstallElements
                           block:^(BOTransitioning * _Nonnull blockTrans,
                                   BOTransitionStep step,
@@ -225,33 +304,35 @@
                 [blockcontainer addSubview:transitionElement.transitionView];
             }];
             
-            [photoele addToStep:BOTransitionStepInteractiveEnd
-                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable bksubInfo) {
-                NSNumber *finishnum = bksubInfo[@"finish"];
-                BOOL bkfinish = YES;
-                if (nil != finishnum) {
-                    bkfinish = finishnum.boolValue;
-                }
-                
-                if (bkfinish
-                    && contentmodeconvert) {
-                    
-                    UIImageView *tiv = (id)transitionElement.transitionView;
-                    if ([tiv isKindOfClass:[UIImageView class]]) {
-                        tiv.clipsToBounds = YES;
-                        tiv.contentMode = toMode;
-                        
-                        if (UIViewContentModeScaleAspectFit == fromMode) {
-                            tiv.frame = [BOTransitionUtility rectWithAspectFitForBounding:tiv.frame size:tiv.image.size];
-                        } else if (UIViewContentModeScaleAspectFill == toMode) {
-                            tiv.frame = [BOTransitionUtility rectWithAspectFillForBounding:tiv.frame size:tiv.image.size];
-                        }
-                        
-                        transitionElement.frameTo = tort;
+            if (!photoele.framePinch) {
+                [photoele addToStep:BOTransitionStepInteractiveEnd
+                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable bksubInfo) {
+                    NSNumber *finishnum = bksubInfo[@"finish"];
+                    BOOL bkfinish = YES;
+                    if (nil != finishnum) {
+                        bkfinish = finishnum.boolValue;
                     }
                     
-                }
-            }];
+                    if (bkfinish
+                        && contentmodeconvert) {
+                        
+                        UIImageView *tiv = (id)transitionElement.transitionView;
+                        if ([tiv isKindOfClass:[UIImageView class]]) {
+                            tiv.clipsToBounds = YES;
+                            tiv.contentMode = toMode;
+                            
+                            if (UIViewContentModeScaleAspectFit == fromMode) {
+                                tiv.frame = [BOTransitionUtility rectWithAspectFitForBounding:tiv.frame size:tiv.image.size];
+                            } else if (UIViewContentModeScaleAspectFill == toMode) {
+                                tiv.frame = [BOTransitionUtility rectWithAspectFillForBounding:tiv.frame size:tiv.image.size];
+                            }
+                            
+                            transitionElement.frameTo = tort;
+                        }
+                        
+                    }
+                }];
+            }
             
             [photoele addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
                           block:^(BOTransitioning * _Nonnull blockTrans,

@@ -3,13 +3,13 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 51;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		22D2928DEE6CA28A3143984C /* Pods_BOTransitionDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2E931393390B12145FA0993B /* Pods_BOTransitionDemo.framework */; };
 		5F0DED08293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F0DED07293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m */; };
-		950C911B25B1487700561B29 /* BOTransitionPanGesture.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910325B1487600561B29 /* BOTransitionPanGesture.m */; };
+		950C911B25B1487700561B29 /* BOTransitionGesture.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910325B1487600561B29 /* BOTransitionGesture.m */; };
 		950C911C25B1487700561B29 /* BOTransitionConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910525B1487600561B29 /* BOTransitionConfig.m */; };
 		950C911D25B1487700561B29 /* BOTransitionNCProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910625B1487600561B29 /* BOTransitionNCProxy.m */; };
 		950C911E25B1487700561B29 /* BOTransitionEffectElementExpensionImp.m in Sources */ = {isa = PBXBuildFile; fileRef = 950C910A25B1487600561B29 /* BOTransitionEffectElementExpensionImp.m */; };
@@ -44,9 +44,10 @@
 		2E931393390B12145FA0993B /* Pods_BOTransitionDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_BOTransitionDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F0DED06293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectAndroidStyle1Imp.h; sourceTree = "<group>"; };
 		5F0DED07293DE49000888C2F /* BOTransitionEffectAndroidStyle1Imp.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BOTransitionEffectAndroidStyle1Imp.m; sourceTree = "<group>"; };
+		5FCAA8B82B06554800851909 /* BOTransitionNCProxy_privacy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BOTransitionNCProxy_privacy.h; sourceTree = "<group>"; };
 		8C7D7768807021FCA4935E77 /* Pods-BOTransitionDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BOTransitionDemo.release.xcconfig"; path = "Target Support Files/Pods-BOTransitionDemo/Pods-BOTransitionDemo.release.xcconfig"; sourceTree = "<group>"; };
 		950C910225B1487600561B29 /* BOTransitionUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionUtility.h; sourceTree = "<group>"; };
-		950C910325B1487600561B29 /* BOTransitionPanGesture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionPanGesture.m; sourceTree = "<group>"; };
+		950C910325B1487600561B29 /* BOTransitionGesture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionGesture.m; sourceTree = "<group>"; };
 		950C910425B1487600561B29 /* BOTransitionPresentationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionPresentationDelegate.h; sourceTree = "<group>"; };
 		950C910525B1487600561B29 /* BOTransitionConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionConfig.m; sourceTree = "<group>"; };
 		950C910625B1487600561B29 /* BOTransitionNCProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionNCProxy.m; sourceTree = "<group>"; };
@@ -61,7 +62,7 @@
 		950C911025B1487600561B29 /* BOTransitionEffectMovingImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectMovingImp.h; sourceTree = "<group>"; };
 		950C911125B1487600561B29 /* BOTransitionEffectPhotoPreviewImp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionEffectPhotoPreviewImp.h; sourceTree = "<group>"; };
 		950C911225B1487600561B29 /* BOTransitionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionProtocol.h; sourceTree = "<group>"; };
-		950C911325B1487600561B29 /* BOTransitionPanGesture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionPanGesture.h; sourceTree = "<group>"; };
+		950C911325B1487600561B29 /* BOTransitionGesture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionGesture.h; sourceTree = "<group>"; };
 		950C911425B1487700561B29 /* BOTransitionUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BOTransitionUtility.m; sourceTree = "<group>"; };
 		950C911525B1487700561B29 /* BOTransitionNCProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionNCProxy.h; sourceTree = "<group>"; };
 		950C911625B1487700561B29 /* BOTransitionConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BOTransitionConfig.h; sourceTree = "<group>"; };
@@ -146,10 +147,11 @@
 				950C911225B1487600561B29 /* BOTransitionProtocol.h */,
 				950C910225B1487600561B29 /* BOTransitionUtility.h */,
 				950C911425B1487700561B29 /* BOTransitionUtility.m */,
-				950C911325B1487600561B29 /* BOTransitionPanGesture.h */,
-				950C910325B1487600561B29 /* BOTransitionPanGesture.m */,
+				950C911325B1487600561B29 /* BOTransitionGesture.h */,
+				950C910325B1487600561B29 /* BOTransitionGesture.m */,
 				950C910425B1487600561B29 /* BOTransitionPresentationDelegate.h */,
 				950C911825B1487700561B29 /* BOTransitionPresentationDelegate.m */,
+				5FCAA8B82B06554800851909 /* BOTransitionNCProxy_privacy.h */,
 				950C911525B1487700561B29 /* BOTransitionNCProxy.h */,
 				950C910625B1487600561B29 /* BOTransitionNCProxy.m */,
 				950C910925B1487600561B29 /* effectGroup */,
@@ -280,6 +282,7 @@
 				TargetAttributes = {
 					95E0D8BB25A06A5D0095C763 = {
 						CreatedOnToolsVersion = 12.3;
+						LastSwiftMigration = 1620;
 					};
 				};
 			};
@@ -530,6 +533,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 8ED2N2GBR7;
@@ -542,6 +546,7 @@
 					"\"$(SRCROOT)/BOTransitionDemo\"",
 				);
 				INFOPLIST_FILE = BOTransitionDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -549,6 +554,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Bo.BOTransitionDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = wildcardProfile;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -559,6 +566,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = 8ED2N2GBR7;
@@ -571,6 +579,7 @@
 					"\"$(SRCROOT)/BOTransitionDemo\"",
 				);
 				INFOPLIST_FILE = BOTransitionDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -578,6 +587,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Bo.BOTransitionDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = wildcardProfile;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

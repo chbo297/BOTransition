@@ -1,12 +1,12 @@
 //
-//  BOTransitionPanGesture.m
+//  BOTransitionGesture.m
 //  BOTransition
 //
 //  Created by bo on 2020/11/13.
 //  Copyright © 2020 bo. All rights reserved.
 //
 
-#import "BOTransitionPanGesture.h"
+#import "BOTransitionGesture.h"
 #import "BOTransitionUtility.h"
 
 static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) {
@@ -17,15 +17,57 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     }
 }
 
-@interface BOTransitionPanGesture () <UIGestureRecognizerDelegate>
+@implementation BOTransitionGesturePinchInfo
+
++ (instancetype)pinchInfoWithTouchAr:(NSArray<UITouch *> *)touchAr containerView:(UIView *)containerView {
+    if (touchAr.count < 2
+        || !containerView) {
+        return nil;
+    }
+    
+    BOTransitionGesturePinchInfo *pinchinfo = [BOTransitionGesturePinchInfo new];
+    CGPoint thept1 = [touchAr[0] locationInView:containerView];
+    CGPoint thept2 = [touchAr[1] locationInView:containerView];
+    
+    pinchinfo.pt1 = thept1;
+    pinchinfo.pt2 = thept2;
+    pinchinfo.centerPt = CGPointMake((thept1.x + thept2.x) / 2.0, (thept1.y + thept2.y) / 2.0);
+    pinchinfo.space = pow((pow((thept2.x - thept1.x), 2) + pow((thept2.y - thept1.y), 2)), 0.5);
+    
+    pinchinfo.ts = [[NSDate date] timeIntervalSince1970];
+    
+    return pinchinfo;
+}
+
+- (BOOL)isPointEqual:(BOTransitionGesturePinchInfo *)pinchInfo {
+    if (pinchInfo
+        && CGPointEqualToPoint(pinchInfo.pt1, self.pt1)
+        && CGPointEqualToPoint(pinchInfo.pt2, self.pt2)) {
+        return YES;
+    }
+    return NO;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"tss:%@ pt1:%@, pt2:%@, center:%@, space:%@", @(_tsSinceFirst), @(_pt1), @(_pt2), @(_centerPt), @(_space)];
+}
+
+- (NSString *)debugDescription {
+    return [self description];
+}
+
+@end
+
+@interface BOTransitionGesture () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) UIGestureRecognizerState originState;
 
-@property (nonatomic, strong) NSMutableArray<NSValue *> *touchInfoAr;
+@property (nonatomic, strong) NSMutableArray<NSValue *> *panInfoAr;
+@property (nonatomic, strong) NSMutableArray<BOTransitionGesturePinchInfo *> *pinchInfoAr;
 
 @property (nonatomic, assign) BOTransitionGesSliceInfo initialDirectionInfo;
 @property (nonatomic, assign) BOTransitionGesSliceInfo triggerDirectionInfo;
-@property (nonatomic, assign) BOOL delayTrigger;
+@property (nonatomic, assign) BOOL isDelayTrigger;
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSMutableDictionary *> *otherSVRespondedDirectionRecord;
 
 @property (nonatomic, assign) UIGestureRecognizerState transitionGesState;
@@ -37,18 +79,24 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 @property (nonatomic, strong) NSMutableArray<NSValue *> *currPanScrollVSavOffsetAr;
 @property (nonatomic, assign) BOOL beganWithSVBounces;
 
-@property (nonatomic, assign) BOTransitionPanGestureBrief lastGesBrief;
+@property (nonatomic, assign) BOTransitionGestureBrief lastGesBrief;
 @property (nonatomic, assign) BOOL needsRecoverWhenTouchDown;
 
 @property (nonatomic, strong) NSMutableArray<UIGestureRecognizer *> *otherGesWillExecSimultaneouslyStrategy;
 
-//同时只接收和响应第一个touch的began、move、end、cancel
-@property (nonatomic, strong) UITouch *currTouch;
-@property (nonatomic, strong) NSMutableArray<UITouch *> *multiTouches;
+@property (nonatomic, strong) NSMutableArray<UITouch *> *touchAr;
+
+@property (nonatomic, strong) NSString *gesType;
 
 @end
 
-@implementation BOTransitionPanGesture
+static CGFloat sf_ges_conflict_wait_time = 0.12;
+
+@implementation BOTransitionGesture
+
++ (CGFloat)gesConflictTime {
+    return sf_ges_conflict_wait_time;
+}
 
 - (instancetype)initWithTransitionGesDelegate:(id<BOTransitionGestureDelegate>)transitionGesDelegate {
     self = [super initWithTarget:nil action:nil];
@@ -73,13 +121,13 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (CGPoint)velocityInCurrView {
-    if (_touchInfoAr.count < 2) {
+    if (_panInfoAr.count < 2) {
         return CGPointZero;
     }
     
     __block NSInteger lastptidx = -1;
     __block NSInteger remoteidx = -1;
-    [_touchInfoAr enumerateObjectsWithOptions:NSEnumerationReverse
+    [_panInfoAr enumerateObjectsWithOptions:NSEnumerationReverse
                                    usingBlock:^(NSValue * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (lastptidx < 0) {
             lastptidx = idx;
@@ -88,7 +136,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         } else {
             CGFloat ptts = obj.CGRectValue.size.width;
             if (ptts > 0) {
-                CGFloat lastts = self.touchInfoAr[lastptidx].CGRectValue.size.width;
+                CGFloat lastts = self.panInfoAr[lastptidx].CGRectValue.size.width;
                 if (lastts <= 0) {
                     //失效
                     *stop = YES;
@@ -110,8 +158,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     if (lastptidx >= 0
         && remoteidx >= 0
         && lastptidx != remoteidx) {
-        CGRect lastptinfo = _touchInfoAr[lastptidx].CGRectValue;
-        CGRect remoteptinfo = _touchInfoAr[remoteidx].CGRectValue;
+        CGRect lastptinfo = _panInfoAr[lastptidx].CGRectValue;
+        CGRect remoteptinfo = _panInfoAr[remoteidx].CGRectValue;
         
         if (lastptinfo.size.width > 0 && remoteptinfo.size.width > 0) {
             CGFloat ptdur = lastptinfo.size.width - remoteptinfo.size.width;
@@ -129,9 +177,14 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (void)innerReset {
-    _currTouch = nil;
-    _touchInfoAr = nil;
-    [_multiTouches removeAllObjects];
+    _panInfoAr = nil;
+
+    [_pinchInfoAr removeAllObjects];
+    _pinchInfoAr = nil;
+    
+    [_touchAr removeAllObjects];
+    _touchAr = nil;
+    _gesType = nil;
     
     switch (_originState) {
         case UIGestureRecognizerStateBegan:
@@ -159,7 +212,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     [_userInfo removeAllObjects];
 }
 
-- (void)makeGesStateCanceledWithCanRetryBegan:(BOOL)canRetryBegan; {
+- (void)makeGesStateCanceledWithCanRetryBegan:(BOOL)canRetryBegan {
     if (canRetryBegan) {
         switch (_transitionGesState) {
             case UIGestureRecognizerStateBegan:
@@ -172,169 +225,306 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         
         _transitionGesState = UIGestureRecognizerStatePossible;
         
-        [_touchInfoAr removeAllObjects];
+        [_panInfoAr removeAllObjects];
         
         [_currPanScrollVSavOffsetAr removeAllObjects];
         [_otherSVRespondedDirectionRecord removeAllObjects];
-        _delayTrigger = NO;
+        _isDelayTrigger = NO;
         _beganWithSVBounces = NO;
     } else {
-        NSMutableSet<UITouch *> *touchset = [NSMutableSet new];
-        if (_currTouch) {
-            [touchset addObject:_currTouch];
-        }
-        [self touchesDidChange:touchset event:nil state:UIGestureRecognizerStateCancelled];
-        _currTouch = nil;
-        [_multiTouches removeAllObjects];
+        [self i_touchDidChange:self.touchAr
+                         event:nil
+                         state:UIGestureRecognizerStateCancelled];
+        
+        [_touchAr removeAllObjects];
+        _touchAr = nil;
     }
 }
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer {
     if (preventingGestureRecognizer != self
-        && [BOTransitionPanGesture isTransitonGes:preventingGestureRecognizer]) {
+        && [BOTransitionGesture isTransitonGes:preventingGestureRecognizer]) {
         return YES;
     }
     return NO;
 }
 
-- (NSMutableArray<UITouch *> *)multiTouches {
-    if (!_multiTouches) {
-        _multiTouches = @[].mutableCopy;
+- (NSMutableArray<NSValue *> *)touchInfoAr {
+    return _panInfoAr;
+}
+
+- (NSMutableArray<UITouch *> *)touchAr {
+    if (!_touchAr) {
+        _touchAr = @[].mutableCopy;
     }
-    return _multiTouches;
+    return _touchAr;
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [super touchesBegan:touches withEvent:event];
-    if (!_currTouch) {
-        _currTouch = [touches anyObject];
-        [self touchesDidChange:[NSSet setWithObject:_currTouch]
-                         event:event state:UIGestureRecognizerStateBegan];
-    } else {
-        UITouch *anTouch = [touches anyObject];
-        [self.multiTouches addObject:anTouch];
+    NSMutableArray<UITouch *> *usetouches = @[].mutableCopy;
+    for (UITouch *touchitem in touches) {
+        if (![self.touchAr containsObject:touchitem]) {
+            [usetouches addObject:touchitem];
+        }
+    }
+    
+    if (usetouches.count > 0) {
+        [self.touchAr addObjectsFromArray:usetouches];
+        [self i_touchDidChange:usetouches
+                         event:event
+                         state:UIGestureRecognizerStateBegan];
     }
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [super touchesMoved:touches withEvent:event];
-    if (_currTouch
-        && [touches containsObject:_currTouch]) {
-        [self touchesDidChange:[NSSet setWithObject:_currTouch] event:event state:UIGestureRecognizerStateChanged];
+    
+    NSMutableArray<UITouch *> *usetouches = @[].mutableCopy;
+    for (UITouch *touchitem in touches) {
+        if ([self.touchAr containsObject:touchitem]) {
+            [usetouches addObject:touchitem];
+        }
+    }
+    if (usetouches.count > 0) {
+        //pinch moved
+        [self i_touchDidChange:usetouches
+                         event:event
+                         state:UIGestureRecognizerStateChanged];
     }
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [super touchesEnded:touches withEvent:event];
-    if (_currTouch
-        && ([touches containsObject:_currTouch] || 0 == touches.count)) {
-        [self touchesDidChange:[NSSet setWithObject:_currTouch] event:event state:UIGestureRecognizerStateEnded];
-        _currTouch = nil;
+    
+    NSMutableArray<UITouch *> *usetouches = @[].mutableCopy;
+    for (UITouch *touchitem in touches) {
+        if ([self.touchAr containsObject:touchitem]) {
+            [usetouches addObject:touchitem];
+        }
+    }
+    if (usetouches.count > 0) {
+        //pinch Ended
+        [self i_touchDidChange:usetouches
+                         event:event
+                         state:UIGestureRecognizerStateEnded];
     }
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [super touchesCancelled:touches withEvent:event];
-    if (_currTouch
-        && ([touches containsObject:_currTouch] || 0 == touches.count)) {
-        [self touchesDidChange:[NSSet setWithObject:_currTouch] event:event state:UIGestureRecognizerStateCancelled];
-        _currTouch = nil;
+    
+    NSMutableArray<UITouch *> *usetouches = @[].mutableCopy;
+    for (UITouch *touchitem in touches) {
+        if ([self.touchAr containsObject:touchitem]) {
+            [usetouches addObject:touchitem];
+        }
+    }
+    if (usetouches.count > 0) {
+        //pinch Cancelled
+        [self i_touchDidChange:usetouches
+                         event:event
+                         state:UIGestureRecognizerStateCancelled];
     }
 }
 
-- (void)touchesDidChange:(NSSet<UITouch *> *)touches
+static NSInteger sf_max_pinchInfo_count = 20;
+
+- (void)i_touchDidChange:(NSArray<UITouch *> *)touches
                    event:(UIEvent *)event
                    state:(UIGestureRecognizerState)state {
     
     switch (state) {
         case UIGestureRecognizerStateBegan:
-            if (!_touchInfoAr) {
-                _touchInfoAr = [NSMutableArray new];
-                
-                [touches enumerateObjectsUsingBlock:^(UITouch * _Nonnull obj, BOOL * _Nonnull stop) {
-                    for (UIView *theview = obj.view;
-                         (theview != self.view && nil != theview);
-                         theview = theview.superview) {
-                        if ([theview isKindOfClass:[UIScrollView class]]) {
-                            UIScrollView *scv = (UIScrollView *)theview;
-                            if (scv.scrollEnabled &&
-                                YES == scv.panGestureRecognizer.enabled) {
-                                [self addCurrPanSV:scv];
-                            }
-                        } else if ([theview isKindOfClass:[UIControl class]]) {
-                            if (theview.userInteractionEnabled
-                                && [(UIControl *)theview isEnabled]) {
-                                [self addCareOtherObj:(id)theview forKey:@"control"];
-                            }
-                        } else if ([theview isKindOfClass:[UITableViewCell class]]
-                                   || [theview isKindOfClass:[UICollectionViewCell class]]) {
-                            [self addCareOtherObj:(id)theview forKey:@"cell"];
-                        } else if (theview.userInteractionEnabled
-                                   && [theview.nextResponder isKindOfClass:[UINavigationController class]]) {
-                            UINavigationController *thenc = (UINavigationController *)theview.nextResponder;
-                            if (thenc.interactivePopGestureRecognizer) {
-                                if (self.transitionGesDelegate
-                                    && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
-                                    NSInteger checkst =\
-                                    [self.transitionGesDelegate checkTransitionGes:self
-                                                                otherTransitionGes:thenc.interactivePopGestureRecognizer
-                                                                          makeFail:YES];
-                                    
-                                    if (2 == checkst) {
-                                        [self makeGestureStateCanceledOrFailed];
-                                        return;
-                                    }
+            for (UITouch *touchitem in touches) {
+                for (UIView *theview = touchitem.view;
+                     (theview != self.view && nil != theview);
+                     theview = theview.superview) {
+                    if ([theview isKindOfClass:[UIScrollView class]]) {
+                        UIScrollView *scv = (UIScrollView *)theview;
+                        if (scv.scrollEnabled &&
+                            YES == scv.panGestureRecognizer.enabled) {
+                            [self addCurrPanSV:scv];
+                        }
+                    } else if ([theview isKindOfClass:[UIControl class]]) {
+                        if (theview.userInteractionEnabled
+                            && [(UIControl *)theview isEnabled]) {
+                            [self addCareOtherObj:(id)theview forKey:@"control"];
+                        }
+                    } else if ([theview isKindOfClass:[UITableViewCell class]]
+                               || [theview isKindOfClass:[UICollectionViewCell class]]) {
+                        [self addCareOtherObj:(id)theview forKey:@"cell"];
+                    } else if (theview.userInteractionEnabled
+                               && [theview.nextResponder isKindOfClass:[UINavigationController class]]) {
+                        UINavigationController *thenc = (UINavigationController *)theview.nextResponder;
+                        if (thenc.interactivePopGestureRecognizer) {
+                            if (self.transitionGesDelegate
+                                && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
+                                NSInteger checkst =\
+                                [self.transitionGesDelegate checkTransitionGes:self
+                                                            otherTransitionGes:thenc.interactivePopGestureRecognizer
+                                                                      makeFail:YES];
+                                
+                                if (2 == checkst) {
+                                    [self makeGestureStateCanceledOrFailed];
+                                    return;
                                 }
                             }
-                            
-                            [self addCareOtherObj:(id)theview forKey:@"nc"];
                         }
+                        
+                        [self addCareOtherObj:(id)theview forKey:@"nc"];
                     }
-                }];
+                }
+            }
+            
+            if (self.touchAr.count == 1) {
+                //单点touch开始
+                if (!_panInfoAr) {
+                    //开启pan记录
+                    _panInfoAr = [NSMutableArray new];
+                    
+                    if ([self isPanBeginSVBounces]) {
+                        _beganWithSVBounces = YES;
+                    }
+                    
+                    //不return，继续后面的change流程
+                } else {
+                    return;
+                }
+            } else if (self.touchAr.count >= 2) {
+                if (!_panInfoAr) {
+                    //pan没有触发，直接2点起步。 后续优化写法，这里先补完isPanBeginSVBounces判定
+                    if ([self isPanBeginSVBounces]) {
+                        _beganWithSVBounces = YES;
+                    }
+                }
                 
-                if ([self currPanSVInBounces]) {
-                    _beganWithSVBounces = YES;
+                if (!_pinchInfoAr) {
+                    _pinchInfoAr = [NSMutableArray new];
+                    //不return，继续后面的change流程
+                } else {
+                    return;
                 }
             } else {
                 return;
             }
-            
         case UIGestureRecognizerStateChanged: {
-            if (_touchInfoAr) {
-                UITouch *touch = [touches anyObject];
-                CGPoint locpt = [touch locationInView:self.view];
+            BOOL panchange = NO;
+            if (_panInfoAr) {
+                UITouch *firsttouch = self.touchAr.firstObject;
                 
-                if (_touchInfoAr.count > 0 &&
-                    CGPointEqualToPoint(_touchInfoAr.lastObject.CGRectValue.origin, locpt)) {
-                    return;
+                //判断是首个touch的变化
+                if (firsttouch
+                    && [touches containsObject:firsttouch]) {
+                    CGPoint locpt = [firsttouch locationInView:self.view];
+                    if (_panInfoAr.count > 0 &&
+                        CGPointEqualToPoint(_panInfoAr.lastObject.CGRectValue.origin, locpt)) {
+                        return;
+                    }
+                    
+                    [_panInfoAr addObject:@((CGRect){locpt, [NSDate date].timeIntervalSince1970, 0})];
+                    
+                    //最大存储数量限制
+                    if (_panInfoAr.count > 9) {
+                        [_panInfoAr removeObjectAtIndex:2];
+                    }
+                    
+                    panchange = YES;
+                }
+            }
+            
+            BOOL pinchchange = NO;
+            if (_pinchInfoAr
+                && self.touchAr.count >= 2) {
+                UITouch *touch1 = self.touchAr[0];
+                UITouch *touch2 = self.touchAr[1];
+                if ([touches containsObject:touch1]
+                    || [touches containsObject:touch2]) {
+                    BOTransitionGesturePinchInfo *pininfo = [BOTransitionGesturePinchInfo pinchInfoWithTouchAr:@[touch1, touch2] containerView:self.view];
+                    if (pininfo) {
+                        pininfo.tsSinceFirst = pininfo.ts - _pinchInfoAr.firstObject.ts;
+                        [_pinchInfoAr addObject:pininfo];
+                        if (_pinchInfoAr.count > sf_max_pinchInfo_count) {
+                            [_pinchInfoAr removeObjectAtIndex:2];
+                        }
+//                        [self testCheckVelPinch];
+                        pinchchange = YES;
+                    }
                 }
                 
-                [_touchInfoAr addObject:@((CGRect){locpt, [NSDate date].timeIntervalSince1970, 0})];
-                
-                if (_touchInfoAr.count > 9) {
-                    [_touchInfoAr removeObjectAtIndex:2];
-                }
-                
+            }
+            
+            if (panchange
+                || pinchchange) {
                 self.originState = state;
             }
         }
             break;
         case UIGestureRecognizerStateEnded:
         case UIGestureRecognizerStateCancelled: {
-            if (_touchInfoAr) {
+            BOOL panfinish = NO;
+            if (_panInfoAr) {
+                UITouch *firsttouch = self.touchAr.firstObject;
                 
-                UITouch *touch = [touches anyObject];
-                CGPoint locpt = [touch locationInView:self.view];
-                [_touchInfoAr addObject:@((CGRect){locpt, [NSDate date].timeIntervalSince1970, 0})];
-                
-                if (_touchInfoAr.count > 9) {
-                    [_touchInfoAr removeObjectAtIndex:2];
+                //判断是首个touch的变化
+                if (firsttouch
+                    && [touches containsObject:firsttouch]) {
+                    
+                    CGPoint locpt = [firsttouch locationInView:self.view];
+                    [_panInfoAr addObject:@((CGRect){locpt, [NSDate date].timeIntervalSince1970, 0})];
+                    
+                    if (_panInfoAr.count > 9) {
+                        [_panInfoAr removeObjectAtIndex:2];
+                    }
+                    
+                    panfinish = YES;
                 }
                 
-                self.originState = state;
-                
-                self.state = UIGestureRecognizerStateFailed;
             }
+            
+            BOOL pinchfinish = NO;
+            if (_pinchInfoAr
+                && self.touchAr.count >= 2) {
+                UITouch *touch1 = self.touchAr[0];
+                UITouch *touch2 = self.touchAr[1];
+                if ([touches containsObject:touch1]
+                    || [touches containsObject:touch2]) {
+                    BOTransitionGesturePinchInfo *pininfo = [BOTransitionGesturePinchInfo pinchInfoWithTouchAr:@[touch1, touch2] containerView:self.view];
+                    BOTransitionGesturePinchInfo *lastpininfo = _pinchInfoAr.lastObject;
+                    if (pininfo && ![pininfo isPointEqual:lastpininfo]) {
+                        pininfo.tsSinceFirst = pininfo.ts - _pinchInfoAr.firstObject.ts;
+                        [_pinchInfoAr addObject:pininfo];
+//                        [self testCheckVelPinch];
+                        pinchfinish = YES;
+                    }
+                }
+            }
+            
+            [self.touchAr removeObjectsInArray:touches];
+            
+            if (self.touchAr.count == 0) {
+                self.originState = state;
+                [self makeGestureStateCanceledOrFailed];
+            } else if (panfinish) {
+                //pan结束了，pinch当前也结束了，全部结束
+                self.originState = state;
+                [self makeGestureStateCanceledOrFailed];
+            } else if (pinchfinish) {
+                BOOL hastranbegan = (UIGestureRecognizerStateBegan == _transitionGesState
+                                     || UIGestureRecognizerStateChanged == _transitionGesState);
+                if (hastranbegan) {
+                    //pinch转场中，结束手势
+                    self.originState = state;
+                    [self makeGestureStateCanceledOrFailed];
+                } else {
+                    //只有pinch结束了
+                    [_pinchInfoAr removeAllObjects];
+                    _pinchInfoAr = nil;
+                }
+            } else {
+                //都没结束，什么也不用做
+            }
+            
         }
             break;
         default:
@@ -342,25 +532,93 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     }
 }
 
+- (CGFloat)obtainPinchVelocity {
+    NSInteger pcount = self.pinchInfoAr.count;
+    if (pcount <= 1) {
+        return 0.0;
+    }
+    CGFloat lastspace = self.pinchInfoAr.lastObject.space;
+    CGFloat lastts = self.pinchInfoAr.lastObject.ts;
+    for (NSInteger idx = self.pinchInfoAr.count - 2; idx >= 0; idx--) {
+        BOTransitionGesturePinchInfo *infoitem = self.pinchInfoAr[idx];
+        CGFloat durts = lastts - infoitem.ts;
+        if (durts >= 0.1) {
+            return (lastspace - infoitem.space) / durts;
+        }
+        
+        if (pcount >= sf_max_pinchInfo_count
+            && idx == 1) {
+            //到最大后，取第二个就好了，因为前面可能被裁剪过数据
+            break;
+        } else if (idx == 0) {
+            return (lastspace - infoitem.space) / durts;
+        }
+    }
+    
+    return 0.0;
+}
+
+- (void)testCheckVelPinch {
+    NSInteger pcount = self.pinchInfoAr.count;
+    if (pcount <= 1) {
+        NSLog(@"~~~p0.1: 0pt/s");
+        NSLog(@"~~~p0.2: 0pt/s");
+        return;
+    }
+    CGFloat lastspace = self.pinchInfoAr.lastObject.space;
+    CGFloat lastts = self.pinchInfoAr.lastObject.ts;
+    NSNumber *sp01 = nil;
+    NSNumber *sp02 = nil;
+    for (NSInteger idx = self.pinchInfoAr.count - 2; idx >= 0; idx--) {
+        BOTransitionGesturePinchInfo *infoitem = self.pinchInfoAr[idx];
+        CGFloat durts = lastts - infoitem.ts;
+        if (nil == sp01) {
+            if (durts >= 0.1) {
+                sp01 = @((lastspace - infoitem.space) / durts);
+            }
+        }
+        if (nil == sp02) {
+            if (durts >= 0.2) {
+                sp02 = @((lastspace - infoitem.space) / durts);
+            }
+        }
+        
+        if (pcount >= sf_max_pinchInfo_count
+            && idx == 1) {
+            //到最大后，取第二个就好了，因为前面可能被裁剪过数据
+            break;
+        } else if (idx == 0) {
+            sp01 = @((lastspace - infoitem.space) / durts);
+            sp02 = sp01;
+        }
+    }
+    
+    NSLog(@"~~~p0.1: %@pt/s", sp01);
+    NSLog(@"~~~p0.2: %@pt/s", sp02);
+}
+
 - (void)setOriginState:(UIGestureRecognizerState)originState {
     if (_originState != originState
         || UIGestureRecognizerStateChanged == originState) {
         _originState = originState;
-        
         BOOL hastranbegan = (UIGestureRecognizerStateBegan == _transitionGesState
                              || UIGestureRecognizerStateChanged == _transitionGesState);
         
         switch (originState) {
             case UIGestureRecognizerStateBegan: {
+                
                 if (_needsRecoverWhenTouchDown) {
                     NSNumber *shouldbegin;
+                    NSString *gestype = nil;
                     if (self.transitionGesDelegate &&
                         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:specialMainDirection:subInfo:)]) {
                         UISwipeGestureRecognizerDirection anDir = _lastGesBrief.triggerDirectionInfo.mainDirection;
-                        shouldbegin =\
+                        NSDictionary *controldic =\
                         [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self
                                                                  specialMainDirection:&anDir
                                                                               subInfo:@{@"type": @"needsRecoverWhenTouchDown"}];
+                        shouldbegin = [controldic objectForKey:@"shouldBegin"];
+                        gestype = [controldic objectForKey:@"gesType"];
                         if (anDir != _lastGesBrief.triggerDirectionInfo.mainDirection) {
                             //recover的时候应该不需要修改，虽然估计用不到，暂保留吧
                             _lastGesBrief.triggerDirectionInfo.subDirection = _lastGesBrief.triggerDirectionInfo.mainDirection;
@@ -371,14 +629,17 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     if (nil != shouldbegin &&
                         shouldbegin.boolValue) {
                         _initialDirectionInfo = _lastGesBrief.triggerDirectionInfo;
-                        _initialDirectionInfo.location = _touchInfoAr.lastObject.CGRectValue.origin;
+                        _initialDirectionInfo.location = _panInfoAr.lastObject.CGRectValue.origin;
                         _triggerDirectionInfo = _initialDirectionInfo;
-                        //                        [_touchInfoAr insertObject:_lastGesBrief.touchBeganVal atIndex:0];
+//                        [_panInfoAr insertObject:_lastGesBrief.touchBeganVal atIndex:0];
                         
                         _needsRecoverWhenTouchDown = NO;
                         
-                        [self beganTransitionGesState];
-                        
+                        //执行手势冲突策略，自己还活着后，开始转场
+                        if ([self mixGesAndExecStrategy]) {
+                            self.gesType = gestype;
+                            self.transitionGesState = UIGestureRecognizerStateBegan;
+                        }
                     } else {
                         _needsRecoverWhenTouchDown = NO;
                     }
@@ -390,6 +651,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     [self tryBeginTransitionGesAndMakeInfo];
                 } else {
                     self.transitionGesState = UIGestureRecognizerStateChanged;
+                    //otherges比如pinch可以将转场打断
+                    [self checkOtherGes];
                 }
             }
                 break;
@@ -411,15 +674,15 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (void)saveCurrGesContextAndSetNeedsRecoverWhenTouchDown {
-    if (self.touchInfoAr.count <= 0) {
+    if (self.panInfoAr.count <= 0) {
         return;
     }
-    NSValue *firstptval = self.touchInfoAr.firstObject;
+    NSValue *firstptval = self.panInfoAr.firstObject;
     BOTransitionGesSliceInfo briefslice = self.triggerDirectionInfo;
     briefslice.location = firstptval.CGRectValue.origin;
     
-    BOTransitionPanGestureBrief brief = (BOTransitionPanGestureBrief){
-        self.touchInfoAr.copy,
+    BOTransitionGestureBrief brief = (BOTransitionGestureBrief){
+        self.panInfoAr.copy,
         briefslice
     };
     
@@ -434,8 +697,8 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 - (BOTransitionGesBeganInfo)calculateBeganInfo {
     CGRect boardbounds = self.view.bounds;
     BOTransitionGesBeganInfo beganinfo = (BOTransitionGesBeganInfo){UIEdgeInsetsZero, UIEdgeInsetsZero, CGPointZero, boardbounds};
-    if (self.touchInfoAr.count >= 2) {
-        CGPoint pt1 = self.touchInfoAr.firstObject.CGRectValue.origin;
+    if (self.panInfoAr.count >= 2) {
+        CGPoint pt1 = self.panInfoAr.firstObject.CGRectValue.origin;
         beganinfo.location = pt1;
         
         beganinfo.marginSpace = UIEdgeInsetsMake(pt1.y - CGRectGetMinY(boardbounds),
@@ -514,36 +777,43 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (NSNumber *)tryBeginTransitionGesAndMakeInfo {
+//    NSLog(@"~~~~trybegin");
     BOTransitionGesSliceInfo drinfo = [self generateSliceInfo];
-    if (0 == drinfo.mainDirection) {
-        //没有方向，什么也不做
+    if (0 == drinfo.mainDirection
+        && self.pinchInfoAr.count == 0) {
+        //没有方向，没有pinch，什么也不做
         return nil;
     }
     
-    BOOL isInitial = (2 == _touchInfoAr.count);
+    //生成pan相关的信息
+    BOOL isInitial = (2 == _panInfoAr.count);
     if (isInitial) {
+        //初始方向信息
         _initialDirectionInfo = drinfo;
-        _delayTrigger = NO;
+        _isDelayTrigger = NO;
         
         _gesBeganInfo = [self calculateBeganInfo];
     } else {
-        _delayTrigger = YES;
+        _isDelayTrigger = YES;
     }
     
     _triggerDirectionInfo = drinfo;
     
     NSNumber *shouldbegin = nil;
     NSDictionary *mainresdic = [self currPanSVAcceptDirection:drinfo.mainDirection];
-    
+    NSString *gestype = nil;
+    //询问代理是否开始transition
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:specialMainDirection:subInfo:)]) {
         UISwipeGestureRecognizerDirection anDir = drinfo.mainDirection;
-        shouldbegin = [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self
-                                                               specialMainDirection:&anDir
-                                                                            subInfo:@{
+        NSDictionary *controldic =\
+        [self.transitionGesDelegate boTransitionGesShouldAndWillBegin:self
+                                                 specialMainDirection:&anDir
+                                                              subInfo:@{
             @"otherSVResponse": mainresdic ? : @{}
         }];
-        
+        shouldbegin = [controldic objectForKey:@"shouldBegin"];
+        gestype = [controldic objectForKey:@"gesType"];
         if (anDir != drinfo.mainDirection) {
             //delegate指定了新的mainDirection
             drinfo.subDirection = drinfo.mainDirection;
@@ -552,12 +822,22 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }
     }
     
+    NSNumber *hasbeginorfail = nil;
     if (nil != shouldbegin) {
         if (shouldbegin.boolValue) {
+            //恢复被手势触发瞬间offset的scrollView
             [self correctAndSaveCurSVOffsetSugDirection:drinfo.mainDirection];
-            [self beganTransitionGesState];
+            //执行手势冲突策略，自己还活着后，开始转场
+            if ([self mixGesAndExecStrategy]) {
+                self.gesType = gestype;
+                self.transitionGesState = UIGestureRecognizerStateBegan;
+                hasbeginorfail = @(YES);
+            } else {
+                hasbeginorfail = @(NO);
+            }
         } else {
             [self makeGestureStateCanceledOrFailed];
+            hasbeginorfail = @(NO);
         }
     } else {
         //本次没有开始转场，如果scrollView进行了bounces响应，也记录为已响应方向
@@ -571,7 +851,18 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }
     }
     
-    return shouldbegin;
+    return hasbeginorfail;
+}
+
+- (void)checkOtherGes {
+    [_otherGesWillExecSimultaneouslyStrategy enumerateObjectsUsingBlock:^(UIGestureRecognizer * _Nonnull obj,
+                                                                          NSUInteger idx,
+                                                                          BOOL * _Nonnull stop) {
+        if ([obj isKindOfClass:[UIPinchGestureRecognizer class]]) {
+            [self execeSimultaneouslyStrategy:obj makeGesFailedOrCancelled:nil];
+        }
+    }];
+    
 }
 
 /*
@@ -581,18 +872,52 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 - (BOOL)execeSimultaneouslyStrategy:(UIGestureRecognizer *)ges makeGesFailedOrCancelled:(BOOL *)makeGesFailedOrCancelled {
     if (UIGestureRecognizerStateFailed == ges.state
         || UIGestureRecognizerStateCancelled == ges.state) {
-        return NO;
+        return YES;
     }
     
     NSInteger strategy = 0;
-    BOOL istran = [BOTransitionPanGesture isTransitonGes:ges];
+    BOOL istran = [BOTransitionGesture isTransitonGes:ges];
     if (istran) {
-        strategy = [self.transitionGesDelegate checkTransitionGes:self
-                                               otherTransitionGes:ges
-                                                         makeFail:NO];
+        if ([self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
+            NSInteger spsgy = [self.transitionGesDelegate checkTransitionGes:self
+                                                          otherTransitionGes:ges
+                                                                    makeFail:NO];
+            if (0 != spsgy) {
+                strategy = spsgy;
+            }
+        }
     } else {
-        strategy = [self.transitionGesDelegate boTransitionGRStrategyForGes:self
-                                                                   otherGes:ges];
+        if ([self.gesType isEqualToString:@"pinch"]) {
+            
+        } else {
+            //如果本次ges是pan类型，那其它的缩放手势优先响应
+            if ([ges isKindOfClass:[UIPinchGestureRecognizer class]]) {
+                if (ges.state == UIGestureRecognizerStateBegan
+                    || ges.state == UIGestureRecognizerStateChanged) {
+                    CGRect firstptinfo = _panInfoAr.firstObject.CGRectValue;
+                    CGFloat firstptts = firstptinfo.size.width;
+                    CGFloat durts = [NSDate date].timeIntervalSince1970 - firstptts;
+                    //等待时间内内才允许再次将本手势fail，超过后就算了，用户已经滑了一会儿了
+                    if (durts < sf_ges_conflict_wait_time) {
+                        strategy = 2;
+                    } else {
+                        strategy = 4;
+                    }
+                }
+            } else if ([ges isKindOfClass:[UIPanGestureRecognizer class]]
+                       && [ges.view isKindOfClass:[UIScrollView class]]) {
+                //其它UIScrollView的pan，暂不将其fail，因为手势又回来时，还有回复scrolView继续滑动
+    //            strategy = 4;
+            }
+        }
+        
+        if ([self.transitionGesDelegate boTransitionGRStrategyForGes:self otherGes:ges]) {
+            NSInteger spsgy = [self.transitionGesDelegate boTransitionGRStrategyForGes:self
+                                                                              otherGes:ges];
+            if (0 != spsgy) {
+                strategy = spsgy;
+            }
+        }
     }
     
     BOOL sfalive = YES;
@@ -600,20 +925,20 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     
     switch (strategy) {
         case 1: {
-            killges = [BOTransitionPanGesture tryMakeGesFail:ges
-                                                       byGes:self
-                                                       force:istran];
+            killges = [BOTransitionGesture tryMakeGesFail:ges
+                                                    byGes:self
+                                                    force:istran];
         }
             break;
         case 2: {
-            self.state = UIGestureRecognizerStateFailed;
+            [self makeGestureStateCanceledOrFailed];
             sfalive = NO;
         }
             break;
         case 4: {
-            killges = [BOTransitionPanGesture tryMakeGesFail:ges
-                                                       byGes:self
-                                                       force:YES];
+            killges = [BOTransitionGesture tryMakeGesFail:ges
+                                                    byGes:self
+                                                    force:YES];
         }
             break;
         default:
@@ -627,54 +952,64 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     return sfalive;
 }
 
-- (void)beganTransitionGesState {
+/*
+ 混合计算手势、执行冲突策略
+ return: self是否还活着
+ */
+- (BOOL)mixGesAndExecStrategy {
+    //执行手势冲突处理
     __block BOOL hasFailed = NO;
-    if (self.transitionGesDelegate &&
-        [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGRStrategyForGes:otherGes:)]) {
-        [_otherGesWillExecSimultaneouslyStrategy enumerateObjectsUsingBlock:^(UIGestureRecognizer * _Nonnull obj,
-                                                                              NSUInteger idx,
-                                                                              BOOL * _Nonnull stop) {
-            if (![self execeSimultaneouslyStrategy:obj makeGesFailedOrCancelled:nil]) {
-                hasFailed = YES;
-            }
-        }];
-    }
-    
-    if (!hasFailed) {
-        __block BOOL hasDrag = NO;
-        [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (obj.isDragging || obj.isTracking) {
-                hasDrag = YES;
-                switch (obj.panGestureRecognizer.state) {
-                    case UIGestureRecognizerStatePossible:
-                    case UIGestureRecognizerStateBegan:
-                    case UIGestureRecognizerStateChanged:
-                        if (![_otherGesWillExecSimultaneouslyStrategy containsObject:obj.panGestureRecognizer]) {
-                            BOOL isfc = NO;
-                            [self execeSimultaneouslyStrategy:obj.panGestureRecognizer makeGesFailedOrCancelled:&isfc];
-                            if (isfc) {
-                                hasDrag = NO;
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }];
-        
-        if (!hasDrag
-            && ([self careOtherArForKey:@"cell"].count > 0
-                || [self careOtherArForKey:@"control"].count > 0)) {
-            /*
-             有control时暂时借用系统的能力时uicontrol停止响应失效
-             */
-            self.state = UIGestureRecognizerStateBegan;
+    [_otherGesWillExecSimultaneouslyStrategy enumerateObjectsUsingBlock:^(UIGestureRecognizer * _Nonnull obj,
+                                                                          NSUInteger idx,
+                                                                          BOOL * _Nonnull stop) {
+        if (![self execeSimultaneouslyStrategy:obj makeGesFailedOrCancelled:nil]) {
+            hasFailed = YES;
         }
-        self.transitionGesState = UIGestureRecognizerStateBegan;
+    }];
+    
+    if (hasFailed) {
+        return NO;
     }
     
-    [_otherGesWillExecSimultaneouslyStrategy removeAllObjects];
+    __block BOOL hasDrag = NO;
+    [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.isDragging || obj.isTracking) {
+            hasDrag = YES;
+            switch (obj.panGestureRecognizer.state) {
+                case UIGestureRecognizerStatePossible:
+                case UIGestureRecognizerStateBegan:
+                case UIGestureRecognizerStateChanged:
+                    if (![_otherGesWillExecSimultaneouslyStrategy containsObject:obj.panGestureRecognizer]) {
+                        BOOL isfc = NO;
+                        BOOL failedsf = [self execeSimultaneouslyStrategy:obj.panGestureRecognizer makeGesFailedOrCancelled:&isfc];
+                        if (failedsf) {
+                            hasFailed = YES;
+                        }
+                        if (isfc) {
+                            hasDrag = NO;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }];
+    
+    if (!hasDrag
+        && ([self careOtherArForKey:@"cell"].count > 0
+            || [self careOtherArForKey:@"control"].count > 0)) {
+        /*
+         有control时暂时借用系统的能力时uicontrol停止响应失效
+         */
+        self.state = UIGestureRecognizerStateBegan;
+    }
+    
+    if (hasFailed) {
+        return NO;
+    } else {
+        return YES;
+    }
 }
 
 - (void)setTransitionGesState:(UIGestureRecognizerState)transitionGesState {
@@ -709,7 +1044,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         && otherGestureRecognizer != gestureRecognizer) {
         BOOL shouldfailsf = NO;
         
-        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
             if (self.transitionGesDelegate
                 && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
                 NSInteger checkst = [self.transitionGesDelegate checkTransitionGes:self
@@ -720,13 +1055,18 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     shouldfailsf = YES;
                 }
             }
+        } else {
+            if ([otherGestureRecognizer isKindOfClass:[UIPinchGestureRecognizer class]]) {
+                shouldfailsf = YES;
+            }
         }
         
         if (UIGestureRecognizerStateBegan == _transitionGesState || UIGestureRecognizerStateChanged == _transitionGesState) {
             [self execeSimultaneouslyStrategy:otherGestureRecognizer makeGesFailedOrCancelled:nil];
         } else {
-            [self addGesWillExecSimultaneouslyStrategy:gestureRecognizer];
+            [self addGesWillExecSimultaneouslyStrategy:otherGestureRecognizer];
         }
+        
         return shouldfailsf;
     } else {
         return NO;
@@ -734,11 +1074,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    
     if (gestureRecognizer == self
         && otherGestureRecognizer != gestureRecognizer) {
         BOOL shouldfailog = NO;
-        if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
             if (self.transitionGesDelegate
                 && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
                 NSInteger checkst = [self.transitionGesDelegate checkTransitionGes:self
@@ -749,12 +1088,16 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
                     shouldfailog = YES;
                 }
             }
+        } else {
+            if ([otherGestureRecognizer isKindOfClass:[UIPinchGestureRecognizer class]]) {
+                shouldfailog = NO;
+            }
         }
         
         if (UIGestureRecognizerStateBegan == _transitionGesState || UIGestureRecognizerStateChanged == _transitionGesState) {
             [self execeSimultaneouslyStrategy:otherGestureRecognizer makeGesFailedOrCancelled:nil];
         } else {
-            [self addGesWillExecSimultaneouslyStrategy:gestureRecognizer];
+            [self addGesWillExecSimultaneouslyStrategy:otherGestureRecognizer];
         }
         
         return shouldfailog;
@@ -770,8 +1113,12 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     }
     
     BOOL shouldsim = YES;
-    if ([BOTransitionPanGesture isTransitonGes:otherGestureRecognizer]) {
+    if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
         shouldsim = NO;
+    } else {
+        if ([otherGestureRecognizer isKindOfClass:[UIPinchGestureRecognizer class]]) {
+            shouldsim = NO;
+        }
     }
     
     if (UIGestureRecognizerStateBegan == _transitionGesState || UIGestureRecognizerStateChanged == _transitionGesState) {
@@ -802,8 +1149,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         muar = [NSMutableArray new];
         [self.careOtherDic setObject:muar forKey:key];
     }
-    
-    [muar addObject:obj];
+    if (![muar containsObject:obj]) {
+        [muar addObject:obj];
+    }
 }
 
 - (NSArray *)careOtherArForKey:(NSString *)key {
@@ -813,6 +1161,9 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     return [self.careOtherDic objectForKey:key];
 }
 
+/*
+ 有的scrollView会在开始滑动的一瞬被移动一些offset，开始转场后，复位其位置
+ */
 - (void)correctAndSaveCurSVOffsetSugDirection:(UISwipeGestureRecognizerDirection)direction {
     if (_currPanScrollVAr.count > 0) {
         if (!_currPanScrollVSavOffsetAr) {
@@ -904,7 +1255,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     [_otherSVRespondedDirectionRecord removeAllObjects];
     _otherSVRespondedDirectionRecord = nil;
     
-    _delayTrigger = NO;
+    _isDelayTrigger = NO;
 }
 
 /*
@@ -1009,6 +1360,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         }
             break;
         default: {
+            
         }
             break;
     }
@@ -1018,7 +1370,6 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 #pragma mark - helper func
 
 - (BOTransitionGesSliceInfo)generateSliceInfo {
-    
     CGPoint velocity = [self velocityInCurrView];
     
     UISwipeGestureRecognizerDirection vdi = 0;
@@ -1067,6 +1418,10 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
  
  */
 - (NSDictionary *)currPanSVAcceptDirection:(UISwipeGestureRecognizerDirection)gesDirection {
+    if (0 == gesDirection) {
+        return nil;
+    }
+    
     if (_currPanScrollVAr.count <= 0) {
         return nil;
     }
@@ -1245,13 +1600,19 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
     return nil;
 }
 
-- (BOOL)currPanSVInBounces {
+- (BOOL)isPanBeginSVBounces {
     if (_currPanScrollVAr.count <= 0) {
         return NO;
     }
     
     CGFloat onepixel = (1.f / [UIScreen mainScreen].scale);
-    
+    CGPoint movvel = CGPointZero;
+//    if (self.panInfoAr.count > 1) {
+//        CGPoint pt1 = self.panInfoAr[0].CGRectValue.origin;
+//        CGPoint pt2 = self.panInfoAr[1].CGRectValue.origin;
+//        movvel.x = pt2.x - pt1.x;
+//        movvel.y = pt2.y - pt1.y;
+//    }
     __block BOOL hasbounces = NO;
     [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         UIEdgeInsets insets = sf_common_contentInset(obj);
@@ -1259,22 +1620,21 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         CGPoint offset = obj.contentOffset;
         CGSize boundsz = obj.bounds.size;
         if (obj.bounces) {
-            if (((contentsz.height + insets.top + insets.bottom) > boundsz.height)
-                &&
-                ((offset.y + boundsz.height)
-                 >
-                 (contentsz.height + insets.bottom + onepixel))) {
+            if (((contentsz.height + insets.top + insets.bottom) > boundsz.height - onepixel)
+                && ((offset.y + boundsz.height - movvel.y)
+                    >
+                    (contentsz.height + insets.bottom + onepixel))) {
                 hasbounces = YES;
-            } else if (offset.y
+            } else if (offset.y - movvel.y
                        <
                        (-insets.top - onepixel)) {
                 hasbounces = YES;
-            } else if (((contentsz.width + insets.left + insets.right) > boundsz.width)
+            } else if (((contentsz.width + insets.left + insets.right) > boundsz.width - onepixel)
                        &&
-                       ((offset.x + boundsz.width) >
+                       ((offset.x + boundsz.width - movvel.x) >
                         (contentsz.width + insets.right + onepixel))) {
                 hasbounces = YES;
-            } else if (offset.x
+            } else if (offset.x - movvel.x
                        <
                        (-insets.left - onepixel)) {
                 hasbounces = YES;
@@ -1291,7 +1651,7 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
 }
 
 - (void)insertBeganPt:(CGPoint)beganPt {
-    [_touchInfoAr insertObject:@((CGRect){beganPt, CGSizeZero}) atIndex:0];
+    [_panInfoAr insertObject:@((CGRect){beganPt, CGSizeZero}) atIndex:0];
 }
 
 + (BOOL)tryMakeGesFail:(UIGestureRecognizer *)gesShouldFail
@@ -1333,13 +1693,13 @@ static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) 
         UINavigationController *nc = (UINavigationController *)vnres;
         if (nc.interactivePopGestureRecognizer == ges) {
             return 1;
-        } else if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
+        } else if ([ges isKindOfClass:[BOTransitionGesture class]]) {
             return 2;
         }
     }
     
     //对应present的情况
-    if ([ges isKindOfClass:[BOTransitionPanGesture class]]) {
+    if ([ges isKindOfClass:[BOTransitionGesture class]]) {
         return 2;
     }
     

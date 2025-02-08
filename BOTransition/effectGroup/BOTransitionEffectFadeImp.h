@@ -16,6 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface BOTransitionEffectFadeImp : NSObject <BOTransitionEffectControl>
 
+/*
+ alphaCalPow: @(CGFloat)
+ */
+@property (nonatomic, strong, nullable) NSDictionary *configInfo;
+
 @end
 
 NS_ASSUME_NONNULL_END

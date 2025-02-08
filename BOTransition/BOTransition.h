@@ -12,7 +12,7 @@
 #import "UIViewController+BOTransition.h"
 #import "BOTransitioning.h"
 #import "BOTransitionConfig.h"
-#import "BOTransitionPanGesture.h"
+#import "BOTransitionGesture.h"
 #import "BOTransitionProtocol.h"
 #import "BOTransitionUtility.h"
 #import "BOTransitionNCProxy.h"

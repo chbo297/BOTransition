@@ -57,7 +57,7 @@ typedef NS_ENUM(NSUInteger, BOTransitionElementType) {
 
 @class BOTransitioning;
 @class BOTransitionElement;
-@class BOTransitionPanGesture;
+@class BOTransitionGesture;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -67,10 +67,22 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readwrite, nullable, strong) NSDictionary *configInfo;
 
+/*
+ 弃用，但如果使用者实现了这个，但没实现新的，暂时还能用
+ */
 - (void)bo_transitioning:(BOTransitioning *)transitioning
           prepareForStep:(BOTransitionStep)step
           transitionInfo:(BOTransitionInfo)transitionInfo
-                elements:(NSMutableArray<BOTransitionElement *> *)elements;
+                elements:(NSMutableArray<BOTransitionElement *> *)elements API_DEPRECATED("replacement bo_transitioning:prepareForStep:transitionInfo:elements:subInfo:", ios(2.0, 3.0));
+
+/*
+ 实现这个后只调用这个
+ */
+- (void)bo_transitioning:(BOTransitioning *)transitioning
+          prepareForStep:(BOTransitionStep)step
+          transitionInfo:(BOTransitionInfo)transitionInfo
+                elements:(NSMutableArray<BOTransitionElement *> *)elements
+                 subInfo:(nullable NSDictionary *)subInfo;
 
 /*
  不实现的默认情况下，竖滑整个container高代表全程，横滑整个container的宽代表全程
@@ -78,21 +90,21 @@ NS_ASSUME_NONNULL_BEGIN
  return @(CGFloat)
  */
 - (nullable NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
-              distanceCoefficientForGes:(BOTransitionPanGesture *)gesture;
+              distanceCoefficientForGes:(BOTransitionGesture *)gesture;
 
 /*
  不实现的默认情况下，竖滑整个container高代表全程，横滑整个container的宽代表全程
  这里可以返回参考的size
  */
 - (nullable NSValue *)bo_transitioning:(BOTransitioning *)transitioning
-                  controlCalculateSize:(BOTransitionPanGesture *)gesture;
+                  controlCalculateSize:(BOTransitionGesture *)gesture;
 
 /*
  根据当前的ges计算转场的进度，若实现，可以介入和指定percent。不实现或返回nil时使用内置默认行为
  return @(CGFloat)
  */
 - (nullable NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning
-                                          gesture:(BOTransitionPanGesture *)gesture;
+                                          gesture:(BOTransitionGesture *)gesture;
 
 /*
  控制当前percent和手势是否应该完成转场或是取消转场，不实现或返回nil时使用内置默认行为
@@ -102,7 +114,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSNumber *)bo_transitioningShouldFinish:(BOTransitioning *)transitioning
                                     percentComplete:(CGFloat)percentComplete
                                      intentComplete:(NSNumber *)intentComplete
-                                            gesture:(BOTransitionPanGesture *)gesture;
+                                            gesture:(BOTransitionGesture *)gesture;
 
 /*
  通用背景蒙层被点击
@@ -110,6 +122,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSDictionary *)bo_transitioning:(BOTransitioning *)transitioning
                              didTapCommonBg:(UIView *)bgView
                                     subInfo:(nullable NSDictionary *)subInfo;
+
+/*
+ 目前暂只支持一个，后续扩展
+ moveIn时，问base获取from，问move获取to
+ moveOut时，问move获取from，问base获取to
+ */
+- (nullable NSArray<NSDictionary *> *)bo_transitioningGetTransViewAr:(BOTransitioning *)transitioning
+                                                          fromViewAr:(nullable NSArray<NSDictionary *> *)fromViewAr
+                                                             subInfo:(nullable NSDictionary *)subInfo;
 
 @end
 
@@ -132,7 +153,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  返回nil或nsdictionary没内容时，不做任何操作，不cancel手势，允许手势变化时再询问
  */
-- (nullable NSDictionary *)bo_trans_moveInVCWithGes:(BOTransitionPanGesture *)gesture
+- (nullable NSDictionary *)bo_trans_moveInVCWithGes:(BOTransitionGesture *)gesture
                                      transitionType:(BOTransitionType)transitionType
                                             subInfo:(nullable NSDictionary *)subInfo;
 

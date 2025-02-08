@@ -205,31 +205,19 @@ BOTransitionEffect const BOTransitionEffectAndroidStyle1 = @"AndroidStyle1";
                     [config addGesInfoMoveOut:YES
                                     direction:UISwipeGestureRecognizerDirectionRight
                                 seriousMargin:NO
-                                     userInfo:@{
-                        @"allowBeganWithSVBounces": @(YES),
-                        @"allowOtherSVDirectionCoexist": @(YES)
-                    }];
+                                     userInfo:@{}];
                     [config addGesInfoMoveOut:YES
                                     direction:UISwipeGestureRecognizerDirectionLeft
                                 seriousMargin:NO
-                                     userInfo:@{
-                        @"allowBeganWithSVBounces": @(YES),
-                        @"allowOtherSVDirectionCoexist": @(YES)
-                    }];
-                     [config addGesInfoMoveOut:YES
-                                     direction:UISwipeGestureRecognizerDirectionUp
-                                 seriousMargin:NO
-                                      userInfo:@{
-                        @"allowBeganWithSVBounces": @(YES),
-                        @"allowOtherSVDirectionCoexist": @(YES)
-                    }];
-                     [config addGesInfoMoveOut:YES
-                                     direction:UISwipeGestureRecognizerDirectionDown
-                                 seriousMargin:NO
-                                      userInfo:@{
-                        @"allowBeganWithSVBounces": @(YES),
-                        @"allowOtherSVDirectionCoexist": @(YES)
-                    }];
+                                     userInfo:@{}];
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionUp
+                                seriousMargin:NO
+                                     userInfo:@{}];
+                    [config addGesInfoMoveOut:YES
+                                    direction:UISwipeGestureRecognizerDirectionDown
+                                seriousMargin:NO
+                                     userInfo:@{}];
                 },
 //                @"gesTriggerDirection": @(UISwipeGestureRecognizerDirectionDown),
         },
@@ -255,6 +243,13 @@ BOTransitionEffect const BOTransitionEffectAndroidStyle1 = @"AndroidStyle1";
     _moveInEffectConfig = configinfo;
     //self. 借助一下moveOutEffectConfig的set方法 加载里面的外层配置
     self.moveOutEffectConfig = configinfo;
+}
+
+- (void)setTransitionEffectConfig:(NSDictionary *)transitionEffectConfig {
+    _transitionEffectConfig = transitionEffectConfig;
+    
+    [self setMoveInEffectConfig:_transitionEffectConfig];
+    [self setMoveOutEffectConfig:_transitionEffectConfig];
 }
 
 - (void)setMoveInEffectConfig:(NSDictionary *)moveInEffectConfig {
@@ -298,8 +293,31 @@ BOTransitionEffect const BOTransitionEffectAndroidStyle1 = @"AndroidStyle1";
     
     NSMutableDictionary *mudic = @{
         @"act": @(moveOut ? 1 : 2),
+        @"gesType": @"pan",
         @"direction": @(direction),
         @"margin": @(seriousMargin)
+    }.mutableCopy;
+    
+    if (userInfo
+        && userInfo.count > 0) {
+        [mudic addEntriesFromDictionary:userInfo];
+    }
+    
+    //后加的优先判定：放在数组头部
+    [_gesInfoAr insertObject:mudic atIndex:0];
+}
+
+- (void)addGesInfoMoveOut:(BOOL)moveOut
+                 pinchVal:(CGFloat)pinchVal
+                 userInfo:(NSDictionary *)userInfo {
+    if (!_gesInfoAr) {
+        _gesInfoAr = @[].mutableCopy;
+    }
+    
+    NSMutableDictionary *mudic = @{
+        @"act": @(moveOut ? 1 : 2),
+        @"gesType": @"pinch",
+        @"pinchVal": @(pinchVal),
     }.mutableCopy;
     
     if (userInfo

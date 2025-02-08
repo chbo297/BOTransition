@@ -27,6 +27,10 @@
             BOTransitionElement *boardelement = [BOTransitionElement elementWithType:BOTransitionElementTypeBoard];
             boardelement.transitionView = transitioning.moveTransBoard;
             boardelement.alphaAllow = YES;
+            NSNumber *alphaCalPow_num = [self.configInfo objectForKey:@"alphaCalPow"];
+            if (nil != alphaCalPow_num) {
+                boardelement.alphaCalPow = alphaCalPow_num.floatValue;
+            }
             if (BOTransitionActMoveIn == transitioning.transitionAct) {
                 boardelement.alphaFrom = 0;
                 boardelement.alphaTo = 1;

@@ -19,7 +19,7 @@
 }
 
 - (NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
-     distanceCoefficientForGes:(BOTransitionPanGesture *)gesture {
+     distanceCoefficientForGes:(BOTransitionGesture *)gesture {
     switch (gesture.triggerDirectionInfo.mainDirection) {
         case UISwipeGestureRecognizerDirectionUp:
             return @(0.84);

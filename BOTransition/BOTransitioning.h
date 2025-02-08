@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "BOTransitionConfig.h"
-#import "BOTransitionPanGesture.h"
+#import "BOTransitionGesture.h"
 #import "BOTransitionProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -61,7 +61,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, readonly) NSString *effectStyle;
 @property (nonatomic, weak) BOTransitionConfig *moveVCConfig;
 
-@property (nonatomic, readonly, nonnull) BOTransitionPanGesture *transitionGes;
+@property (nonatomic, readonly, nonnull) BOTransitionGesture *transitionGes;
 
 @property (nonatomic, readonly) BOOL triggerInteractiveTransitioning;
 
@@ -124,6 +124,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, weak) UIView *fromView;
 @property (nonatomic, weak) UIView *toView;
 @property (nonatomic, strong, nullable) NSValue *toFrameCoordinateInVC;
+@property (nonatomic, strong, nullable) NSNumber *toFrameContentMode;
 
 /*
  YES：
@@ -172,6 +173,8 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 @property (nonatomic, assign) CGRect frameFrom;
 @property (nonatomic, assign) CGRect frameTo;
 @property (nonatomic, assign) CGFloat frameCalPow;
+@property (nonatomic, assign) BOOL framePinch; //缩放效果
+@property (nonatomic, assign) BOOL frameAniBreak; //是否取消后续变化
 @property (nonatomic, assign) BOOL frameAnimationWithTransform;
 @property (nonatomic, assign) UIRectEdge frameBarrierInContainer;
 @property (nonatomic, strong, nullable) NSValue *frameLastBeforeAni;
