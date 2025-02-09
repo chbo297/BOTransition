@@ -214,7 +214,8 @@
 - (void)bo_transitioning:(BOTransitioning *)transitioning
           prepareForStep:(BOTransitionStep)step
           transitionInfo:(BOTransitionInfo)transitionInfo
-                elements:(NSMutableArray<BOTransitionElement *> *)elements {
+                elements:(NSMutableArray<BOTransitionElement *> *)elements
+                 subInfo:(nullable NSDictionary *)subInfo {
     id<UIViewControllerContextTransitioning> context = transitioning.transitionContext;
     UIView *container = context.containerView;
     if (!context ||
@@ -225,7 +226,8 @@
     [self.effectMoving bo_transitioning:transitioning
                          prepareForStep:step
                          transitionInfo:transitionInfo
-                               elements:elements];
+                               elements:elements
+                                subInfo:subInfo];
     //入场时，默认effectMoving即可，出场时才用android手势特效
     if (transitioning.transitionAct != BOTransitionActMoveOut
         || !transitioning.triggerInteractiveTransitioning) {

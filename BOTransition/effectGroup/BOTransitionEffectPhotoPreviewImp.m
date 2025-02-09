@@ -59,7 +59,7 @@
     UIView *fromview = transitioning.moveVCConfig.startViewFromBaseVC;
     if (fromview
         && fromview.frame.size.width > transitioning.transitionContext.containerView.frame.size.width - 30) {
-        return @(CGSizeMake(60, 60));
+        return @(CGSizeMake(120, 120));
     } else {
         return @(0.6);
     }

@@ -151,7 +151,8 @@ NS_ASSUME_NONNULL_BEGIN
  act: @"fail" 手势判定不符合，直接cancel该手势
  }
  
- 返回nil或nsdictionary没内容时，不做任何操作，不cancel手势，允许手势变化时再询问
+ 返回suspend时，不做任何操作，不cancel手势，允许手势变化时再询问
+ 返回nil时，默认行为和不实现一样
  */
 - (nullable NSDictionary *)bo_trans_moveInVCWithGes:(BOTransitionGesture *)gesture
                                      transitionType:(BOTransitionType)transitionType

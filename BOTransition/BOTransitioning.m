@@ -340,6 +340,18 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
 //                            }
                             
                             tosz = CGSizeMake(CGRectGetWidth(rtfrom) * whscale, CGRectGetHeight(rtfrom) * whscale);
+                        } else {
+                            if ([self.framePinEffect isEqualToString:@"forceZoomIn"]) {
+                                CGSize usetosz = rtto.size;
+                                if (usetosz.width > CGRectGetWidth(rtfrom) - 20.0) {
+                                    usetosz = CGSizeMake(CGRectGetWidth(rtto) / 2.0, CGRectGetHeight(rtto) / 2.0);
+                                    tosz =\
+                                    CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
+                                                                        v1:usetosz.width t:scalepercent],
+                                               [BOTransitionUtility lerpV0:CGRectGetHeight(rtfrom)
+                                                                        v1:usetosz.height t:scalepercent]);
+                                }
+                            }
                         }
                         
                         CGFloat tocenterx;
@@ -1540,7 +1552,14 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [self.effectControlAr enumerateObjectsUsingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj,
                                                        NSUInteger idx,
                                                        BOOL * _Nonnull stop) {
-        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+        if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:subInfo:)]) {
+            [obj bo_transitioning:self
+                   prepareForStep:BOTransitionStepTransitioning
+                   transitionInfo:transitioninfo
+                         elements:elementar
+                          subInfo:nil];
+        } else if ([obj respondsToSelector:@selector(bo_transitioning:prepareForStep:transitionInfo:elements:)]) {
+            //兼容已废弃的实现，后续使用方都换新方法后，再删掉这里
             [obj bo_transitioning:self
                    prepareForStep:BOTransitionStepTransitioning
                    transitionInfo:transitioninfo
