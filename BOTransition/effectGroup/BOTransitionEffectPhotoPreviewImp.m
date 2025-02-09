@@ -152,9 +152,13 @@
                 }
                 if (basevcdelegate
                     && [basevcdelegate respondsToSelector:@selector(bo_transitioningGetTransViewAr:fromViewAr:subInfo:)]) {
-                    currtoar = [basevcdelegate bo_transitioningGetTransViewAr:transitioning
-                                                                   fromViewAr:currfromar
-                                                                      subInfo:nil];
+                    NSArray<NSDictionary *> *i_toar = nil;
+                    i_toar = [basevcdelegate bo_transitioningGetTransViewAr:transitioning
+                                                                 fromViewAr:currfromar
+                                                                    subInfo:nil];
+                    if (nil != i_toar) {
+                        currtoar = i_toar;
+                    }
                 }
                 
                 if (currfromar.count > 0) {
