@@ -38,7 +38,8 @@
 - (void)bo_transitioning:(BOTransitioning *)transitioning
           prepareForStep:(BOTransitionStep)step
           transitionInfo:(BOTransitionInfo)transitionInfo
-                elements:(NSMutableArray<BOTransitionElement *> *)elements {
+                elements:(NSMutableArray<BOTransitionElement *> *)elements
+                 subInfo:(nullable NSDictionary *)subInfo {
     id<UIViewControllerContextTransitioning> context = transitioning.transitionContext;
     UIView *container = context.containerView;
     if (!context ||

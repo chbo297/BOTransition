@@ -8,6 +8,7 @@
 #import "BOTransitionEffectPhotoPreviewImp.h"
 #import "BOTransitionEffectFadeImp.h"
 #import "BOTransitioning.h"
+#import "UIViewController+BOTransition.h"
 
 @interface BOTransitionEffectPhotoPreviewImp () <BOTransitionEffectControl>
 
@@ -44,17 +45,36 @@
 
 - (NSNumber *)bo_transitioning:(BOTransitioning *)transitioning
      distanceCoefficientForGes:(BOTransitionGesture *)gesture {
-    return @(0.6);
+    UIView *fromview = transitioning.moveVCConfig.startViewFromBaseVC;
+    if (fromview
+        && fromview.frame.size.width > transitioning.transitionContext.containerView.frame.size.width - 30) {
+        return nil;
+    } else {
+        return @(0.6);
+    }
+}
+
+- (nullable NSValue *)bo_transitioning:(BOTransitioning *)transitioning
+                  controlCalculateSize:(BOTransitionGesture *)gesture {
+    UIView *fromview = transitioning.moveVCConfig.startViewFromBaseVC;
+    if (fromview
+        && fromview.frame.size.width > transitioning.transitionContext.containerView.frame.size.width - 30) {
+        return @(CGSizeMake(60, 60));
+    } else {
+        return @(0.6);
+    }
 }
 
 - (void)bo_transitioning:(BOTransitioning *)transitioning
           prepareForStep:(BOTransitionStep)step
           transitionInfo:(BOTransitionInfo)transitionInfo
-                elements:(NSMutableArray<BOTransitionElement *> *)elements {
+                elements:(NSMutableArray<BOTransitionElement *> *)elements
+                 subInfo:(nullable NSDictionary *)subInfo {
     [self.fadeImp bo_transitioning:transitioning
                     prepareForStep:step
                     transitionInfo:transitionInfo
-                          elements:elements];
+                          elements:elements
+                           subInfo:subInfo];
     
     id<UIViewControllerContextTransitioning> context = transitioning.transitionContext;
     UIView *container = context.containerView;
@@ -285,6 +305,7 @@
             }
             
             photoele.frameShouldPin = pinGes;
+            photoele.framePinEffect = @"forceZoomIn";
             photoele.frameCalPow = 0.5;
             tranview.frame = fromrt;
             photoele.transitionView = tranview;
