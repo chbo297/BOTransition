@@ -343,8 +343,8 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                         } else {
                             if ([self.framePinEffect isEqualToString:@"forceZoomIn"]) {
                                 CGSize usetosz = rtto.size;
-                                if (usetosz.width > CGRectGetWidth(rtfrom) - 20.0) {
-                                    usetosz = CGSizeMake(CGRectGetWidth(rtto) / 2.0, CGRectGetHeight(rtto) / 2.0);
+                                if (usetosz.width / MAX(CGRectGetWidth(rtfrom), 1.0) > 0.5) {
+                                    usetosz = CGSizeMake(CGRectGetWidth(rtfrom) / 2.0, CGRectGetHeight(rtfrom) / 2.0);
                                     tosz =\
                                     CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
                                                                         v1:usetosz.width t:scalepercent],

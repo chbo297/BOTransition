@@ -170,7 +170,7 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 //手势初始位置时相对于transformRectFrom的anchor，例如在transformRectFrom中心点时是(0,0),在transformRectFrom最右上角时是(0.5,0.5)，左下角是(-0.5,-0.5)
 @property (nonatomic, assign) CGPoint framePinAnchor;
 /*
- "forceZoomIn": 强制移动就缩小
+ "forceZoomIn": 强制移动(pan手势)就缩小
  */
 @property (nonatomic, strong) NSString *framePinEffect;
 @property (nonatomic, assign) CGRect frameOrigin;

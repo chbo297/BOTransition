@@ -61,7 +61,7 @@
         && fromview.frame.size.width > transitioning.transitionContext.containerView.frame.size.width - 30) {
         return @(CGSizeMake(120, 120));
     } else {
-        return @(0.6);
+        return nil;
     }
 }
 
@@ -109,9 +109,13 @@
                 
                 if (basevcdelegate
                     && [basevcdelegate respondsToSelector:@selector(bo_transitioningGetTransViewAr:fromViewAr:subInfo:)]) {
-                    currfromar = [basevcdelegate bo_transitioningGetTransViewAr:transitioning
-                                                                     fromViewAr:currfromar
-                                                                        subInfo:nil];
+                    NSArray<NSDictionary *> *i_fromar = nil;
+                    i_fromar = [basevcdelegate bo_transitioningGetTransViewAr:transitioning
+                                                                   fromViewAr:currfromar
+                                                                      subInfo:nil];
+                    if (nil != i_fromar) {
+                        currfromar = i_fromar;
+                    }
                 }
                 
                 NSArray<NSDictionary *> *currtoar = nil;
