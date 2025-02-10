@@ -77,6 +77,19 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 - (void)forceCancelTransition;
 
 /*
+ 由外部驱动的自定义进度转场
+ begin: {
+ effectConfig: {}
+ }
+ 
+ 外部需保障 outterTrans_begin  outterTrans_complete成对调用
+ */
+- (void)outterTrans_begin:(NSDictionary *)transInfo subInfo:(nullable NSDictionary *)subInfo;
+- (void)outterTrans_update:(CGFloat)percent subInfo:(nullable NSDictionary *)subInfo;
+- (void)outterTrans_complete:(BOOL)isFinish subInfo:(nullable NSDictionary *)subInfo;
+
+
+/*
  return:
  1 保留ges
  2 保留otherges

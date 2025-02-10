@@ -658,6 +658,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 @property (nonatomic, strong) NSString *effectStyle;
 
+@property (nonatomic, strong) NSDictionary *outterTransInfo;
+
 @end
 
 @implementation BOTransitioning
@@ -780,12 +782,16 @@ static CGFloat sf_default_transition_dur = 0.22f;
     NSDictionary *effectconfig;
     
     if (interactive) {
-        NSDictionary *triggerGesInfo = [self.transitionGes.userInfo objectForKey:@"triggerGesInfo"];
-        if ([triggerGesInfo isKindOfClass:[NSDictionary class]]
-            && triggerGesInfo.count > 0) {
-            NSDictionary *econfig = [triggerGesInfo objectForKey:@"effectConfig"];
-            if ([econfig isKindOfClass:[econfig class]]) {
-                effectconfig = econfig;
+        if (self.outterTransInfo) {
+            effectconfig = [self.outterTransInfo objectForKey:@"effectConfig"];
+        } else {
+            NSDictionary *triggerGesInfo = [self.transitionGes.userInfo objectForKey:@"triggerGesInfo"];
+            if ([triggerGesInfo isKindOfClass:[NSDictionary class]]
+                && triggerGesInfo.count > 0) {
+                NSDictionary *econfig = [triggerGesInfo objectForKey:@"effectConfig"];
+                if ([econfig isKindOfClass:[econfig class]]) {
+                    effectconfig = econfig;
+                }
             }
         }
     }
@@ -1411,6 +1417,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
 }
 
 - (void)makeTransitionComplete:(BOOL)isFinish isInteractive:(BOOL)interactive {
+    _outterTransInfo = nil;
+    
     _effectControlAr = nil;
     _effectStyle = nil;
     [_transitionElementAr removeAllObjects];
@@ -1502,7 +1510,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
     if (self.triggerInteractiveTransitioning) {
         //从手势交互触发
         if (UIGestureRecognizerStateBegan == self.transitionGes.transitionGesState
-            || UIGestureRecognizerStateChanged == self.transitionGes.transitionGesState) {
+            || UIGestureRecognizerStateChanged == self.transitionGes.transitionGesState
+            || self.outterTransInfo) {
             [self makeInteractiveTransition:transitionContext];
         } else {
             //状态不对，手势可能已经取消了
@@ -2873,6 +2882,82 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     return prior;
+}
+
+- (void)outterTrans_begin:(NSDictionary *)transInfo subInfo:(nullable NSDictionary *)subInfo {
+    _outterTransInfo = transInfo;
+    _triggerInteractiveTransitioning = YES;
+}
+
+- (void)outterTrans_update:(CGFloat)percent subInfo:(nullable NSDictionary *)subInfo {
+    CGFloat usepercent = MIN(1.0, MAX(0.0, percent));
+    BOTransitionInfo transitioninfo = {usepercent, YES, CGPointZero, CGPointZero};
+    [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [obj execTransitioning:self
+                          step:BOTransitionStepTransitioning
+                transitionInfo:transitioninfo
+                       subInfo:nil];
+    }];
+    [self.transitionContext updateInteractiveTransition:usepercent];
+}
+
+- (void)outterTrans_complete:(BOOL)isFinish subInfo:(nullable NSDictionary *)subInfo {
+    CGFloat usepercent = isFinish ? 1.0 : 0.0;
+    BOTransitionInfo transitioninfo = {usepercent, YES, CGPointZero, CGPointZero};
+    [self makePrepareAndExecStep:BOTransitionStepInteractiveEnd
+                        elements:self.transitionElementAr
+                  transitionInfo:transitioninfo
+                         subInfo:@{@"finish": @(isFinish)}];
+    
+    if (isFinish) {
+        transitioninfo.interactive = NO;
+        [self makePrepareAndExecStep:BOTransitionStepWillFinish
+                            elements:self.transitionElementAr
+                      transitionInfo:transitioninfo
+                             subInfo:nil];
+        
+        self.shouldRunAniCompletionBlock = YES;
+        [self execAnimateDuration:sf_default_transition_dur
+                         curveOpt:nil
+               percentStartAndEnd:CGPointMake(0, 1)
+                    modifyUIBlock:^{
+            [self makePrepareAndExecStep:BOTransitionStepFinalAnimatableProperties
+                                elements:self.transitionElementAr
+                          transitionInfo:transitioninfo
+                                 subInfo:@{@"ani": @(YES)}];
+        }
+                       completion:^(BOOL finished) {
+            if (!self.shouldRunAniCompletionBlock) {
+                return;
+            }
+            self.shouldRunAniCompletionBlock = NO;
+            
+            [self makePrepareAndExecStep:BOTransitionStepFinished
+                                elements:self.transitionElementAr
+                          transitionInfo:transitioninfo
+                                 subInfo:nil];
+            
+            [self.transitionContext updateInteractiveTransition:usepercent];
+            [self finalViewHierarchy];
+            
+            [self makeTransitionComplete:YES isInteractive:YES];
+        }];
+    } else {
+        [self makePrepareAndExecStep:BOTransitionStepWillCancel
+                            elements:self.transitionElementAr
+                      transitionInfo:transitioninfo
+                             subInfo:nil];
+        
+        [self makePrepareAndExecStep:BOTransitionStepCancelled
+                            elements:self.transitionElementAr
+                      transitionInfo:transitioninfo
+                             subInfo:nil];
+        
+        [self.transitionContext updateInteractiveTransition:usepercent];
+        [self revertInitialViewHierarchy];
+        
+        [self makeTransitionComplete:NO isInteractive:YES];
+    }
 }
 
 @end

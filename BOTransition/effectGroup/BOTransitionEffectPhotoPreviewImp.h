@@ -9,11 +9,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/*
+ "style": @"PhotoPreview",
+ */
 @interface BOTransitionEffectPhotoPreviewImp : NSObject
 
 /*
- {
- @"style": @"PhotoPreview",
+ effect_only_finish: "1"
  */
 @property (nonatomic, strong, nullable) NSDictionary *configInfo;
 
