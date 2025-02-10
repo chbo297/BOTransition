@@ -173,6 +173,10 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
            transitionInfo:(BOTransitionInfo)transitionInfo
                   subInfo:(nullable NSDictionary *)subInfo;
 
+/*
+ 外部是否已经接管，接管后，内部转场不再操作transitionView
+ */
+@property (nonatomic, assign) BOOL outterTakeOver;
 
 //at least prepare for step PrepareAndInstallElements
 //是否进行transform转变

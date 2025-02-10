@@ -159,67 +159,68 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
     }];
     
     UIView *thetrView = self.transitionView;
-    if (thetrView) {
-        BOOL ani = NO;
-        NSNumber *anival = [subInfo objectForKey:@"ani"];
-        if (nil != anival) {
-            ani = anival.boolValue;
-        }
-        if (ani) {
-            self.alphaLastBeforeAni = @(thetrView.alpha);
-            self.frameLastBeforeAni = @(thetrView.frame);
-        }
-        
-        __weak typeof(self) ws = self;
-        switch (step) {
-            case BOTransitionStepInstallElements : {
-                if (self.autoAddAndRemoveTransitionView > 0
-                    && self.transitionView) {
+    BOOL ani = NO;
+    NSNumber *anival = [subInfo objectForKey:@"ani"];
+    if (nil != anival) {
+        ani = anival.boolValue;
+    }
+    if (ani) {
+        self.alphaLastBeforeAni = @(thetrView.alpha);
+        self.frameLastBeforeAni = @(thetrView.frame);
+    }
+    
+    __weak typeof(self) ws = self;
+    switch (step) {
+        case BOTransitionStepInstallElements : {
+            if (thetrView) {
+                if (self.autoAddAndRemoveTransitionView > 0) {
                     UIView *trancontainer = transitioning.transitionContext.containerView;
-                    self.transitionView.frame = trancontainer.bounds;
+                    thetrView.frame = trancontainer.bounds;
                     if (self.autoAddAndRemoveTransitionView <= 10) {
                         if (transitioning.baseTransBoard
                             && transitioning.baseTransBoard.superview == trancontainer) {
-                            [trancontainer insertSubview:self.transitionView belowSubview:transitioning.baseTransBoard];
+                            [trancontainer insertSubview:thetrView belowSubview:transitioning.baseTransBoard];
                         } else {
-                            [trancontainer insertSubview:self.transitionView atIndex:0];
+                            [trancontainer insertSubview:thetrView atIndex:0];
                         }
                     } else if (self.autoAddAndRemoveTransitionView <= 20) {
                         if (transitioning.moveTransBoard
                             && transitioning.moveTransBoard.superview == trancontainer) {
-                            [trancontainer insertSubview:self.transitionView belowSubview:transitioning.moveTransBoard];
+                            [trancontainer insertSubview:thetrView belowSubview:transitioning.moveTransBoard];
                         } else {
-                            [trancontainer addSubview:self.transitionView];
+                            [trancontainer addSubview:thetrView];
                         }
                     } else if (self.autoAddAndRemoveTransitionView <= 30) {
-                        [trancontainer addSubview:self.transitionView];
+                        [trancontainer addSubview:thetrView];
                     }
                 }
             }
-                break;
-            case BOTransitionStepAfterInstallElements: {
-                if (self.fromView &&
-                    self.fromViewAutoHidden) {
-                    BOOL originfromhidden = self.fromView.hidden;
-                    self.fromView.hidden = YES;
-                    [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
-                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                        ws.fromView.hidden = originfromhidden;
-                    }];
-                }
-                
-                if (self.toView &&
-                    self.toViewAutoHidden) {
-                    BOOL origintohidden = self.toView.hidden;
-                    self.toView.hidden = YES;
-                    [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
-                              block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
-                        ws.toView.hidden = origintohidden;
-                    }];
-                }
+        }
+            break;
+        case BOTransitionStepAfterInstallElements: {
+            if (self.fromView &&
+                self.fromViewAutoHidden) {
+                BOOL originfromhidden = self.fromView.hidden;
+                self.fromView.hidden = YES;
+                [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
+                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+                    ws.fromView.hidden = originfromhidden;
+                }];
             }
-                break;
-            case BOTransitionStepInitialAnimatableProperties: {
+            
+            if (self.toView &&
+                self.toViewAutoHidden) {
+                BOOL origintohidden = self.toView.hidden;
+                self.toView.hidden = YES;
+                [self addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
+                          block:^(BOTransitioning * _Nonnull transitioning, BOTransitionStep step, BOTransitionElement * _Nonnull transitionElement, BOTransitionInfo transitionInfo, NSDictionary * _Nullable subInfo) {
+                    ws.toView.hidden = origintohidden;
+                }];
+            }
+        }
+            break;
+        case BOTransitionStepInitialAnimatableProperties: {
+            if (thetrView) {
                 if (self.frameAllow && !self.frameAniBreak) {
                     if (transitionInfo.interactive) {
                         CGPoint beganPt;
@@ -256,8 +257,10 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                     thetrView.alpha = self.alphaFrom;
                 }
             }
-                break;
-            case BOTransitionStepTransitioning: {
+        }
+            break;
+        case BOTransitionStepTransitioning: {
+            if (thetrView) {
                 CGFloat percentComplete = transitionInfo.percentComplete;
                 if (self.innerPercentWithTransitionPercent) {
                     percentComplete = self.innerPercentWithTransitionPercent(percentComplete);
@@ -343,8 +346,9 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                         } else {
                             if ([self.framePinEffect isEqualToString:@"forceZoomIn"]) {
                                 CGSize usetosz = rtto.size;
-                                if (usetosz.width / MAX(CGRectGetWidth(rtfrom), 1.0) > 0.5) {
-                                    usetosz = CGSizeMake(CGRectGetWidth(rtfrom) / 2.0, CGRectGetHeight(rtfrom) / 2.0);
+                                CGFloat fitscale = 0.7;
+                                if (usetosz.width / MAX(CGRectGetWidth(rtfrom), 1.0) > fitscale) {
+                                    usetosz = CGSizeMake(CGRectGetWidth(rtfrom) * fitscale, CGRectGetHeight(rtfrom) * fitscale);
                                     tosz =\
                                     CGSizeMake([BOTransitionUtility lerpV0:CGRectGetWidth(rtfrom)
                                                                         v1:usetosz.width t:scalepercent],
@@ -450,8 +454,10 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                     thetrView.alpha = curalpha;
                 }
             }
-                break;
-            case BOTransitionStepFinalAnimatableProperties: {
+        }
+            break;
+        case BOTransitionStepFinalAnimatableProperties: {
+            if (thetrView) {
                 if (self.frameAllow && !self.frameAniBreak) {
                     if (self.frameAnimationWithTransform) {
                         
@@ -469,10 +475,12 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                     thetrView.alpha = self.alphaTo;
                 }
             }
-                break;
-                
-            case BOTransitionStepCancelled:
-            case BOTransitionStepFinished: {
+        }
+            break;
+            
+        case BOTransitionStepCancelled:
+        case BOTransitionStepFinished: {
+            if (thetrView && !self.outterTakeOver) {
                 if (self.frameAllow && !self.frameAniBreak) {
                     if (!self.frameAnimationWithTransform) {
                         thetrView.frame = self.frameOrigin;
@@ -483,16 +491,16 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                 }
                 
                 if (self.autoAddAndRemoveTransitionView > 0
-                    && self.transitionView) {
-                    if (self.transitionView.superview == transitioning.transitionContext.containerView) {
-                        [self.transitionView removeFromSuperview];
+                    && thetrView) {
+                    if (thetrView.superview == transitioning.transitionContext.containerView) {
+                        [thetrView removeFromSuperview];
                     }
                 }
             }
-                break;
-            default:
-                break;
         }
+            break;
+        default:
+            break;
     }
     
     [self.subEleAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {

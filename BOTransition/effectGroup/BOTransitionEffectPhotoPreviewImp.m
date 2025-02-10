@@ -185,6 +185,13 @@
                 }
             }
             
+            if (effect_only_finish) {
+                //finish时才执行效果，交互情况下 fromview就不需要自动隐藏了， 非交互标识已经finish可以执行
+                photoele.fromViewAutoHidden = NO;
+            } else {
+                photoele.fromViewAutoHidden = YES;
+            }
+            
             [elements addObject:photoele];
         }
             break;
@@ -192,7 +199,7 @@
             if (effect_only_finish) {
                 
             } else {
-                //按转转场元素
+                //安装转场元素
                 [self i_installEffect:transitioning
                        transitionInfo:transitionInfo
                              elements:elements
@@ -203,20 +210,12 @@
             break;
         case BOTransitionStepWillFinish: {
             if (effect_only_finish) {
-                //按转转场元素
+                //安装转场元素
                 transitionInfo.interactive = NO;
                 [self i_installEffect:transitioning
                        transitionInfo:transitionInfo
                              elements:elements
                               subInfo:subInfo];
-                
-                
-                [elements enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                    [obj execTransitioning:transitioning
-                                      step:BOTransitionStepAfterInstallElements
-                            transitionInfo:transitionInfo
-                                   subInfo:subInfo];
-                }];
             }
         }
             break;
@@ -386,16 +385,10 @@
         && transitionInfo.interactive) {
         //finish时才执行效果，交互情况下 fromview就不需要自动隐藏了， 非交互标识已经finish可以执行
         photoele.fromViewAutoHidden = NO;
+    } else {
+        photoele.fromViewAutoHidden = YES;
     }
-    [photoele addToStep:BOTransitionStepAfterInstallElements
-                  block:^(BOTransitioning * _Nonnull blockTrans,
-                          BOTransitionStep step,
-                          BOTransitionElement * _Nonnull transitionElement,
-                          BOTransitionInfo transitionInfo,
-                          NSDictionary * _Nullable subInfo) {
-        UIView *blockcontainer = blockTrans.transitionContext.containerView;
-        [blockcontainer addSubview:transitionElement.transitionView];
-    }];
+    [container addSubview:tranview];
     
     if (!photoele.framePinch) {
         [photoele addToStep:BOTransitionStepInteractiveEnd
@@ -422,7 +415,6 @@
                     
                     transitionElement.frameTo = tort;
                 }
-                
             }
         }];
     }
@@ -433,7 +425,18 @@
                           BOTransitionElement * _Nonnull transitionElement,
                           BOTransitionInfo transitionInfo,
                           NSDictionary * _Nullable subInfo) {
-        [transitionElement.transitionView removeFromSuperview];
+        transitionElement.outterTakeOver = YES;
+        //渐变立场，防止有页面在图片上面放了一些元素闪一下
+        [UIView animateWithDuration:0.22
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseOut
+                         animations:^{
+            transitionElement.transitionView.alpha = 0;
+        }
+                         completion:^(BOOL finished) {
+            [transitionElement.transitionView removeFromSuperview];
+        }];
+        
     }];
 }
 
