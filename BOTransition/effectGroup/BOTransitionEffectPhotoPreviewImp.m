@@ -59,7 +59,7 @@
     UIView *fromview = transitioning.moveVCConfig.startViewFromBaseVC;
     if (fromview
         && fromview.frame.size.width > transitioning.transitionContext.containerView.frame.size.width - 30) {
-        return @(CGSizeMake(120, 120));
+        return @(CGSizeMake(160, 240));
     } else {
         return nil;
     }
@@ -135,11 +135,14 @@
                 }
                 
                 if (currfromar.count > 0) {
-                    photoele.fromView = [currfromar[0] objectForKey:@"view"];
+                    NSDictionary *fromdic = currfromar[0];
+                    photoele.fromView = [fromdic objectForKey:@"view"];
+                    [photoele.userInfo setObject:fromdic forKey:@"from_info"];
                 }
                 
                 if (currtoar.count > 0) {
                     NSDictionary *configdic = currtoar[0];
+                    [photoele.userInfo setObject:configdic forKey:@"to_info"];
                     photoele.toView = [configdic objectForKey:@"view"];
                     photoele.toFrameCoordinateInVC = [configdic objectForKey:@"frame"];
                     photoele.toFrameContentMode = [configdic objectForKey:@"contentMode"];
@@ -174,11 +177,14 @@
                 }
                 
                 if (currfromar.count > 0) {
-                    photoele.fromView = [currfromar[0] objectForKey:@"view"];
+                    NSDictionary *fromdic = currfromar[0];
+                    photoele.fromView = [fromdic objectForKey:@"view"];
+                    [photoele.userInfo setObject:fromdic forKey:@"from_info"];
                 }
                 
                 if (currtoar.count > 0) {
                     NSDictionary *configdic = currtoar[0];
+                    [photoele.userInfo setObject:configdic forKey:@"to_info"];
                     photoele.toView = [configdic objectForKey:@"view"];
                     photoele.toFrameCoordinateInVC = [configdic objectForKey:@"frame"];
                     photoele.toFrameContentMode = [configdic objectForKey:@"contentMode"];
@@ -425,18 +431,36 @@
                           BOTransitionElement * _Nonnull transitionElement,
                           BOTransitionInfo transitionInfo,
                           NSDictionary * _Nullable subInfo) {
-        transitionElement.outterTakeOver = YES;
-        //渐变立场，防止有页面在图片上面放了一些元素闪一下
-        [UIView animateWithDuration:0.22
-                              delay:0
-                            options:UIViewAnimationOptionCurveEaseOut
-                         animations:^{
-            transitionElement.transitionView.alpha = 0;
-        }
-                         completion:^(BOOL finished) {
-            [transitionElement.transitionView removeFromSuperview];
-        }];
         
+        BOOL needfade = YES;
+        NSDictionary *currinfo;
+        //取落地的info
+        if (BOTransitionStepFinished == step) {
+            currinfo = [transitionElement.userInfo objectForKey:@"to_info"];
+        } else if (BOTransitionStepCancelled == step) {
+            currinfo = [transitionElement.userInfo objectForKey:@"from_info"];
+        }
+        
+        if ([currinfo isKindOfClass:[NSDictionary class]]
+            && [[currinfo objectForKey:@"imageAlign"] isEqualToString:@"1"]) {
+            needfade = NO;
+        }
+        
+        if (needfade) {
+            transitionElement.outterTakeOver = YES;
+            //渐变立场，防止有页面在图片上面放了一些元素闪一下
+            [UIView animateWithDuration:0.22
+                                  delay:0
+                                options:UIViewAnimationOptionCurveEaseOut
+                             animations:^{
+                transitionElement.transitionView.alpha = 0;
+            }
+                             completion:^(BOOL finished) {
+                [transitionElement.transitionView removeFromSuperview];
+            }];
+        } else {
+            [transitionElement.transitionView removeFromSuperview];
+        }
     }];
 }
 

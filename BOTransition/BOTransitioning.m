@@ -1802,7 +1802,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     percentComplete = MAX(0.f, MIN(percentComplete, 1.f));
-//    NSLog(@"~~~~perc:%f", percentComplete);
     return percentComplete;
 }
 
@@ -1873,6 +1872,12 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
     
     if (_transitionContext) {
+        return @{
+            @"shouldBegin": @(NO)
+        };
+    }
+    
+    if (_outterTransInfo) {
         return @{
             @"shouldBegin": @(NO)
         };
@@ -2165,13 +2170,16 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 BOTransitionGesturePinchInfo *pinch2 = ges.pinchInfoAr[ges.pinchInfoAr.count - 1];
                 CGFloat durspace = pinch2.space - pinch1.space;
                 CGFloat pinchVal_flo = pinchVal_num.floatValue;
-                if (pinchVal_flo >= 0) {
+                if (pinchVal_flo > 0) {
                     if (durspace > 0) {
                         gesvalid = @(YES);
                     } else if (durspace < -20) {
                         //反方向较长，直接fail掉
                         gesvalid = @(NO);
                     }
+                } else if (pinchVal_flo == 0) {
+                    //俩方向都识别
+                    gesvalid = @(YES);
                 } else if (pinchVal_flo < 0) {
                     if (durspace < 0) {
                         gesvalid = @(YES);
@@ -2412,6 +2420,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                                              ges:ges
                                                      distanceCoe:&distanceCoe];
     BOTransitionInfo transitioninfo = {percentComplete, YES, beganloc, curloc};
+    
+    NSDictionary *triggerGesInfo = [ges.userInfo objectForKey:@"triggerGesInfo"];
+    if (![triggerGesInfo isKindOfClass:[NSDictionary class]]) {
+        triggerGesInfo = nil;
+    }
     switch (ges.transitionGesState) {
         case UIGestureRecognizerStateBegan: {
             if (_innerAnimatingVal && _transitionContext) {
@@ -2477,22 +2490,28 @@ static CGFloat sf_default_transition_dur = 0.22f;
             }];
             [self.transitionContext updateInteractiveTransition:percentComplete];
             
-            if (percentComplete <= 0
-                && [self needsCancelTransition:beganloc
-                                        currPt:curloc
-                              triggerDirection:ges.triggerDirectionInfo.mainDirection
-                                     hasElePin:haselepin]) {
+            if (percentComplete <= 0) {
                 BOOL allowrecover = YES;
-                NSNumber *allowRecoverval = [ges.userInfo objectForKey:@"allowRecover"];
+                if ([ges.gesType isEqualToString:@"pinch"]) {
+                    //pinch默认NO
+                    allowrecover = NO;
+                }
+                
+                NSNumber *allowRecoverval = [triggerGesInfo objectForKey:@"allowRecover"];
                 if (nil != allowRecoverval) {
                     allowrecover = allowRecoverval.boolValue;
                 }
                 
-                if (allowrecover) {
+                if (allowrecover
+                    && [self needsCancelTransition:beganloc
+                                            currPt:curloc
+                                  triggerDirection:ges.triggerDirectionInfo.mainDirection
+                                         hasElePin:haselepin]) {
                     //需要取消了
                     [ges makeGesStateCanceledWithCanRetryBegan:YES];
                 }
             }
+            
         }
             break;
         case UIGestureRecognizerStateEnded: {
@@ -2508,10 +2527,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
             NSNumber *intentcomplete = nil;
             if ([ges.gesType isEqualToString:@"pinch"]) {
                 CGFloat pinchVal_flo = 1.0;
-                NSDictionary *triggerGesInfo = [ges.userInfo objectForKey:@"triggerGesInfo"];
-                if (![triggerGesInfo isKindOfClass:[NSDictionary class]]) {
-                    triggerGesInfo = nil;
-                }
                 NSNumber *pinchVal_num = [triggerGesInfo objectForKey:@"pinchVal"];
                 if (nil != pinchVal_num) {
                     pinchVal_flo = pinchVal_num.floatValue;
@@ -2892,12 +2907,25 @@ static CGFloat sf_default_transition_dur = 0.22f;
     return prior;
 }
 
-- (void)outterTrans_begin:(NSDictionary *)transInfo subInfo:(nullable NSDictionary *)subInfo {
+- (BOOL)outterTrans_begin:(NSDictionary *)transInfo subInfo:(nullable NSDictionary *)subInfo {
+    if (_transitionContext) {
+        return NO;
+    }
+    
+    if (_outterTransInfo) {
+        return NO;
+    }
+    
     _outterTransInfo = transInfo;
-    _triggerInteractiveTransitioning = YES;
+    self.triggerInteractiveTransitioning = YES;
+    return YES;
 }
 
 - (void)outterTrans_update:(CGFloat)percent subInfo:(nullable NSDictionary *)subInfo {
+    if (!_outterTransInfo) {
+        return;
+    }
+    
     CGFloat usepercent = MIN(1.0, MAX(0.0, percent));
     BOTransitionInfo transitioninfo = {usepercent, YES, CGPointZero, CGPointZero};
     [self.transitionElementAr enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -2910,6 +2938,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
 }
 
 - (void)outterTrans_complete:(BOOL)isFinish subInfo:(nullable NSDictionary *)subInfo {
+    if (!_outterTransInfo) {
+        return;
+    }
+    
     CGFloat usepercent = isFinish ? 1.0 : 0.0;
     BOTransitionInfo transitioninfo = {usepercent, YES, CGPointZero, CGPointZero};
     [self makePrepareAndExecStep:BOTransitionStepInteractiveEnd

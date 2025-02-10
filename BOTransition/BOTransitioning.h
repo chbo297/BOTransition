@@ -83,8 +83,10 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
  }
  
  外部需保障 outterTrans_begin  outterTrans_complete成对调用
+ 
+  outterTrans_begin  return 是否成功
  */
-- (void)outterTrans_begin:(NSDictionary *)transInfo subInfo:(nullable NSDictionary *)subInfo;
+- (BOOL)outterTrans_begin:(NSDictionary *)transInfo subInfo:(nullable NSDictionary *)subInfo;
 - (void)outterTrans_update:(CGFloat)percent subInfo:(nullable NSDictionary *)subInfo;
 - (void)outterTrans_complete:(BOOL)isFinish subInfo:(nullable NSDictionary *)subInfo;
 
