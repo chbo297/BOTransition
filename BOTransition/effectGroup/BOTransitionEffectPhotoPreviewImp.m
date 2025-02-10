@@ -365,7 +365,7 @@
         }
         
         if (transitionInfo.interactive
-            || (disablePinGesForDirection
+            && (disablePinGesForDirection
                 & transitioning.transitionGes.triggerDirectionInfo.mainDirection)) {
             pinGes = NO;
         }
