@@ -100,6 +100,14 @@ NS_ASSUME_NONNULL_BEGIN
                   controlCalculateSize:(BOTransitionGesture *)gesture;
 
 /*
+ animate转场时间
+ 返回nil或不实现使用默认
+ */
+- (nullable NSNumber *)bo_transitioningAnimateDuration:(BOTransitioning *)transitioning
+                                              elements:(NSMutableArray<BOTransitionElement *> *)elements
+                                               subInfo:(nullable NSDictionary *)subInfo;
+
+/*
  根据当前的ges计算转场的进度，若实现，可以介入和指定percent。不实现或返回nil时使用内置默认行为
  return @(CGFloat)
  */

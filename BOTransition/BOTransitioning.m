@@ -1346,7 +1346,36 @@ static CGFloat sf_default_transition_dur = 0.22f;
             }
         }
         
-        [self execAnimateDuration:sf_default_transition_dur
+        __block NSNumber *spdurval = nil;
+        [self.effectControlAr enumerateObjectsWithOptions:NSEnumerationReverse
+                                               usingBlock:^(id<BOTransitionEffectControl>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (nil == spdurval) {
+                if ([obj respondsToSelector:@selector(bo_transitioningAnimateDuration:elements:subInfo:)]) {
+                    NSNumber *anVal =\
+                    [obj bo_transitioningAnimateDuration:self elements:elementar subInfo:nil];
+                    if (nil != anVal) {
+                        NSLog(@"~~~~spdur:%@", anVal);
+                        spdurval = anVal;
+                        *stop = YES;
+                    }
+                }
+            }
+        }];
+        
+        CGFloat anidur;
+        if (nil != spdurval) {
+            CGFloat spdur = spdurval.floatValue;
+            if (spdur > 4.0) {
+                spdur = 4.0;
+            } else if (spdur < 0) {
+                spdur = 0.0;
+            }
+            anidur = spdur;
+        } else {
+            anidur = sf_default_transition_dur;
+        }
+        
+        [self execAnimateDuration:anidur
                          curveOpt:anioptnum
                percentStartAndEnd:CGPointMake(0, 1)
                     modifyUIBlock:^{

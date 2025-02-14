@@ -28,6 +28,49 @@
     return _fadeImp;
 }
 
+- (nullable NSNumber *)bo_transitioningAnimateDuration:(BOTransitioning *)transitioning
+                                              elements:(NSMutableArray<BOTransitionElement *> *)elements
+                                               subInfo:(nullable NSDictionary *)subInfo {
+    __block BOTransitionElement *photoele;
+    [elements enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (BOTransitionElementTypePhotoMirror == obj.elementType) {
+            photoele = obj;
+            *stop = YES;
+        }
+    }];
+    if (!photoele || !photoele.frameAllow) {
+        return nil;
+    }
+    
+    CGFloat fromw = photoele.frameFrom.size.width;
+    CGFloat tow = photoele.frameTo.size.width;
+    if (0 == fromw
+        || 0 == tow) {
+        return nil;
+    }
+    
+    CGFloat mindur = 0.08;
+    
+    CGFloat dw = tow - fromw;
+    if (fabs(dw) <= 30) {
+        return @(mindur);
+    }
+    
+    CGFloat adddur = 0.14;
+    
+    CGFloat thedur;
+    if (dw >= 0.0) {
+        CGFloat scalechange = (tow / fromw) - 1.0;
+        scalechange = MAX(0.0, MIN(1.0, scalechange));
+        thedur = mindur + (adddur * scalechange);
+    } else {
+        CGFloat scalechange = (1.0 - (tow / fromw)) * 2.0;
+        scalechange = MAX(0.0, MIN(1.0, scalechange));
+        thedur = mindur + (adddur * scalechange);
+    }
+    return @(thedur);
+}
+
 - (NSNumber *)bo_transitioningGetPercent:(BOTransitioning *)transitioning gesture:(BOTransitionGesture *)gesture {
     NSNumber *pinGesnum = self.configInfo[@"freePinGes"];
     if (nil == pinGesnum || !pinGesnum.boolValue) {
@@ -249,6 +292,7 @@
     [elements enumerateObjectsUsingBlock:^(BOTransitionElement * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (BOTransitionElementTypePhotoMirror == obj.elementType) {
             photoele = obj;
+            *stop = YES;
         }
     }];
     
