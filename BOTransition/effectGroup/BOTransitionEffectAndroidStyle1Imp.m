@@ -165,8 +165,6 @@
             _completionBlock = nil;
         }
     }
-    
-//    NSLog(@"~~~%f,%f,%f", dl.timestamp, dl.duration, dl.targetTimestamp);
 }
 
 - (void)completion:(BOOL)finish completion:(void (^)(void))completion {

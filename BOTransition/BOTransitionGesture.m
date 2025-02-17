@@ -447,7 +447,6 @@ static NSInteger sf_max_pinchInfo_count = 20;
                         if (_pinchInfoAr.count > sf_max_pinchInfo_count) {
                             [_pinchInfoAr removeObjectAtIndex:2];
                         }
-//                        [self testCheckVelPinch];
                         pinchchange = YES;
                     }
                 }
@@ -494,7 +493,6 @@ static NSInteger sf_max_pinchInfo_count = 20;
                     if (pininfo && ![pininfo isPointEqual:lastpininfo]) {
                         pininfo.tsSinceFirst = pininfo.ts - _pinchInfoAr.firstObject.ts;
                         [_pinchInfoAr addObject:pininfo];
-//                        [self testCheckVelPinch];
                         pinchfinish = YES;
                     }
                 }
@@ -556,45 +554,6 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
     
     return 0.0;
-}
-
-- (void)testCheckVelPinch {
-    NSInteger pcount = self.pinchInfoAr.count;
-    if (pcount <= 1) {
-        NSLog(@"~~~p0.1: 0pt/s");
-        NSLog(@"~~~p0.2: 0pt/s");
-        return;
-    }
-    CGFloat lastspace = self.pinchInfoAr.lastObject.space;
-    CGFloat lastts = self.pinchInfoAr.lastObject.ts;
-    NSNumber *sp01 = nil;
-    NSNumber *sp02 = nil;
-    for (NSInteger idx = self.pinchInfoAr.count - 2; idx >= 0; idx--) {
-        BOTransitionGesturePinchInfo *infoitem = self.pinchInfoAr[idx];
-        CGFloat durts = lastts - infoitem.ts;
-        if (nil == sp01) {
-            if (durts >= 0.1) {
-                sp01 = @((lastspace - infoitem.space) / durts);
-            }
-        }
-        if (nil == sp02) {
-            if (durts >= 0.2) {
-                sp02 = @((lastspace - infoitem.space) / durts);
-            }
-        }
-        
-        if (pcount >= sf_max_pinchInfo_count
-            && idx == 1) {
-            //到最大后，取第二个就好了，因为前面可能被裁剪过数据
-            break;
-        } else if (idx == 0) {
-            sp01 = @((lastspace - infoitem.space) / durts);
-            sp02 = sp01;
-        }
-    }
-    
-    NSLog(@"~~~p0.1: %@pt/s", sp01);
-    NSLog(@"~~~p0.2: %@pt/s", sp02);
 }
 
 - (void)setOriginState:(UIGestureRecognizerState)originState {
@@ -777,7 +736,6 @@ static NSInteger sf_max_pinchInfo_count = 20;
 }
 
 - (NSNumber *)tryBeginTransitionGesAndMakeInfo {
-//    NSLog(@"~~~~trybegin");
     BOTransitionGesSliceInfo drinfo = [self generateSliceInfo];
     if (0 == drinfo.mainDirection
         && self.pinchInfoAr.count == 0) {

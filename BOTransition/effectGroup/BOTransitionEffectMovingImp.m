@@ -108,7 +108,7 @@
             break;
         default: {
             //error
-            NSLog(@"~~~！！！错误CGRect outrt = movedrt;");
+            NSLog(@"%s ！！！错误CGRect outrt = movedrt;", __func__);
             outrt.origin.x = CGRectGetMaxX(container.bounds);
         }
             break;

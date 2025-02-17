@@ -387,7 +387,7 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                             if (topext > 0
                                 && (UIRectEdgeTop & self.frameBarrierInContainer)) {
                                 if (downext > 0) {
-                                    NSLog(@"error:%s ~~~1", __func__);
+                                    NSLog(@"error:%s 1", __func__);
                                 } else {
                                     offset.y = topext;
                                 }
@@ -405,7 +405,7 @@ NSMutableArray<void (^)(BOTransitioning *transitioning, BOTransitionStep step,
                             if (leftext > 0
                                 && (UIRectEdgeLeft & self.frameBarrierInContainer)) {
                                 if (rightext > 0) {
-                                    NSLog(@"error:%s ~~~2", __func__);
+                                    NSLog(@"error:%s 2", __func__);
                                 } else {
                                     offset.x = leftext;
                                 }
@@ -1354,7 +1354,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     NSNumber *anVal =\
                     [obj bo_transitioningAnimateDuration:self elements:elementar subInfo:nil];
                     if (nil != anVal) {
-                        NSLog(@"~~~~spdur:%@", anVal);
                         spdurval = anVal;
                         *stop = YES;
                     }

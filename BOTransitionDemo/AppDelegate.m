@@ -13,6 +13,44 @@
 
 @implementation AppDelegate
 
+//- (void)testCheckVelPinch {
+//    NSInteger pcount = self.pinchInfoAr.count;
+//    if (pcount <= 1) {
+//        NSLog(@"~~~p0.1: 0pt/s");
+//        NSLog(@"~~~p0.2: 0pt/s");
+//        return;
+//    }
+//    CGFloat lastspace = self.pinchInfoAr.lastObject.space;
+//    CGFloat lastts = self.pinchInfoAr.lastObject.ts;
+//    NSNumber *sp01 = nil;
+//    NSNumber *sp02 = nil;
+//    for (NSInteger idx = self.pinchInfoAr.count - 2; idx >= 0; idx--) {
+//        BOTransitionGesturePinchInfo *infoitem = self.pinchInfoAr[idx];
+//        CGFloat durts = lastts - infoitem.ts;
+//        if (nil == sp01) {
+//            if (durts >= 0.1) {
+//                sp01 = @((lastspace - infoitem.space) / durts);
+//            }
+//        }
+//        if (nil == sp02) {
+//            if (durts >= 0.2) {
+//                sp02 = @((lastspace - infoitem.space) / durts);
+//            }
+//        }
+//        
+//        if (pcount >= sf_max_pinchInfo_count
+//            && idx == 1) {
+//            //到最大后，取第二个就好了，因为前面可能被裁剪过数据
+//            break;
+//        } else if (idx == 0) {
+//            sp01 = @((lastspace - infoitem.space) / durts);
+//            sp02 = sp01;
+//        }
+//    }
+//    
+//    NSLog(@"~~~p0.1: %@pt/s", sp01);
+//    NSLog(@"~~~p0.2: %@pt/s", sp02);
+//}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
