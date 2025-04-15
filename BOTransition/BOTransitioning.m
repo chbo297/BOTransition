@@ -628,11 +628,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
 
 @property (nonatomic, assign) BOTransitionType transitionType;
 
-//present/push动作发生之前前已经在展示的基准VC
-@property (nonatomic, strong) UIViewController *baseVC;
-
-//present/push动作的入场VC以及 dismiss/pop动作的离场VC
-@property (nonatomic, strong) UIViewController *moveVC;
+////present/push动作发生之前前已经在展示的基准VC
+//@property (nonatomic, weak) UIViewController *baseVC;
+//
+////present/push动作的入场VC以及 dismiss/pop动作的离场VC
+//@property (nonatomic, weak) UIViewController *moveVC;
 
 @property (nonatomic, strong) UIView *baseTransBoard;
 @property (nonatomic, strong) UIView *moveTransBoard;
@@ -2188,18 +2188,19 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     break;
                 }
                 
+                //添加手势时，定义的值，大于0代表要放大手势，小于0表示要缩小手势，数值表示至少变化多少距离后触发
                 NSNumber *pinchVal_num = [gesinfo objectForKey:@"pinchVal"];
                 if (nil == pinchVal_num) {
                     gesvalid = @(NO);
                     break;
                 }
                 
-                BOTransitionGesturePinchInfo *pinch1 = ges.pinchInfoAr[ges.pinchInfoAr.count - 2];
+                BOTransitionGesturePinchInfo *pinch1 = ges.pinchInfoAr.firstObject;
                 BOTransitionGesturePinchInfo *pinch2 = ges.pinchInfoAr[ges.pinchInfoAr.count - 1];
                 CGFloat durspace = pinch2.space - pinch1.space;
                 CGFloat pinchVal_flo = pinchVal_num.floatValue;
                 if (pinchVal_flo > 0) {
-                    if (durspace > 0) {
+                    if (durspace >= pinchVal_flo) {
                         gesvalid = @(YES);
                     } else if (durspace < -20) {
                         //反方向较长，直接fail掉
@@ -2209,7 +2210,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     //俩方向都识别
                     gesvalid = @(YES);
                 } else if (pinchVal_flo < 0) {
-                    if (durspace < 0) {
+                    if (durspace <= pinchVal_flo) {
                         gesvalid = @(YES);
                     } else if (durspace > 20) {
                         //反方向较长，直接fail掉

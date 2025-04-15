@@ -925,47 +925,49 @@ static NSInteger sf_max_pinchInfo_count = 20;
         }
     }];
     
-    if (hasFailed) {
-        return NO;
-    }
-    
-    __block BOOL hasDrag = NO;
-    [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (obj.isDragging || obj.isTracking) {
-            hasDrag = YES;
-            switch (obj.panGestureRecognizer.state) {
-                case UIGestureRecognizerStatePossible:
-                case UIGestureRecognizerStateBegan:
-                case UIGestureRecognizerStateChanged:
-                    if (![_otherGesWillExecSimultaneouslyStrategy containsObject:obj.panGestureRecognizer]) {
-                        BOOL isfc = NO;
-                        BOOL failedsf = [self execeSimultaneouslyStrategy:obj.panGestureRecognizer makeGesFailedOrCancelled:&isfc];
-                        if (failedsf) {
-                            hasFailed = YES;
-                        }
-                        if (isfc) {
-                            hasDrag = NO;
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }];
-    
-    if (!hasDrag
-        && ([self careOtherArForKey:@"cell"].count > 0
-            || [self careOtherArForKey:@"control"].count > 0)) {
-        /*
-         有control时暂时借用系统的能力时uicontrol停止响应失效
-         */
-        self.state = UIGestureRecognizerStateBegan;
-    }
+    //后面判断暂不用，后续优化
+//    if (hasFailed) {
+//        return NO;
+//    }
+//    
+//    __block BOOL hasDrag = NO;
+//    [_currPanScrollVAr enumerateObjectsUsingBlock:^(UIScrollView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//        if (obj.isDragging || obj.isTracking) {
+//            hasDrag = YES;
+//            switch (obj.panGestureRecognizer.state) {
+//                case UIGestureRecognizerStatePossible:
+//                case UIGestureRecognizerStateBegan:
+//                case UIGestureRecognizerStateChanged:
+//                    if (![_otherGesWillExecSimultaneouslyStrategy containsObject:obj.panGestureRecognizer]) {
+//                        BOOL isfc = NO;
+//                        BOOL failedsf = [self execeSimultaneouslyStrategy:obj.panGestureRecognizer makeGesFailedOrCancelled:&isfc];
+//                        if (failedsf) {
+//                            hasFailed = YES;
+//                        }
+//                        if (isfc) {
+//                            hasDrag = NO;
+//                        }
+//                    }
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
+//    }];
+//    
+//    if (!hasDrag
+//        && ([self careOtherArForKey:@"cell"].count > 0
+//            || [self careOtherArForKey:@"control"].count > 0)) {
+//        /*
+//         有control时暂时借用系统的能力时uicontrol停止响应失效
+//         */
+//        self.state = UIGestureRecognizerStateBegan;
+//    }
     
     if (hasFailed) {
         return NO;
     } else {
+        self.state = UIGestureRecognizerStateBegan;
         return YES;
     }
 }
@@ -1629,7 +1631,6 @@ static NSInteger sf_max_pinchInfo_count = 20;
             && [gesShouldFail canBePreventedByGestureRecognizer:ges])) {
         switch (gesShouldFail.state) {
             case UIGestureRecognizerStatePossible:
-                gesShouldFail.state = UIGestureRecognizerStateFailed;
                 break;
             case UIGestureRecognizerStateBegan:
             case UIGestureRecognizerStateChanged:

@@ -40,9 +40,9 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 + (instancetype)new NS_UNAVAILABLE;
 
 //present/push动作发生之前前已经在展示的基准VC
-@property (nonatomic, readonly, nullable) UIViewController *baseVC;
+@property (nonatomic, weak) UIViewController *baseVC;
 //present/push动作的入场VC以及 dismiss/pop动作的离场VC
-@property (nonatomic, readonly, nullable) UIViewController *moveVC;
+@property (nonatomic, weak) UIViewController *moveVC;
 
 /*
  act=moveIn时，start=baseVC，des=moveVC
