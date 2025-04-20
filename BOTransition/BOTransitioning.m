@@ -2109,7 +2109,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
                             
                             if (!allow_direction_diff) {
                                 if (ges.initialDirectionInfo.mainDirection != ges.triggerDirectionInfo.mainDirection
-                                    || !(regdirection & ges.initialDirectionInfo.mainDirection)
                                     || !(regdirection & ges.triggerDirectionInfo.mainDirection)) {
                                     gesvalid = @(NO);
                                     break;
@@ -2128,16 +2127,24 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                 //                                }
                                 //                            }
                                 
-                                BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
-                                BOOL regisVertical = (verd & regdirection) > 0;
-                                if (initialisVertical != triggerisVertical
-                                    || regisVertical != initialisVertical
-                                    || regisVertical != triggerisVertical) {
-                                    //方向线都不同了，直接失败
+                                UISwipeGestureRecognizerDirection hord =\
+                                (UISwipeGestureRecognizerDirectionLeft | UISwipeGestureRecognizerDirectionRight);
+                                
+                                UISwipeGestureRecognizerDirection judgedir = regdirection;
+                                if (hord & regdirection) {
+                                    //同个方向一起判定
+                                    judgedir = judgedir | hord;
+                                }
+                                
+                                if (verd & regdirection) {
+                                    //同个方向一起判定
+                                    judgedir = judgedir | verd;
+                                }
+                                
+                                if (ges.initialDirectionInfo.mainDirection != ges.triggerDirectionInfo.mainDirection
+                                    || !(judgedir & ges.triggerDirectionInfo.mainDirection)) {
                                     gesvalid = @(NO);
                                     break;
-                                } else {
-                                    
                                 }
                             }
                             
