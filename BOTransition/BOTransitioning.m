@@ -1911,7 +1911,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
         for (NSDictionary *gesinfo in config_item.gesInfoAr) {
             UISwipeGestureRecognizerDirection regdirection =\
             [(NSNumber *)[gesinfo objectForKey:@"direction"] unsignedIntegerValue];
-            if (regdirection == direction) {
+            if (regdirection & direction) {
                 return YES;
             }
         }
@@ -2109,8 +2109,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
                             
                             if (!allow_direction_diff) {
                                 if (ges.initialDirectionInfo.mainDirection != ges.triggerDirectionInfo.mainDirection
-                                    || regdirection != ges.initialDirectionInfo.mainDirection
-                                    || regdirection != ges.triggerDirectionInfo.mainDirection) {
+                                    || !(regdirection & ges.initialDirectionInfo.mainDirection)
+                                    || !(regdirection & ges.triggerDirectionInfo.mainDirection)) {
                                     gesvalid = @(NO);
                                     break;
                                 }
