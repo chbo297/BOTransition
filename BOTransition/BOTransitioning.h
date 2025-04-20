@@ -67,6 +67,8 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
 @property (nonatomic, readonly, nullable) id<UIViewControllerContextTransitioning> transitionContext;
 
+@property (nonatomic, strong) NSMutableArray<BOTransitionConfig *> *subConfigAr;
+
 //外部控制 每个周期前必须被设置为正确的类型
 @property (nonatomic, assign) BOTransitionAct transitionAct;
 
@@ -92,6 +94,12 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
 
 
 /*
+ 0 不是
+ 1 navigationController 系统pop
+ 2 BOTransitionGesture
+ */
++ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges transType:(nullable BOTransitionType *)transType;
+/*
  return:
  1 保留ges
  2 保留otherges
@@ -101,7 +109,11 @@ UIKIT_EXTERN const NSNotificationName BOTransitionWillAndMustCompletion;
           transitionType:(BOTransitionType)transitionType
                 makeFail:(BOOL)makeFail
                  baseGes:(UIGestureRecognizer *)ges
-      otherTransitionGes:(UIGestureRecognizer *)otherGes;
+      otherTransitionGes:(UIGestureRecognizer *)otherGes
+               otherType:(BOTransitionType)otherType;
+
+- (BOOL)hasGesWithVC:(UIViewController *)m_vc;
+- (BOOL)hasDirectionGes:(UISwipeGestureRecognizerDirection)direction withVC:(UIViewController *)m_vc;
 
 //控件自己使用，nc的view布局完成后通知BOTransitioning的方法
 - (void)ncViewDidLayoutSubviews:(UINavigationController *)nc;

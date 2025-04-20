@@ -134,13 +134,22 @@
     if (nil != bgval) {
         hasBG = bgval.boolValue;
     }
+    
+    CGFloat (^percentblock)(CGFloat percentComplete) = [config objectForKey:@"percent_trans_block"];
+    boardelement.innerPercentWithTransitionPercent = percentblock;
     if (hasBG) {
         UIView *bgv = transitioning.checkAndInitCommonBg;
         bgv.frame = container.bounds;
         BOTransitionElement *bgelement = [BOTransitionElement elementWithType:BOTransitionElementTypeBg];
         bgelement.transitionView = bgv;
         bgelement.alphaAllow = YES;
-        bgelement.alphaCalPow = 4;
+        CGFloat alphacalpow = 4.0;
+        if (UIRectEdgeBottom == direction
+            || UIRectEdgeTop == direction) {
+            //动效优化
+            alphacalpow = 2;
+        }
+        bgelement.alphaCalPow = alphacalpow;
         if (BOTransitionActMoveIn == transitioning.transitionAct) {
             bgelement.alphaFrom = 0;
             bgelement.alphaTo = 1;
@@ -158,22 +167,29 @@
             transitionElement.transitionView.frame = blockcontainer.bounds;
             [blockcontainer insertSubview:transitionElement.transitionView belowSubview:transitioning.moveTransBoard];
         }];
-        if (BOTransitionTypeModalPresentation == transitioning.transitionType
-            && BOTransitionActMoveIn == transitioning.transitionAct) {
-            //present出来的时候，不用移除
+        BOTransitionStep removestep;
+        if (BOTransitionTypeModalPresentation == transitioning.transitionType) {
+            //present出来的时候，不用移除,入场时取消才移除，出场时成功才移除
+            if (BOTransitionActMoveIn == transitioning.transitionAct) {
+                removestep = BOTransitionStepCancelled;
+            } else {
+                removestep = BOTransitionStepFinished;
+            }
         } else {
-            [bgelement addToStep:BOTransitionStepFinished | BOTransitionStepCancelled
-                           block:^(BOTransitioning * _Nonnull blockTrans,
-                                   BOTransitionStep step,
-                                   BOTransitionElement * _Nonnull transitionElement,
-                                   BOTransitionInfo transitionInfo,
-                                   NSDictionary * _Nullable subInfo) {
-                [transitionElement.transitionView removeFromSuperview];
-            }];
+            //push只做动画过程效果，无论成功失败都移除
+            removestep = BOTransitionStepFinished | BOTransitionStepCancelled;
         }
         
+        [bgelement addToStep:removestep
+                       block:^(BOTransitioning * _Nonnull blockTrans,
+                               BOTransitionStep step,
+                               BOTransitionElement * _Nonnull transitionElement,
+                               BOTransitionInfo transitionInfo,
+                               NSDictionary * _Nullable subInfo) {
+            [transitionElement.transitionView removeFromSuperview];
+        }];
         
-        
+        bgelement.innerPercentWithTransitionPercent = percentblock;
         [elements addObject:bgelement];
     }
 }

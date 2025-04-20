@@ -10,6 +10,7 @@
 #import <objc/runtime.h>
 #import "UIViewController+BOTransition.h"
 #import "BOTransitioning.h"
+#import "BOTransitionPresentationDelegate.h"
 
 /*
  处理系统的pop手势
@@ -21,7 +22,7 @@
 @end
 
 @implementation BOTransitionNCPopGestureHandler {
-    id _originDelegate;
+    id<UIGestureRecognizerDelegate> _originDelegate;
 }
 
 - (void)setNavigationController:(UINavigationController *)navigationController {
@@ -58,10 +59,33 @@
         
         UIViewController *topvc = nc.viewControllers.lastObject;
         BOTransitionConfig *transitconfig = topvc.bo_transitionConfig;
+        
+        if (topvc.presentedViewController) {
+            UIViewController *lastpresentVC = topvc.presentedViewController;
+            while (lastpresentVC.presentedViewController) {
+                lastpresentVC = lastpresentVC.presentedViewController;
+            }
+            if ([lastpresentVC.bo_transitionConfig.presentTransitioningDelegate isKindOfClass:[BOTransitionPresentationDelegate class]]) {
+                BOTransitionPresentationDelegate *presentdelegate =\
+                lastpresentVC.bo_transitionConfig.presentTransitioningDelegate;
+                if ([presentdelegate.currTransitioning hasGesWithVC:lastpresentVC]) {
+                    //有手势判定，优先present上的手势
+                    return NO;
+                }
+            }
+        }
+        
         if (transitconfig && !transitconfig.moveOutUseOrigin) {
             //顶部VC配置了不支持interactivePopGestureRecognizer
             return NO;
         } else {
+            BOOL hasrightges =\
+            [nc.bo_transProxy.transitioning hasDirectionGes:UISwipeGestureRecognizerDirectionRight
+                                                     withVC:topvc];
+            if (hasrightges) {
+                return NO;
+            }
+            
             NSNumber *shouldMoveOut = @(YES);
             id<BOTransitionConfigDelegate> configdelegate = transitconfig.configDelegate;
             if (!configdelegate) {
@@ -82,45 +106,67 @@
         }
     }
     
+    if (_originDelegate
+        && [_originDelegate respondsToSelector:@selector(gestureRecognizerShouldBegin:)]) {
+        return [_originDelegate gestureRecognizerShouldBegin:gestureRecognizer];
+    }
+    
     return YES;
 }
 
+/*
+ 是否关自己
+ */
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRequireFailureOfGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
         && otherGestureRecognizer != gestureRecognizer) {
         
-        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
+        BOTransitionType othertype;
+        if ([BOTransitioning isTransitonGes:otherGestureRecognizer transType:&othertype]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
                           transitionType:BOTransitionTypeNavigation
-                                makeFail:YES
+                                makeFail:NO
                                  baseGes:gestureRecognizer
-                      otherTransitionGes:otherGestureRecognizer];
-            
-            if (2 == strategy) {
+                      otherTransitionGes:otherGestureRecognizer
+                               otherType:othertype];
+            if (0 == strategy) {
+                
+            } else if (2 == strategy) {
                 return YES;
             }
         }
     }
     
+    if (_originDelegate
+        && [_originDelegate respondsToSelector:@selector(gestureRecognizer:shouldRequireFailureOfGestureRecognizer:)]) {
+        return [_originDelegate gestureRecognizer:gestureRecognizer shouldRequireFailureOfGestureRecognizer:otherGestureRecognizer];
+    }
+    
     return NO;
 }
 
+/*
+ 是否关other
+ */
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
         && otherGestureRecognizer != gestureRecognizer) {
         
         //有对应策略时执行策略
-        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
+        BOTransitionType othertype;
+        if ([BOTransitioning isTransitonGes:otherGestureRecognizer transType:&othertype]) {
             NSInteger strategy =\
             [BOTransitioning checkWithVC:self.navigationController.viewControllers.lastObject
                           transitionType:BOTransitionTypeNavigation
-                                makeFail:YES
+                                makeFail:NO
                                  baseGes:gestureRecognizer
-                      otherTransitionGes:otherGestureRecognizer];
-            
-            if (1 == strategy) {
-                return YES;
+                      otherTransitionGes:otherGestureRecognizer
+                               otherType:othertype];
+            if (0 == strategy) {
+                
+            } else if (2 == strategy) {
+                return NO;
             }
         }
         
@@ -128,10 +174,30 @@
         return YES;
     }
     
+    if (_originDelegate
+        && [_originDelegate respondsToSelector:@selector(gestureRecognizer:shouldBeRequiredToFailByGestureRecognizer:)]) {
+        return [_originDelegate gestureRecognizer:gestureRecognizer
+        shouldBeRequiredToFailByGestureRecognizer:otherGestureRecognizer];
+    }
+    
     return NO;
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer
+        && otherGestureRecognizer != gestureRecognizer) {
+        //有对应策略时执行策略
+        if ([BOTransitioning isTransitonGes:otherGestureRecognizer transType:nil]) {
+            return NO;
+        }
+    }
+    
+    if (_originDelegate
+        && [_originDelegate respondsToSelector:@selector(gestureRecognizer:shouldRecognizeSimultaneouslyWithGestureRecognizer:)]) {
+        return [_originDelegate gestureRecognizer:gestureRecognizer
+shouldRecognizeSimultaneouslyWithGestureRecognizer:otherGestureRecognizer];
+    }
+    
     return NO;
 }
 

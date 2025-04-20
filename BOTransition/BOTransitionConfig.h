@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol BOTransitionEffectControl;
 @protocol BOTransitionConfigDelegate;
 @class BOTransitionGesture;
+@class BOTransitioning;
 
 typedef NSString *BOTransitionEffect NS_EXTENSIBLE_STRING_ENUM;
 
@@ -134,8 +135,12 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectAndroidStyle1;
  
  effectConfig: EffectConfig dictionary
  
- //传递这个时，请确保里面一定
- transExec: ^(BOTransitionGesture *ges){}
+ //moveIn情况：
+ "gesTransExec": (NSDictionary *)^(BOTransitionGesture *ges, BOTransitioning *transitioning, NSDictionary *b_info){
+ return @{
+ "act": @"fail" 手势失败，suspend保留等待下次询问是否触发,否则需实现moveInBlock
+ @"moveInBlock": ^{ //执行push、present的代码 },
+ }
  */
 @property (nonatomic, readonly, nullable) NSMutableArray<NSDictionary *> *gesInfoAr;
 
@@ -168,6 +173,18 @@ FOUNDATION_EXTERN BOTransitionEffect const BOTransitionEffectAndroidStyle1;
  default：NO
  */
 @property (nonatomic, assign) BOOL allowInteractionInAnimating;
+
+/*
+ 预制的transitioning
+ 未present的交互式入场使用
+ */
+@property (nonatomic, weak, nullable) BOTransitioning *preTransition;
+
+/*
+ 内部使用
+ 用来记录config是挂在那个vc上的
+ */
+@property (nonatomic, weak) UIViewController *targetVC;
 
 /*
  该属性不属于本类管理
