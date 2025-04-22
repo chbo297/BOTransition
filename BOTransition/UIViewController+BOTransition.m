@@ -24,7 +24,6 @@
 - (void)setBo_transitionConfig:(BOTransitionConfig *)bo_transitionConfig {
     objc_setAssociatedObject(self, @selector(bo_transitionConfig),
                              bo_transitionConfig, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    bo_transitionConfig.targetVC = self;
     
     if (bo_transitionConfig && bo_transitionConfig.applyToModalPresentation) {
         //如果需要应用到presentation方式，设置modalPresentationStyle以及transitioningDelegate

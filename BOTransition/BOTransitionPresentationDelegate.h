@@ -10,16 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class BOTransitioning;
-
 @interface BOTransitionPresentationDelegate : NSObject <UIViewControllerTransitioningDelegate>
-
-/*
- 预制的transitioning
- */
-@property (nonatomic, weak, nullable) BOTransitioning *preTransition;
-
-@property (nonatomic, readonly, nullable) BOTransitioning *currTransitioning;
 
 @end
 

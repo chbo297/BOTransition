@@ -685,27 +685,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
     return self;
 }
 
-@synthesize transitionGes = _transitionGes;
-
 - (BOTransitionGesture *)transitionGes {
     if (!_transitionGes) {
         _transitionGes = [[BOTransitionGesture alloc] initWithTransitionGesDelegate:self];
-        _transitionGes.name = @"bo_tran_inner";
-        _transitionGes.transitioning = self;
     }
     return _transitionGes;
-}
-
-- (void)setTransitionGes:(BOTransitionGesture *)transitionGes {
-    _transitionGes = transitionGes;
-    _transitionGes.transitioning = self;
-}
-
-- (NSMutableArray<BOTransitionConfig *> *)subConfigAr {
-    if (!_subConfigAr) {
-        _subConfigAr = @[].mutableCopy;
-    }
-    return _subConfigAr;
 }
 
 - (UIViewController *)startVC {
@@ -780,13 +764,11 @@ static CGFloat sf_default_transition_dur = 0.22f;
     
     if (BOTransitionTypeModalPresentation == self.transitionType &&
         BOTransitionActMoveIn == self.transitionAct) {
-        if ([self.transitionGes.name isEqualToString:@"bo_tran_inner"]) {
-            //初始化手势
-            UIView *container = [transitionContext containerView];
-            if (container) {
-                if (![container.gestureRecognizers containsObject:self.transitionGes]) {
-                    [container addGestureRecognizer:self.transitionGes];
-                }
+        //初始化手势
+        UIView *container = [transitionContext containerView];
+        if (container) {
+            if (![container.gestureRecognizers containsObject:self.transitionGes]) {
+                [container addGestureRecognizer:self.transitionGes];
             }
         }
     }
@@ -1635,10 +1617,10 @@ static CGFloat sf_default_transition_dur = 0.22f;
     [self.transitionContext updateInteractiveTransition:0];
 }
 
-- (UIViewController *)obtainFirstResponseVC:(BOTransitionGesture *)ges config:(BOTransitionConfig *)conf {
+- (UIViewController *)obtainFirstResponseVC {
     switch (_transitionType) {
         case BOTransitionTypeModalPresentation:
-            return self.moveVC ? : self.baseVC;
+            return self.moveVC;
         case BOTransitionTypeNavigation:
             return self.navigationController.topViewController;
         case BOTransitionTypeTabBar:
@@ -1897,50 +1879,6 @@ static CGFloat sf_default_transition_dur = 0.22f;
     return dis;
 }
 
-- (BOOL)hasDirectionGes:(UISwipeGestureRecognizerDirection)direction withVC:(UIViewController *)m_vc {
-    NSMutableArray<BOTransitionConfig *> *use_config_ar = @[].mutableCopy;
-    BOTransitionConfig *firstResponseconfig = m_vc.bo_transitionConfig;
-    if (firstResponseconfig) {
-        [use_config_ar addObject:firstResponseconfig];
-    }
-    if (self.subConfigAr.count > 0) {
-        [use_config_ar addObjectsFromArray:self.subConfigAr];
-    }
-    
-    for (BOTransitionConfig *config_item in use_config_ar) {
-        for (NSDictionary *gesinfo in config_item.gesInfoAr) {
-            UISwipeGestureRecognizerDirection regdirection =\
-            [(NSNumber *)[gesinfo objectForKey:@"direction"] unsignedIntegerValue];
-            if (regdirection & direction) {
-                return YES;
-            }
-        }
-    }
-    return NO;
-}
-
-- (BOOL)hasGesWithVC:(UIViewController *)m_vc {
-    NSMutableArray<BOTransitionConfig *> *use_config_ar = @[].mutableCopy;
-    BOTransitionConfig *firstResponseconfig = m_vc.bo_transitionConfig;
-    if (firstResponseconfig) {
-        [use_config_ar addObject:firstResponseconfig];
-    }
-    if (self.subConfigAr.count > 0) {
-        [use_config_ar addObjectsFromArray:self.subConfigAr];
-    }
-    
-    if (use_config_ar.count == 0) {
-        return NO;
-    }
-    
-    for (BOTransitionConfig *config_item in use_config_ar) {
-        if (config_item.gesInfoAr.count > 0) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
 /*
  返回 shouldBegin YES/NO (YES时，会计算手势冲突策略，成功后才会真的开始)
  return {
@@ -1957,352 +1895,355 @@ static CGFloat sf_default_transition_dur = 0.22f;
                                             subInfo:(nullable NSDictionary *)subInfo {
     if ([subInfo[@"type"] isEqualToString:@"needsRecoverWhenTouchDown"]) {
         return @{
-            @"shouldBegin": @(YES),
-            @"reason": @"1",
+            @"shouldBegin": @(YES)
         };
     }
     
     if (_transitionContext) {
         return @{
-            @"shouldBegin": @(NO),
-            @"reason": @"2",
+            @"shouldBegin": @(NO)
         };
     }
     
     if (_outterTransInfo) {
         return @{
-            @"shouldBegin": @(NO),
-            @"reason": @"3",
+            @"shouldBegin": @(NO)
         };
     }
     
-    NSMutableArray<BOTransitionConfig *> *use_config_ar = @[].mutableCopy;
-    BOTransitionConfig *firstResponseconfig = [self obtainFirstResponseVC:ges config:nil].bo_transitionConfig;
-    if (firstResponseconfig) {
-        [use_config_ar addObject:firstResponseconfig];
-    }
-    if (self.subConfigAr.count > 0) {
-        [use_config_ar addObjectsFromArray:self.subConfigAr];
-    }
-    
-    if (use_config_ar.count == 0) {
+    UIViewController *firstResponseVC = [self obtainFirstResponseVC];
+    if (!firstResponseVC) {
         return @{
-            @"shouldBegin": @(NO),
-            @"reason": @"4",
+            @"shouldBegin": @(NO)
         };
     }
     
-    BOTransitionConfig *use_config = nil;
+    BOTransitionConfig *tconfig = firstResponseVC.bo_transitionConfig;
+    if (!tconfig) {
+        return @{
+            @"shouldBegin": @(NO)
+        };
+    }
+    
+    id<BOTransitionConfigDelegate> configdelegate = tconfig.configDelegate;
+    if (!configdelegate) {
+        configdelegate = (id)firstResponseVC;
+    }
+    
     BOOL hassuspend = NO;
+    BOOL hasvalid = NO;
+    BOOL validismoveout = NO; //hasvalid=YES是才有效
     NSDictionary *validgesinfo = nil;
-    BOOL validismoveout = NO; //validgesinfo有值时才有效
-    for (BOTransitionConfig *config_item in use_config_ar) {
-        for (NSDictionary *gesinfo in config_item.gesInfoAr) {
-            BOOL moveoutact = (1 == [(NSNumber *)[gesinfo objectForKey:@"act"] integerValue]);
-            
-            NSNumber *gesvalid = nil;
-            
-            NSString *gestype = [gesinfo objectForKey:@"gesType"];
-            if ([gestype isEqualToString:@"pan"]) {
-                while (1) {
+    __unused BOOL haspanges = NO;
+    BOOL haspinchges = NO;
+    BOOL haswaitpinch = NO;
+    for (NSDictionary *gesinfo in tconfig.gesInfoAr) {
+        NSString *gestype = [gesinfo objectForKey:@"gesType"];
+        if ([gestype isEqualToString:@"pinch"]) {
+            haspinchges = YES;
+        } else if ([gestype isEqualToString:@"pan"]) {
+            haspanges = YES;
+        }
+    }
+    for (NSDictionary *gesinfo in tconfig.gesInfoAr) {
+        BOOL moveoutact = (1 == [(NSNumber *)[gesinfo objectForKey:@"act"] integerValue]);
+        
+        NSNumber *gesvalid = nil;
+        
+        NSString *gestype = [gesinfo objectForKey:@"gesType"];
+        if ([gestype isEqualToString:@"pan"]) {
+            while (1) {
+                
+                if (haspinchges) {
+                    //有pinch手势,延迟判定一会儿， 暂不延迟，会不流畅
+//                    CGRect firstptinfo = ges.panInfoAr.firstObject.CGRectValue;
+//                    CGFloat firstptts = firstptinfo.size.width;
+//                    CGFloat durts = [NSDate date].timeIntervalSince1970 - firstptts;
+//                    //等待时间内内才允许再次将本手势fail，超过后就算了，用户已经滑了一会儿了
+//                    if (durts < BOTransitionGesture.gesConflictTime) {
+//                        break;
+//                    } else {
+//                        haswaitpinch = YES;
+//                    }
+                }
+                
+                if (ges.triggerDirectionInfo.mainDirection == 0) {
+                    //没方向
+                    break;
+                }
+                
+                UISwipeGestureRecognizerDirection regdirection =\
+                [(NSNumber *)[gesinfo objectForKey:@"direction"] unsignedIntegerValue];
+                BOOL seriousMargin = NO;
+                NSNumber *seriousMarginnum = [gesinfo objectForKey:@"margin"];
+                if (nil != seriousMarginnum) {
+                    seriousMargin = seriousMarginnum.boolValue;
+                }
+                
+                if (seriousMargin) {
+                    BOTransitionGesBeganInfo gesBeganInfo = ges.gesBeganInfo;
+                    //手势横方向和竖直的夹角最小大概27度也判定有效 tan(27度)~=0.5
+                    CGFloat defminrate = 0.5;
+                    //距离边缘距离小于27
+                    CGFloat defmarginspace = 27;
+                    BOOL directjudegsuc = NO;
+                    UISwipeGestureRecognizerDirection maysucdirection = 0;
+                    if (UISwipeGestureRecognizerDirectionRight & regdirection) {
+                        //向右的权重超过指定权重，起始点距离屏幕左侧边缘小于指定距离
+                        directjudegsuc = (gesBeganInfo.directionWeight.right > defminrate
+                                          && gesBeganInfo.marginSpace.left < defmarginspace);
+                        maysucdirection = UISwipeGestureRecognizerDirectionRight;
+                    } else if (UISwipeGestureRecognizerDirectionLeft & regdirection) {
+                        //向左的权重超过指定权重，起始点距离屏幕右侧边缘小于指定距离
+                        directjudegsuc = (gesBeganInfo.directionWeight.left > defminrate
+                                          && gesBeganInfo.marginSpace.right < defmarginspace);
+                        maysucdirection = UISwipeGestureRecognizerDirectionLeft;
+                    }
                     
-                    if (ges.triggerDirectionInfo.mainDirection == 0) {
-                        //没方向
+                    if (directjudegsuc) {
+                        //若默认的主方向与希望的方向不同，进行修改
+                        if (mainDirection
+                            && *mainDirection != maysucdirection) {
+                            *mainDirection = maysucdirection;
+                        }
+                        gesvalid = @(YES);
+                        //allowRecover默认YES，当手势返回原点后，转场会取消，再移动手势会重新尝试触发，有些可以和页面内手势同时响应的场景可以用到
+                        //严格的边缘手势就不用了，没有必要，严格的边缘手势并不与页面内的其它手势共存
+                        [ges.userInfo setObject:@(NO) forKey:@"allowRecover"];
+                        break;
+                    } else {
+                        gesvalid = @(NO);
                         break;
                     }
-                    
-                    UISwipeGestureRecognizerDirection regdirection =\
-                    [(NSNumber *)[gesinfo objectForKey:@"direction"] unsignedIntegerValue];
-                    BOOL seriousMargin = NO;
-                    NSNumber *seriousMarginnum = [gesinfo objectForKey:@"margin"];
-                    if (nil != seriousMarginnum) {
-                        seriousMargin = seriousMarginnum.boolValue;
+                } else {
+                    BOOL allowBeganWithSVBounces = NO;
+                    NSNumber *allowBeganWithSVBouncesnum = [gesinfo objectForKey:@"allowBeganWithSVBounces"];
+                    if (nil != allowBeganWithSVBouncesnum) {
+                        allowBeganWithSVBounces = allowBeganWithSVBouncesnum.boolValue;
                     }
-                    
-                    if (seriousMargin) {
-                        BOTransitionGesBeganInfo gesBeganInfo = ges.gesBeganInfo;
-                        //手势横方向和竖直的夹角最小大概27度也判定有效 tan(27度)~=0.5
-                        CGFloat defminrate = 0.5;
-                        //距离边缘距离小于27
-                        CGFloat defmarginspace = 27;
-                        BOOL directjudegsuc = NO;
-                        UISwipeGestureRecognizerDirection maysucdirection = 0;
-                        if (UISwipeGestureRecognizerDirectionRight & regdirection) {
-                            //向右的权重超过指定权重，起始点距离屏幕左侧边缘小于指定距离
-                            directjudegsuc = (gesBeganInfo.directionWeight.right > defminrate
-                                              && gesBeganInfo.marginSpace.left < defmarginspace);
-                            maysucdirection = UISwipeGestureRecognizerDirectionRight;
-                        } else if (UISwipeGestureRecognizerDirectionLeft & regdirection) {
-                            //向左的权重超过指定权重，起始点距离屏幕右侧边缘小于指定距离
-                            directjudegsuc = (gesBeganInfo.directionWeight.left > defminrate
-                                              && gesBeganInfo.marginSpace.right < defmarginspace);
-                            maysucdirection = UISwipeGestureRecognizerDirectionLeft;
-                        }
-                        
-                        if (directjudegsuc) {
-                            //若默认的主方向与希望的方向不同，进行修改
-                            if (mainDirection
-                                && *mainDirection != maysucdirection) {
-                                *mainDirection = maysucdirection;
-                            }
-                            gesvalid = @(YES);
-                            
-                            //allowRecover默认YES，当手势返回原点后，转场会取消，再移动手势会重新尝试触发，有些可以和页面内手势同时响应的场景可以用到
-                            //严格的边缘手势就不用了，没有必要，严格的边缘手势并不与页面内的其它手势共存
-                            [ges.userInfo setObject:@(NO) forKey:@"allowRecover"];
-                            break;
-                        } else {
-                            gesvalid = @(NO);
-                            break;
-                        }
+                    if (ges.beganWithSVBounces
+                        && !allowBeganWithSVBounces) {
+                        //bounces开始的，不允许bounces，直接失败
+                        gesvalid = @(NO);
+                        break;
                     } else {
-                        BOOL allowBeganWithSVBounces = NO;
-                        NSNumber *allowBeganWithSVBouncesnum = [gesinfo objectForKey:@"allowBeganWithSVBounces"];
-                        if (nil != allowBeganWithSVBouncesnum) {
-                            allowBeganWithSVBounces = allowBeganWithSVBouncesnum.boolValue;
-                        }
-                        if (ges.beganWithSVBounces
-                            && !allowBeganWithSVBounces) {
-                            //bounces开始的，不允许bounces，直接失败
-                            gesvalid = @(NO);
-                            break;
-                        } else {
-                            //延迟判定
-                            BOOL haswaitwithconf = NO;
-                            NSNumber *waiting_num = [gesinfo objectForKey:@"waiting"];
-                            if (nil != waiting_num) {
-                                CGFloat waiting_flo = waiting_num.floatValue;
-                                //合法校验
-                                if (waiting_flo <= 2.0
-                                    && waiting_flo >= 0.0) {
-                                    if (ges.panInfoAr.count >= 2) {
-                                        CGFloat ts1 = ges.panInfoAr[0].CGRectValue.size.width;
-                                        CGFloat ts2 = ges.panInfoAr.lastObject.CGRectValue.size.width;
-                                        if (ts2 - ts1 < waiting_flo) {
-                                            //等待
-                                            break;
-                                        } else {
-                                            haswaitwithconf = YES;
-                                        }
+                        //延迟判定
+                        BOOL haswaitwithconf = NO;
+                        NSNumber *waiting_num = [gesinfo objectForKey:@"waiting"];
+                        if (nil != waiting_num) {
+                            CGFloat waiting_flo = waiting_num.floatValue;
+                            //合法校验
+                            if (waiting_flo <= 2.0
+                                && waiting_flo >= 0.0) {
+                                if (ges.panInfoAr.count >= 2) {
+                                    CGFloat ts1 = ges.panInfoAr[0].CGRectValue.size.width;
+                                    CGFloat ts2 = ges.panInfoAr.lastObject.CGRectValue.size.width;
+                                    if (ts2 - ts1 < waiting_flo) {
+                                        //等待
+                                        break;
+                                    } else {
+                                        haswaitwithconf = YES;
                                     }
                                 }
                             }
-                            
-                            //是否允许存在过不同方向，包括正负
-                            BOOL allow_direction_diff = YES;
-                            
-                            BOOL serious_ges = NO;
-                            NSString *serious_str = [gesinfo objectForKey:@"serious"];
-                            if (serious_str
-                                && [serious_str isKindOfClass:[NSString class]]) {
-                                if ([serious_str isEqualToString:@"1"]) {
-                                    serious_ges = YES;
-                                }
+                        }
+                        
+                        //是否允许存在过不同方向，包括正负
+                        BOOL allow_direction_diff = YES;
+                        
+                        BOOL serious_ges = NO;
+                        NSString *serious_str = [gesinfo objectForKey:@"serious"];
+                        if (serious_str
+                            && [serious_str isKindOfClass:[NSString class]]) {
+                            if ([serious_str isEqualToString:@"1"]) {
+                                serious_ges = YES;
                             }
-                            if (serious_ges) {
-                                allow_direction_diff = NO;
-                            }
-                            
-                            UISwipeGestureRecognizerDirection verd =\
-                            (UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown);
-                            BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
-                            
-                            if (!allow_direction_diff) {
-                                if (ges.initialDirectionInfo.mainDirection != ges.triggerDirectionInfo.mainDirection
-                                    || !(regdirection & ges.triggerDirectionInfo.mainDirection)) {
-                                    gesvalid = @(NO);
-                                    break;
-                                }
-                            } else {
-                                //允许存在过不同方向正负，但方向线相同，默认都不允许
-                                //                            BOOL allow_verandhor_diff = NO;
-                                //                            if (!allow_verandhor_diff) {
-                                //                                UISwipeGestureRecognizerDirection verd =\
-                                //                                (UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown);
-                                //                                BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
-                                //                                BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
-                                //                                if (initialisVertical != triggerisVertical) {
-                                //                                    gesvalid = @(NO);
-                                //                                    continue;
-                                //                                }
-                                //                            }
-                                
-                                UISwipeGestureRecognizerDirection hord =\
-                                (UISwipeGestureRecognizerDirectionLeft | UISwipeGestureRecognizerDirectionRight);
-                                
-                                UISwipeGestureRecognizerDirection judgedir = regdirection;
-                                if (hord & regdirection) {
-                                    //同个方向一起判定
-                                    judgedir = judgedir | hord;
-                                }
-                                
-                                if (verd & regdirection) {
-                                    //同个方向一起判定
-                                    judgedir = judgedir | verd;
-                                }
-                                
-                                if (ges.initialDirectionInfo.mainDirection != ges.triggerDirectionInfo.mainDirection
-                                    || !(judgedir & ges.triggerDirectionInfo.mainDirection)) {
-                                    gesvalid = @(NO);
-                                    break;
-                                }
-                            }
-                            
-                            NSDictionary *otherSVResponsedic = subInfo[@"otherSVResponse"];
-                            CGPoint othersvrespt = CGPointZero;
-                            NSValue *othersvresval = otherSVResponsedic[@"info"];
-                            if (nil != othersvresval) {
-                                othersvrespt = othersvresval.CGPointValue;
-                            }
-                            
-                            //是否允许已经响应过其它scrollview
-                            BOOL allow_othersv_resp = YES;
-                            if (serious_ges) {
-                                allow_othersv_resp = NO;
-                            }
-                            BOOL haswait = haswaitwithconf;
-                            
-                            BOOL othergesuse;
-                            if (haswait) {
-                                //waiting中，允许一些小小的bounces,只被普通滑动互斥
-                                othergesuse = (2 == othersvrespt.x && 2 == othersvrespt.y);
-                            } else {
-                                //bounces和有普通滑动都不允许
-                                //                            othergesuse = (2 == othersvrespt.x) || (1 == othersvrespt.x && 2 == othersvrespt.y);
-                                othergesuse = (2 == othersvrespt.x);
-                            }
-                            
-                            if (othergesuse) {
-                                //响应了其它sv
+                        }
+                        if (serious_ges) {
+                            allow_direction_diff = NO;
+                        }
+                        
+                        UISwipeGestureRecognizerDirection verd =\
+                        (UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown);
+                        BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
+                        
+                        if (!allow_direction_diff) {
+                            if (ges.initialDirectionInfo.mainDirection != ges.triggerDirectionInfo.mainDirection) {
                                 gesvalid = @(NO);
                                 break;
                             }
+                        } else {
+                            //允许存在过不同方向正负，但方向线相同，默认都不允许
+//                            BOOL allow_verandhor_diff = NO;
+//                            if (!allow_verandhor_diff) {
+//                                UISwipeGestureRecognizerDirection verd =\
+//                                (UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown);
+//                                BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
+//                                BOOL triggerisVertical = (verd & ges.triggerDirectionInfo.mainDirection) > 0;
+//                                if (initialisVertical != triggerisVertical) {
+//                                    gesvalid = @(NO);
+//                                    continue;
+//                                }
+//                            }
                             
-                            if (!allow_othersv_resp) {
-                                __block BOOL othersvconfict = NO;
-                                [ges.otherSVRespondedDirectionRecord enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key,
-                                                                                                         NSDictionary * _Nonnull gesinfo,
-                                                                                                         BOOL * _Nonnull stop) {
-                                    CGPoint svrespt = CGPointZero;
-                                    NSValue *svresval = gesinfo[@"info"];
-                                    if (nil != svresval) {
-                                        svrespt = svresval.CGPointValue;
-                                    }
-                                    
-                                    UISwipeGestureRecognizerDirection itemdir = key.unsignedIntegerValue;
-                                    BOOL itemisVertical = (verd & itemdir) > 0;
-                                    
-                                    //如果有一个明确开始过的手势，则认为意图已经被转移，无效本次手势
-                                    BOOL gesdiduse;
-                                    if (haswait) {
-                                        //waiting中，允许一些小小的bounces,和其它方向的滑动，因此只被本方向的普通滑动互斥
-                                        gesdiduse = (itemisVertical == triggerisVertical
-                                                     && 2 == svrespt.x
-                                                     && 2 == svrespt.y);
-                                    } else {
-                                        //bounces和普通滑动都不允许
-                                        //                                    gesdiduse = (2 == svrespt.x) || (1 == svrespt.x && 2 == svrespt.y);
-                                        gesdiduse = (2 == svrespt.x);
-                                    }
-                                    
-                                    if (gesdiduse) {
-                                        othersvconfict = YES;
-                                        *stop = YES;
-                                    }
-                                }];
-                                
-                                if (othersvconfict) {
-                                    //响应了其它sv
-                                    gesvalid = @(NO);
-                                    break;
-                                } else {
-                                    
-                                }
-                            }
-                            
-                            if (regdirection
-                                & ges.triggerDirectionInfo.mainDirection) {
-                                //方向符合，且没有scroll在优先响应
-                                gesvalid = @(YES);
+                            BOOL initialisVertical = (verd & ges.initialDirectionInfo.mainDirection) > 0;
+                            if (initialisVertical != triggerisVertical) {
+                                //方向线都不同了，直接失败
+                                gesvalid = @(NO);
                                 break;
                             } else {
-                                //继续等待,不用赋值
-                                break;
+                                
                             }
                         }
+                        
+                        NSDictionary *otherSVResponsedic = subInfo[@"otherSVResponse"];
+                        CGPoint othersvrespt = CGPointZero;
+                        NSValue *othersvresval = otherSVResponsedic[@"info"];
+                        if (nil != othersvresval) {
+                            othersvrespt = othersvresval.CGPointValue;
+                        }
+                        
+                        //是否允许已经响应过其它scrollview
+                        BOOL allow_othersv_resp = YES;
+                        if (serious_ges) {
+                            allow_othersv_resp = NO;
+                        }
+                        BOOL haswait = (haswaitwithconf || haswaitpinch);
+                        
+                        BOOL othergesuse;
+                        if (haswait) {
+                            //waiting中，允许一些小小的bounces,只被普通滑动互斥
+                            othergesuse = (2 == othersvrespt.x && 2 == othersvrespt.y);
+                        } else {
+                            //bounces和有普通滑动都不允许
+//                            othergesuse = (2 == othersvrespt.x) || (1 == othersvrespt.x && 2 == othersvrespt.y);
+                            othergesuse = (2 == othersvrespt.x);
+                        }
+                        
+                        if (othergesuse) {
+                            //响应了其它sv
+                            gesvalid = @(NO);
+                            break;
+                        }
+                        
+                        if (!allow_othersv_resp) {
+                            __block BOOL othersvconfict = NO;
+                            [ges.otherSVRespondedDirectionRecord enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key,
+                                                                                                     NSDictionary * _Nonnull gesinfo,
+                                                                                                     BOOL * _Nonnull stop) {
+                                CGPoint svrespt = CGPointZero;
+                                NSValue *svresval = gesinfo[@"info"];
+                                if (nil != svresval) {
+                                    svrespt = svresval.CGPointValue;
+                                }
+                                
+                                UISwipeGestureRecognizerDirection itemdir = key.unsignedIntegerValue;
+                                BOOL itemisVertical = (verd & itemdir) > 0;
+                                
+                                //如果有一个明确开始过的手势，则认为意图已经被转移，无效本次手势
+                                BOOL gesdiduse;
+                                if (haswait) {
+                                    //waiting中，允许一些小小的bounces,和其它方向的滑动，因此只被本方向的普通滑动互斥
+                                    gesdiduse = (itemisVertical == triggerisVertical
+                                                 && 2 == svrespt.x
+                                                 && 2 == svrespt.y);
+                                } else {
+                                    //bounces和普通滑动都不允许
+//                                    gesdiduse = (2 == svrespt.x) || (1 == svrespt.x && 2 == svrespt.y);
+                                    gesdiduse = (2 == svrespt.x);
+                                }
+                                
+                                if (gesdiduse) {
+                                    othersvconfict = YES;
+                                    *stop = YES;
+                                }
+                            }];
+                            
+                            if (othersvconfict) {
+                                //响应了其它sv
+                                gesvalid = @(NO);
+                                break;
+                            } else {
+                                
+                            }
+                        }
+                        
+                        if (regdirection
+                            & ges.triggerDirectionInfo.mainDirection) {
+                            //方向符合，且没有scroll在优先响应
+                            gesvalid = @(YES);
+                            break;
+                        } else {
+                            //继续等待,不用赋值
+                            break;
+                        }
                     }
+                }
+                break;
+            }
+        } else if ([gestype isEqualToString:@"pinch"]) {
+            while (1) {
+                if (ges.pinchInfoAr.count < 2) {
+                    //pinch不足
                     break;
                 }
-            } else if ([gestype isEqualToString:@"pinch"]) {
-                while (1) {
-                    if (ges.pinchInfoAr.count < 2) {
-                        //pinch不足
-                        break;
-                    }
-                    
-                    //添加手势时，定义的值，大于0代表要放大手势，小于0表示要缩小手势，数值表示至少变化多少距离后触发
-                    NSNumber *pinchVal_num = [gesinfo objectForKey:@"pinchVal"];
-                    if (nil == pinchVal_num) {
-                        gesvalid = @(NO);
-                        break;
-                    }
-                    
-                    BOTransitionGesturePinchInfo *pinch1 = ges.pinchInfoAr.firstObject;
-                    BOTransitionGesturePinchInfo *pinch2 = ges.pinchInfoAr[ges.pinchInfoAr.count - 1];
-                    CGFloat durspace = pinch2.space - pinch1.space;
-                    CGFloat pinchVal_flo = pinchVal_num.floatValue;
-                    if (pinchVal_flo > 0) {
-                        if (durspace >= pinchVal_flo) {
-                            gesvalid = @(YES);
-                        } else if (durspace < -20) {
-                            //反方向较长，直接fail掉
-                            gesvalid = @(NO);
-                        }
-                    } else if (pinchVal_flo == 0) {
-                        //俩方向都识别
+                
+                //添加手势时，定义的值，大于0代表要放大手势，小于0表示要缩小手势，数值表示至少变化多少距离后触发
+                NSNumber *pinchVal_num = [gesinfo objectForKey:@"pinchVal"];
+                if (nil == pinchVal_num) {
+                    gesvalid = @(NO);
+                    break;
+                }
+                
+                BOTransitionGesturePinchInfo *pinch1 = ges.pinchInfoAr.firstObject;
+                BOTransitionGesturePinchInfo *pinch2 = ges.pinchInfoAr[ges.pinchInfoAr.count - 1];
+                CGFloat durspace = pinch2.space - pinch1.space;
+                CGFloat pinchVal_flo = pinchVal_num.floatValue;
+                if (pinchVal_flo > 0) {
+                    if (durspace >= pinchVal_flo) {
                         gesvalid = @(YES);
-                    } else if (pinchVal_flo < 0) {
-                        if (durspace <= pinchVal_flo) {
-                            gesvalid = @(YES);
-                        } else if (durspace > 20) {
-                            //反方向较长，直接fail掉
-                            gesvalid = @(NO);
-                        }
-                    } else {
+                    } else if (durspace < -20) {
+                        //反方向较长，直接fail掉
                         gesvalid = @(NO);
                     }
-                    
-                    break;
-                }
-            }
-            
-            if (nil != gesvalid) {
-                if (gesvalid.boolValue) {
-                    use_config = config_item;
-                    validgesinfo = gesinfo;
-                    validismoveout = moveoutact;
-                    //有明确响应的手势了，不用再循环了
-                    break;
+                } else if (pinchVal_flo == 0) {
+                    //俩方向都识别
+                    gesvalid = @(YES);
+                } else if (pinchVal_flo < 0) {
+                    if (durspace <= pinchVal_flo) {
+                        gesvalid = @(YES);
+                    } else if (durspace > 20) {
+                        //反方向较长，直接fail掉
+                        gesvalid = @(NO);
+                    }
                 } else {
-                    //该手势已失败
+                    gesvalid = @(NO);
                 }
-            } else {
-                hassuspend = YES;
+                
+                break;
             }
+        }
+        
+        if (nil != gesvalid) {
+            if (gesvalid.boolValue) {
+                hasvalid = YES;
+                validismoveout = moveoutact;
+                validgesinfo = gesinfo;
+                //有明确响应的手势了，不用再循环了
+                break;
+            } else {
+                //该手势已失败
+            }
+        } else {
+            hassuspend = YES;
         }
     }
     
-    if (use_config
-        && validgesinfo.count > 0) {
-        
-        UIViewController *use_resp_vc = use_config.targetVC;
-        id<BOTransitionConfigDelegate> configdelegate = use_config.configDelegate;
-        if (!configdelegate) {
-            configdelegate = (id)use_resp_vc;
-        }
-        
+    if (hasvalid) {
         NSMutableDictionary *processsubinfo = (subInfo ? : @{}).mutableCopy;
-        [processsubinfo addEntriesFromDictionary:validgesinfo];
+        if (validgesinfo.count > 0) {
+            [processsubinfo addEntriesFromDictionary:validgesinfo];
+        }
         if (BOTransitionTypeNavigation == self.transitionType
             && self.navigationController) {
             [processsubinfo setObject:self.navigationController forKey:@"nc"];
@@ -2311,34 +2252,19 @@ static CGFloat sf_default_transition_dur = 0.22f;
         if (!gestype) {
             gestype = @"pan";
         }
-        if (use_resp_vc
-            && validismoveout) {
-            UITouch *thetouch = [ges ori_touchAr].firstObject;
-            if (thetouch.view) {
-                NSInteger hier = [BOTransitionUtility viewHierarchy:use_resp_vc.view viewB:thetouch.view];
-                if (NSNotFound == hier
-                    || hier < 0) {
-                    //手势不在use_resp_vc的图层内
-                    return @{
-                        @"shouldBegin": @(NO),
-                        @"reason": @"5",
-                    };
-                }
-            }
-            
+        if (validismoveout) {
             if (BOTransitionTypeNavigation == self.transitionType) {
                 if (self.navigationController.viewControllers.count <= 1
-                    || use_config.moveOutUseOrigin) {
+                    || tconfig.moveOutUseOrigin) {
                     //navigationController时，若只有一个VC，不尝试moveOut
                     return @{
-                        @"shouldBegin": @(NO),
-                        @"reason": @"6",
+                        @"shouldBegin": @(NO)
                     };
                 }
             }
             
             if ([configdelegate respondsToSelector:@selector(bo_trans_shouldMoveOutVC:gesture:transitionType:subInfo:)]) {
-                NSNumber *control = [configdelegate bo_trans_shouldMoveOutVC:use_resp_vc
+                NSNumber *control = [configdelegate bo_trans_shouldMoveOutVC:firstResponseVC
                                                                      gesture:ges
                                                               transitionType:self.transitionType
                                                                      subInfo:processsubinfo];
@@ -2347,8 +2273,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 } else if (!control.boolValue) {
                     //configdelegate返回不允许
                     return @{
-                        @"shouldBegin": @(NO),
-                        @"reason": @"7",
+                        @"shouldBegin": @(NO)
                     };
                 }
             }
@@ -2360,7 +2285,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 
                 BOOL takeover = NO;
                 if ([configdelegate respondsToSelector:@selector(bo_trans_actMoveOutVC:gesture:transitionType:subInfo:)]) {
-                    takeover = [configdelegate bo_trans_actMoveOutVC:use_resp_vc
+                    takeover = [configdelegate bo_trans_actMoveOutVC:firstResponseVC
                                                              gesture:ges
                                                       transitionType:ws.transitionType
                                                              subInfo:processsubinfo];
@@ -2370,8 +2295,8 @@ static CGFloat sf_default_transition_dur = 0.22f;
                     //未接管，内部调用转场方法
                     switch (self.transitionType) {
                         case BOTransitionTypeModalPresentation: {
-                            [use_resp_vc.presentingViewController dismissViewControllerAnimated:YES
-                                                                                     completion:nil];
+                            [firstResponseVC.presentingViewController dismissViewControllerAnimated:YES
+                                                                                         completion:nil];
                         }
                             break;
                         case BOTransitionTypeNavigation: {
@@ -2395,36 +2320,26 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 @"gesType": gestype,
             };
         } else {
-            NSDictionary *ges_exec_config = nil;
-            //先尝试moveIn逻辑，moveIn不需要快捷属性，只读delegate
+            NSDictionary *delegate_movein_config = nil;
+            
+            //先尝试move0In逻辑，moveIn不需要快捷属性，只读delegate
             NSMutableDictionary *usubif = (subInfo ? : @{}).mutableCopy;
             if (validgesinfo.count > 0) {
                 [usubif addEntriesFromDictionary:validgesinfo];
             }
-            
-            NSDictionary * (^gesTransExec)(BOTransitionGesture *, BOTransitioning *, NSDictionary *) = [validgesinfo objectForKey:@"gesTransExec"];
-            if (gesTransExec) {
-                ges_exec_config = gesTransExec(ges,self, usubif);
-            }
-            
-            if (nil == ges_exec_config) {
-                if (configdelegate &&
-                    [configdelegate respondsToSelector:@selector(bo_trans_moveInVCWithGes:transitionType:subInfo:)]) {
-                    ges_exec_config = [configdelegate bo_trans_moveInVCWithGes:ges
-                                                                transitionType:self.transitionType
-                                                                       subInfo:usubif];
-                }
-            }
-            
-            if (ges_exec_config != nil) {
-                NSString *actstr = [ges_exec_config objectForKey:@"act"];
+            if (configdelegate &&
+                [configdelegate respondsToSelector:@selector(bo_trans_moveInVCWithGes:transitionType:subInfo:)]) {
+                delegate_movein_config = [configdelegate bo_trans_moveInVCWithGes:ges
+                                                                   transitionType:self.transitionType
+                                                                          subInfo:usubif];
+                
+                NSString *actstr = [delegate_movein_config objectForKey:@"act"];
                 if (actstr
                     && actstr.length > 0) {
                     if ([actstr isEqualToString:@"fail"]) {
                         //显式cancel
                         return @{
-                            @"shouldBegin": @(NO),
-                            @"reason": @"8",
+                            @"shouldBegin": @(NO)
                         };
                     } else if ([actstr isEqualToString:@"suspend"]) {
                         return nil;
@@ -2432,71 +2347,77 @@ static CGFloat sf_default_transition_dur = 0.22f;
                 }
             }
             
-            if (ges_exec_config.count > 0) {
+            void (^gesTransExec)(BOTransitionGesture *, BOTransitioning *, NSDictionary *gesInfo) = [validgesinfo objectForKey:@"gesTransExec"];
+            if (gesTransExec) {
                 __weak typeof(self) ws = self;
-                void (^moveInBlock)(void) = [ges_exec_config objectForKey:@"moveInBlock"];
-                if (moveInBlock) {
+                __weak typeof(ges) wges = ges;
+                [ges.userInfo setObject:^{
+                    ws.triggerInteractiveTransitioning = YES;
+                    gesTransExec(wges, ws, validgesinfo);
+                }
+                                 forKey:@"beganBlock"];
+                [ges.userInfo setObject:validgesinfo ? : @{} forKey:@"triggerGesInfo"];
+                return @{
+                    @"shouldBegin": @(YES),
+                    @"gesType": gestype,
+                };
+            }
+            
+            UIViewController *moveInVC;
+            void (^pushblock)(void);
+            if (delegate_movein_config.count > 0) {
+                moveInVC = [delegate_movein_config objectForKey:@"vc"];
+                __weak typeof(self) ws = self;
+                if (moveInVC
+                    && [moveInVC isKindOfClass:[UIViewController class]]) {
                     [ges.userInfo setObject:^{
                         ws.triggerInteractiveTransitioning = YES;
-                        moveInBlock();
+                        switch (self.transitionType) {
+                            case BOTransitionTypeModalPresentation: {
+                                //??? presentation暂不支持手势弹起
+                            }
+                                break;
+                            case BOTransitionTypeNavigation: {
+                                [ws.navigationController pushViewController:moveInVC animated:YES];
+                            }
+                                break;
+                            case BOTransitionTypeTabBar: {
+                                //暂不支持，待开发
+                            }
+                                break;
+                            default:
+                                break;
+                        }
                     }
                                      forKey:@"beganBlock"];
                     [ges.userInfo setObject:validgesinfo ? : @{} forKey:@"triggerGesInfo"];
+                    
                     return @{
                         @"shouldBegin": @(YES),
                         @"gesType": gestype,
                     };
                 } else {
-                    UIViewController *moveinvc = [ges_exec_config objectForKey:@"vc"];
-                    if (moveinvc
-                        && [moveinvc isKindOfClass:[UIViewController class]]) {
+                    pushblock = [delegate_movein_config objectForKey:@"moveInBlock"];
+                    
+                    if (pushblock) {
                         [ges.userInfo setObject:^{
                             ws.triggerInteractiveTransitioning = YES;
-                            switch (self.transitionType) {
-                                case BOTransitionTypeModalPresentation: {
-                                    UIViewController *upresentvc = [ges_exec_config objectForKey:@"baseVC"];
-                                    if (!upresentvc) {
-                                        upresentvc = use_resp_vc;
-                                    }
-                                    if (upresentvc) {
-                                        [upresentvc presentViewController:moveinvc animated:YES completion:^{
-                                            
-                                        }];
-                                    }
-                                }
-                                    break;
-                                case BOTransitionTypeNavigation: {
-                                    [ws.navigationController pushViewController:moveinvc animated:YES];
-                                }
-                                    break;
-                                case BOTransitionTypeTabBar: {
-                                    //暂不支持，待开发
-                                }
-                                    break;
-                                default:
-                                    break;
-                            }
-                            
+                            pushblock();
                         }
                                          forKey:@"beganBlock"];
                         [ges.userInfo setObject:validgesinfo ? : @{} forKey:@"triggerGesInfo"];
-                        
                         return @{
                             @"shouldBegin": @(YES),
                             @"gesType": gestype,
                         };
+                    } else {
+                        return nil;
                     }
                 }
                 
-                //未获取到有效配置，执行失败
-                return @{
-                    @"shouldBegin": @(NO),
-                    @"reason": @"9",
-                };
             } else {
                 return @{
-                    @"shouldBegin": @(NO),
-                    @"reason": @"10",
+                    @"shouldBegin": @(NO)
                 };
             }
         }
@@ -2505,8 +2426,7 @@ static CGFloat sf_default_transition_dur = 0.22f;
     } else {
         //没有识别到的，也没有待定的，那就cancel手势吧
         return @{
-            @"shouldBegin": @(NO),
-            @"reason": @"11",
+            @"shouldBegin": @(NO)
         };
     }
 }
@@ -2867,81 +2787,31 @@ static CGFloat sf_default_transition_dur = 0.22f;
     }
 }
 
-+ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges transType:(BOTransitionType *)transType {
-    UIResponder *vnres = ges.view.nextResponder;
-    if ([vnres isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *nc = (UINavigationController *)vnres;
-        if (nc.interactivePopGestureRecognizer == ges) {
-            if (transType) {
-                *transType = BOTransitionTypeNavigation;
-            }
-            return 1;
-        }
-    }
-    
-    //对应present的情况
-    if ([ges isKindOfClass:[BOTransitionGesture class]]) {
-        if (transType) {
-            *transType = [(BOTransitionGesture *)ges transitioning].transitionType;
-        }
-        return 2;
-    }
-    
-    if (transType) {
-        *transType = BOTransitionTypeNone;
-    }
-    return 0;
-}
-
 - (NSInteger)checkTransitionGes:(UIGestureRecognizer *)tGes
              otherTransitionGes:(UIGestureRecognizer *)otherTGes
                        makeFail:(BOOL)makeFail {
-    if (!tGes
-        || !otherTGes) {
-        return 0;
-    }
-    
-    BOTransitionType tType;
-    BOOL tis = [BOTransitioning isTransitonGes:tGes transType:&tType];
-    if (!tis) {
-        return 0;
-    }
-    
-    BOTransitionType oType;
-    BOOL ois = [BOTransitioning isTransitonGes:otherTGes transType:&oType];
-    if (!ois) {
-        return 0;
-    }
-    
-    UIViewController *use_vc;
-    if (tGes == self.transitionGes) {
-        use_vc = self.moveVC;
-        if (!use_vc) {
-            switch (_transitionType) {
-                case BOTransitionTypeNavigation: {
-                    if (BOTransitionActNone == self.transitionAct) {
-                        use_vc = self.navigationController.viewControllers.lastObject;
-                    }
+    UIViewController *curmoveVC = self.moveVC;
+    if (!self.moveVC && BOTransitionTypeNavigation == _transitionType) {
+        switch (_transitionType) {
+            case BOTransitionTypeNavigation: {
+                if (BOTransitionActNone == self.transitionAct) {
+                    curmoveVC = self.navigationController.viewControllers.lastObject;
                 }
-                    break;
-                case BOTransitionTypeTabBar:
-                    use_vc = self.tabBarController.selectedViewController;
-                    break;
-                case BOTransitionTypeModalPresentation:
-                    use_vc = self.baseVC;
-                    break;
-                default:
-                    break;
             }
+                break;
+            case BOTransitionTypeTabBar:
+                curmoveVC = self.tabBarController.selectedViewController;
+                break;
+            default:
+                break;
         }
     }
     
-    return [BOTransitioning checkWithVC:use_vc
-                         transitionType:tType
+    return [BOTransitioning checkWithVC:curmoveVC
+                         transitionType:self.transitionType
                                makeFail:makeFail
                                 baseGes:tGes
-                     otherTransitionGes:otherTGes
-                              otherType:oType];
+                     otherTransitionGes:otherTGes];
     
 }
 
@@ -2950,17 +2820,13 @@ static CGFloat sf_default_transition_dur = 0.22f;
  2 保留otherges
  0 没有判断出结果
  */
-+ (NSInteger)checkWithVC:(nullable UIViewController *)vc
++ (NSInteger)checkWithVC:(UIViewController *)vc
           transitionType:(BOTransitionType)transitionType
                 makeFail:(BOOL)makeFail
                  baseGes:(UIGestureRecognizer *)ges
-      otherTransitionGes:(UIGestureRecognizer *)otherGes
-               otherType:(BOTransitionType)otherType  {
-    if (ges == otherGes) {
-        return 0;
-    }
-    
-    if (ges.view == otherGes.view) {
+      otherTransitionGes:(UIGestureRecognizer *)otherGes  {
+    if (ges == otherGes
+        || ges.view == otherGes.view) {
         return 0;
     }
     

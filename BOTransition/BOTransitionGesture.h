@@ -115,12 +115,8 @@ typedef struct {
 
 @end
 
-@class BOTransitioning;
-
 //转场手势识别
 @interface BOTransitionGesture : UIGestureRecognizer
-
-@property (nonatomic, weak) BOTransitioning *transitioning;
 
 @property (class, nonatomic, readonly) CGFloat gesConflictTime;
 
@@ -178,11 +174,6 @@ typedef struct {
 
 @property (nonatomic, weak) id<BOTransitionGestureDelegate> transitionGesDelegate;
 
-/*
- 原始touch信息
- */
-@property (nonatomic, readonly) NSArray<UITouch *> *ori_touchAr;
-
 - (instancetype)initWithTransitionGesDelegate:(nullable id<BOTransitionGestureDelegate>)transitionGesDelegate NS_DESIGNATED_INITIALIZER;
 
 - (void)saveCurrGesContextAndSetNeedsRecoverWhenTouchDown;
@@ -201,6 +192,13 @@ typedef struct {
 + (BOOL)tryMakeGesFail:(UIGestureRecognizer *)gesShouldFail
                  byGes:(UIGestureRecognizer *)ges
                  force:(BOOL)force;
+
+/*
+ 0 不是
+ 1 navigationController 系统pop
+ 2 BOTransitionGesture
+ */
++ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges;
 
 @end
 

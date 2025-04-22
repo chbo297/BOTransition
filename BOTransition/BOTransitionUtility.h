@@ -24,12 +24,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (CGAffineTransform)getTransform:(CGRect)from to:(CGRect)to;
 
-/*
- 0 是同一个
- > 0  b在a的子层级中的第几层  1表示直接subView，2表示subView的subView
- < 0  b在a的父层级中  -1表示a是b的subView  -2再下一层
- NSNotFound 俩没有包含关系
- */
 + (NSInteger)viewHierarchy:(UIView *)viewA viewB:(UIView *)viewB;
 
 /*

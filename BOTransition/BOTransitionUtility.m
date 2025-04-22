@@ -88,6 +88,7 @@
 }
 
 + (NSInteger)viewHierarchy:(UIView *)viewA viewB:(UIView *)viewB {
+    
     if (viewA.window != viewB.window) {
         return NSNotFound;
     }
