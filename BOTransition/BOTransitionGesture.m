@@ -8,6 +8,7 @@
 
 #import "BOTransitionGesture.h"
 #import "BOTransitionUtility.h"
+#import "BOTransitioning.h"
 
 static UIEdgeInsets sf_common_contentInset(UIScrollView * __nonnull scrollView) {
     if (@available(iOS 11.0, *)) {
@@ -243,7 +244,7 @@ static CGFloat sf_ges_conflict_wait_time = 0.12;
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer {
     if (preventingGestureRecognizer != self
-        && [BOTransitionGesture isTransitonGes:preventingGestureRecognizer]) {
+        && [BOTransitioning isTransitonGes:preventingGestureRecognizer transType:nil]) {
         return YES;
     }
     return NO;
@@ -257,6 +258,10 @@ static CGFloat sf_ges_conflict_wait_time = 0.12;
     if (!_touchAr) {
         _touchAr = @[].mutableCopy;
     }
+    return _touchAr;
+}
+
+- (NSArray<UITouch *> *)ori_touchAr {
     return _touchAr;
 }
 
@@ -756,10 +761,10 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
     
     _triggerDirectionInfo = drinfo;
-    
     NSNumber *shouldbegin = nil;
     NSDictionary *mainresdic = [self currPanSVAcceptDirection:drinfo.mainDirection];
     NSString *gestype = nil;
+    NSString *failreason = @"";
     //询问代理是否开始transition
     if (self.transitionGesDelegate &&
         [self.transitionGesDelegate respondsToSelector:@selector(boTransitionGesShouldAndWillBegin:specialMainDirection:subInfo:)]) {
@@ -778,6 +783,7 @@ static NSInteger sf_max_pinchInfo_count = 20;
             drinfo.mainDirection = anDir;
             _triggerDirectionInfo = drinfo;
         }
+        failreason = [controldic objectForKey:@"reason"] ? : @"";
     }
     
     NSNumber *hasbeginorfail = nil;
@@ -834,7 +840,7 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
     
     NSInteger strategy = 0;
-    BOOL istran = [BOTransitionGesture isTransitonGes:ges];
+    BOOL istran = [BOTransitioning isTransitonGes:ges transType:nil];
     if (istran) {
         if ([self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
             NSInteger spsgy = [self.transitionGesDelegate checkTransitionGes:self
@@ -999,12 +1005,13 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
 }
 
+//是否第二个失效时才响应第一个(使第一个失效)
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRequireFailureOfGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     if (gestureRecognizer == self
         && otherGestureRecognizer != gestureRecognizer) {
         BOOL shouldfailsf = NO;
         
-        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitioning isTransitonGes:otherGestureRecognizer transType:nil]) {
             if (self.transitionGesDelegate
                 && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
                 NSInteger checkst = [self.transitionGesDelegate checkTransitionGes:self
@@ -1033,11 +1040,12 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
 }
 
+//是否第一个失效时才响应第二个(使第二个失效)
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     if (gestureRecognizer == self
         && otherGestureRecognizer != gestureRecognizer) {
         BOOL shouldfailog = NO;
-        if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
+        if ([BOTransitioning isTransitonGes:otherGestureRecognizer transType:nil]) {
             if (self.transitionGesDelegate
                 && [self.transitionGesDelegate respondsToSelector:@selector(checkTransitionGes:otherTransitionGes:makeFail:)]) {
                 NSInteger checkst = [self.transitionGesDelegate checkTransitionGes:self
@@ -1073,7 +1081,7 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
     
     BOOL shouldsim = YES;
-    if ([BOTransitionGesture isTransitonGes:otherGestureRecognizer]) {
+    if ([BOTransitioning isTransitonGes:otherGestureRecognizer transType:nil]) {
         shouldsim = NO;
     } else {
         if ([otherGestureRecognizer isKindOfClass:[UIPinchGestureRecognizer class]]) {
@@ -1631,6 +1639,7 @@ static NSInteger sf_max_pinchInfo_count = 20;
             && [gesShouldFail canBePreventedByGestureRecognizer:ges])) {
         switch (gesShouldFail.state) {
             case UIGestureRecognizerStatePossible:
+                [gesShouldFail requireGestureRecognizerToFail:ges];
                 break;
             case UIGestureRecognizerStateBegan:
             case UIGestureRecognizerStateChanged:
@@ -1644,25 +1653,6 @@ static NSInteger sf_max_pinchInfo_count = 20;
     }
     
     return NO;
-}
-
-+ (NSInteger)isTransitonGes:(UIGestureRecognizer *)ges {
-    UIResponder *vnres = ges.view.nextResponder;
-    if ([vnres isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *nc = (UINavigationController *)vnres;
-        if (nc.interactivePopGestureRecognizer == ges) {
-            return 1;
-        } else if ([ges isKindOfClass:[BOTransitionGesture class]]) {
-            return 2;
-        }
-    }
-    
-    //对应present的情况
-    if ([ges isKindOfClass:[BOTransitionGesture class]]) {
-        return 2;
-    }
-    
-    return 0;
 }
 
 @end
